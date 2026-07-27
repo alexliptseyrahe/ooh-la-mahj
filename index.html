@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0C3B2E">
+<title>Ooh La Mahj</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt:#11594400; /* placeholder */
+  --deep:#0C3B2E;
+  --deep2:#0F4A39;
+  --emerald:#156146;
+  --emerald-lt:#1E7A58;
+  --ivory:#FBF7EC;
+  --cream:#F3EBD8;
+  --gold:#C9A24B;
+  --gold-dk:#A5822F;
+  --gold-pale:#E8D9AE;
+  --coral:#E2725B;
+  --coral-dk:#C85B45;
+  --pink:#F2C9BC;
+  --ink:#22332B;
+  --red:#B23A2F;
+  --grn:#1B6B4C;
+  --blu:#2C5F82;
+  --tile-face:#FFFDF4;
+  --tile-face2:#F5EEDB;
+  --tile-edge:#E0D6B8;
+  --shadow:0 2px 5px rgba(10,25,18,.35);
+  --serif:'Cormorant Garamond', Georgia, serif;
+  --sans:'Jost', 'Avenir Next', -apple-system, sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+:root{--bg1:#14523F;--bg2:#0C3B2E;--bg3:#082E23}
+body{
+  font-family:var(--sans);
+  color:var(--ivory);
+  background-color:var(--deep);
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 16px, rgba(255,255,255,.028) 16px 17px),
+    repeating-linear-gradient(-45deg, transparent 0 16px, rgba(255,255,255,.028) 16px 17px),
+    radial-gradient(120% 90% at 50% 0%, var(--bg1) 0%, var(--bg2) 60%, var(--bg3) 100%);
+  transition:background-color .4s;
+  display:flex;flex-direction:column;
+  height:100dvh;
+  user-select:none;-webkit-user-select:none;
+}
+button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:inherit}
+
+/* ---------- generic tile ---------- */
+.tile{
+  position:relative;flex:none;
+  background:linear-gradient(165deg,var(--tile-face) 0%,var(--tile-face) 55%,var(--tile-face2) 100%);
+  border:1px solid var(--tile-edge);
+  border-radius:8px;
+  box-shadow:var(--shadow), inset 0 1.5px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(160,140,90,.18);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--ink);
+  overflow:hidden;
+  transition:transform .14s ease, box-shadow .14s ease;
+}
+.tile .n{font-family:var(--serif);font-weight:700;line-height:.9}
+.tile .m{line-height:1;display:flex;align-items:center;justify-content:center}
+.tile .lbl{font-family:var(--sans);font-weight:600;letter-spacing:.14em;line-height:1}
+.tile.red .n{color:var(--red)} .tile.grn .n{color:var(--grn)} .tile.blu .n{color:var(--blu)}
+.tile.back{background:linear-gradient(160deg,#17604A,#0F4A39);border-color:#0A2E24}
+.tile.back::after{content:'';position:absolute;inset:3px;border:1px solid rgba(201,162,75,.55);border-radius:5px;
+  background:repeating-linear-gradient(45deg,transparent 0 5px,rgba(201,162,75,.13) 5px 6px)}
+
+/* rack size */
+.t-lg{width:min(12.2vw,52px);aspect-ratio:13/17}
+.t-lg .n{font-size:clamp(19px,6vw,26px)}
+.t-lg .m svg{width:clamp(12px,3.8vw,16px);height:clamp(12px,3.8vw,16px)}
+.t-lg .m .zi{font-size:clamp(11px,3.4vw,14px)}
+.t-lg .lbl{font-size:7px;margin-top:2px}
+/* mid (exposures, win display) */
+.t-md{width:34px;aspect-ratio:13/17;border-radius:6px}
+.t-md .n{font-size:17px}
+.t-md .m svg{width:10px;height:10px}
+.t-md .m .zi{font-size:9px}
+.t-md .lbl{font-size:5px;margin-top:1px}
+/* small (discards) */
+.t-sm{width:29px;aspect-ratio:13/17;border-radius:5px}
+.t-sm .n{font-size:15px}
+.t-sm .m svg{width:9px;height:9px}
+.t-sm .m .zi{font-size:8px}
+.t-sm .lbl{font-size:4.5px;margin-top:1px}
+/* tiny (opponent exposures) */
+.t-xs{width:20px;aspect-ratio:13/17;border-radius:4px;box-shadow:0 1px 2px rgba(10,25,18,.3)}
+.t-xs .n{font-size:10px}
+.t-xs .m svg{width:6px;height:6px}
+.t-xs .m .zi{font-size:5.5px}
+.t-xs .lbl{font-size:3.5px}
+
+.tile.joker{background:linear-gradient(165deg,#125441,#0D4232);border-color:#0A2E24;color:var(--gold-pale)}
+.tile.joker .lbl{color:var(--gold);letter-spacing:.16em}
+.tile.sel{transform:translateY(-9px);box-shadow:0 8px 14px rgba(10,25,18,.5),0 0 0 2px var(--coral), inset 0 1.5px 0 rgba(255,255,255,.9)}
+.tile.just{outline:2px solid var(--coral);outline-offset:1px}
+
+/* ---------- layout ---------- */
+#hdr{
+  flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top, 8px) + 6px) 14px 8px;
+}
+#hdr .brand{font-family:var(--serif);font-weight:600;letter-spacing:.22em;font-size:13px;color:var(--gold-pale)}
+#hdr .brand b{color:var(--gold);font-weight:700}
+#wallct{font-size:11px;letter-spacing:.12em;color:rgba(251,247,236,.75)}
+#wallct b{color:var(--gold);font-weight:600}
+#hdr .hbtn{font-size:11px;letter-spacing:.14em;color:var(--gold-pale);border:1px solid rgba(201,162,75,.5);border-radius:14px;padding:4px 11px}
+
+#opps{flex:none;display:flex;gap:8px;padding:2px 10px 6px}
+.opp{
+  flex:1;background:rgba(8,40,30,.5);border:1px solid rgba(201,162,75,.25);border-radius:12px;
+  padding:6px 8px 7px;display:flex;flex-direction:column;gap:4px;min-width:0;
+  transition:border-color .2s, box-shadow .2s;
+}
+.opp .oname{display:flex;align-items:center;gap:6px;font-size:11.5px;letter-spacing:.08em;color:var(--ivory)}
+.opp .dotad{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);flex:none}
+.opp.active{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,162,75,.5),0 0 14px rgba(201,162,75,.25)}
+.opp.active .dotad{background:var(--coral);box-shadow:0 0 6px var(--coral)}
+.opp .octr{font-size:9.5px;color:rgba(251,247,236,.55);letter-spacing:.1em}
+.opp .oexp{display:flex;gap:2px;flex-wrap:wrap;min-height:0}
+
+#board{
+  flex:1;min-height:0;margin:2px 10px;display:flex;flex-direction:column;
+  background:rgba(6,32,24,.35);
+  border:1px solid rgba(201,162,75,.28);border-radius:16px;
+  position:relative;overflow:hidden;
+}
+#board .btitle{flex:none;text-align:center;font-size:9.5px;letter-spacing:.3em;color:rgba(232,217,174,.6);padding:7px 0 2px}
+#discards{
+  flex:1;overflow-y:auto;padding:6px 10px 10px;
+  display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;justify-content:center;
+}
+#tablemsg{
+  position:absolute;inset:auto 0 0 0;top:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;text-align:center;padding:0 30px;
+}
+#tablemsg span{
+  font-family:var(--serif);font-size:19px;font-weight:600;color:var(--gold-pale);
+  text-shadow:0 2px 8px rgba(0,0,0,.5);line-height:1.3;
+}
+
+#me{flex:none;padding:4px 8px calc(env(safe-area-inset-bottom, 10px) + 8px)}
+#myexp{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;padding:2px 0 5px;min-height:0}
+#myexp .egrp{display:flex;gap:2px;background:rgba(8,40,30,.5);border:1px solid rgba(201,162,75,.3);border-radius:8px;padding:3px 4px}
+#rack{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:6px 0 2px}
+#actions{
+  display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;
+  min-height:46px;padding-top:6px;
+}
+.abtn{
+  font-size:13px;font-weight:600;letter-spacing:.14em;
+  padding:11px 22px;border-radius:24px;color:#fff;
+  background:linear-gradient(160deg,var(--coral),var(--coral-dk));
+  box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.abtn:active{transform:translateY(1px)}
+.abtn.gold{background:linear-gradient(160deg,var(--gold),var(--gold-dk));color:#241C08}
+.abtn.ghost{background:none;border:1px solid rgba(251,247,236,.45);box-shadow:none;color:var(--ivory);font-weight:500}
+.abtn.big{font-size:15px;padding:13px 30px}
+.abtn:disabled{opacity:.4;pointer-events:none}
+#statusline{text-align:center;font-size:12px;letter-spacing:.1em;color:rgba(251,247,236,.8);min-height:16px;padding-top:2px}
+#statusline b{color:var(--gold)}
+
+/* ---------- title screen ---------- */
+#title{
+  position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  background-color:var(--deep);
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 16px, rgba(255,255,255,.03) 16px 17px),
+    repeating-linear-gradient(-45deg, transparent 0 16px, rgba(255,255,255,.03) 16px 17px),
+    radial-gradient(130% 100% at 50% 0%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+  transition:opacity .5s;text-align:center;padding:30px;
+}
+#title.hide{opacity:0;pointer-events:none}
+#titlemural{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;pointer-events:none}
+#title>*:not(#titlemural){position:relative;z-index:1}
+.matrow{display:flex;gap:14px;margin-top:30px;align-items:center}
+.matsw{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.3);transition:all .2s}
+.matsw.on{border-color:var(--gold);box-shadow:0 0 12px rgba(201,162,75,.55);transform:scale(1.12)}
+#matname{font-size:9.5px;letter-spacing:.32em;color:rgba(232,217,174,.7);margin-top:10px}
+#matlabel{font-size:9px;letter-spacing:.3em;color:rgba(251,247,236,.5);margin-top:26px}
+#btnmat{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(201,162,75,.6);margin-right:8px}
+.crest{
+  width:150px;height:150px;border-radius:50%;
+  border:1.5px solid var(--gold);position:relative;
+  display:flex;align-items:center;justify-content:center;margin-bottom:26px;
+  box-shadow:0 0 40px rgba(201,162,75,.15), inset 0 0 30px rgba(201,162,75,.08);
+}
+.crest::before{content:'';position:absolute;inset:7px;border:1px solid rgba(201,162,75,.55);border-radius:50%}
+.crest svg{width:74px;height:74px}
+#title h1{font-family:var(--serif);font-weight:600;font-size:34px;letter-spacing:.3em;margin-left:.3em;color:var(--ivory);line-height:1.15}
+#title h2{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:.5em;margin:6px 0 2px .5em;color:var(--gold)}
+#title .est{font-size:10px;letter-spacing:.4em;color:rgba(232,217,174,.65);margin:14px 0 34px}
+#title .est::before,#title .est::after{content:'—';margin:0 10px;color:rgba(201,162,75,.5)}
+#title .tbtns{display:flex;flex-direction:column;gap:14px;align-items:center}
+
+/* ---------- card sheet ---------- */
+#sheet{
+  position:fixed;inset:0;z-index:60;display:none;flex-direction:column;justify-content:flex-end;
+  background:rgba(5,20,15,.55);backdrop-filter:blur(3px);
+}
+#sheet.open{display:flex}
+#sheetin{
+  background:var(--ivory);color:var(--ink);border-radius:20px 20px 0 0;
+  max-height:82dvh;display:flex;flex-direction:column;
+  box-shadow:0 -8px 30px rgba(0,0,0,.4);
+}
+#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CBBF9E;margin:10px auto 4px}
+#sheetin h3{
+  font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
+  padding:4px 0 2px;
+}
+#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E2D8BC}
+#cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
+.ccat{font-size:10.5px;font-weight:600;letter-spacing:.26em;color:var(--gold-dk);margin:14px 0 6px}
+.chand{
+  background:#fff;border:1px solid #E6DCC0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.chand.best{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral)}
+.chand .chtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chand .chname{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--deep)}
+.chand .chpts{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--gold-dk);white-space:nowrap}
+.chand .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px}
+.chand .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F4EDDA;font-weight:500}
+.chand .chpat i.cR{color:var(--red)} .chand .chpat i.cG{color:var(--grn)} .chand .chpat i.cB{color:var(--blu)}
+.chand .chpat i.cN{color:#33413A} .chand .chpat i.cF{color:var(--coral-dk)}
+.chand .prog{display:flex;align-items:center;gap:8px}
+.chand .bar{flex:1;height:5px;border-radius:3px;background:#EAE2C8;overflow:hidden}
+.chand .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--coral));transition:width .3s}
+.chand .away{font-size:10.5px;color:#8A7F5F;letter-spacing:.06em;white-space:nowrap}
+.chand .cnote{font-size:10px;color:#A08F63;letter-spacing:.08em}
+
+/* ---------- call bar ---------- */
+#callbar{
+  position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,10px) + 150px);z-index:40;display:none;
+  background:rgba(9,42,32,.96);border:1px solid var(--gold);border-radius:16px;padding:12px;
+  flex-direction:column;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+#callbar.open{display:flex}
+#callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale)}
+#callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- modal ---------- */
+#modal{
+  position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+  background:rgba(5,20,15,.65);backdrop-filter:blur(4px);padding:24px;
+}
+#modal.open{display:flex}
+#modalin{
+  background:var(--ivory);color:var(--ink);border-radius:18px;padding:26px 22px 22px;max-width:340px;width:100%;
+  text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.5);max-height:86dvh;overflow-y:auto;
+}
+#modalin .mtop{font-size:10px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
+#modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
+#modalin .msub{font-size:13px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
+#modalin .mtiles{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+#modalin .mpts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--coral-dk);margin:6px 0 16px}
+#modalin .mbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#modalin .rules{text-align:left;font-size:13px;line-height:1.65;color:#3E4E45}
+#modalin .rules b{color:var(--deep)}
+#modalin .rules p{margin-bottom:9px}
+
+.fade{animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="brand">OOH <b>LA</b> MAHJ</div>
+  <div id="wallct">WALL <b id="wallnum">—</b></div>
+  <div style="display:flex;align-items:center">
+    <button id="btnmat" title="Change mat"></button>
+    <button class="hbtn" id="btncard">CARD</button>
+  </div>
+</div>
+
+<div id="opps"></div>
+
+<div id="board">
+  <div class="btitle">DISCARDS</div>
+  <div id="discards"></div>
+  <div id="tablemsg" style="display:none"><span id="tablemsgtxt"></span></div>
+</div>
+
+<div id="me">
+  <div id="myexp"></div>
+  <div id="rack"></div>
+  <div id="statusline"></div>
+  <div id="actions"></div>
+</div>
+
+<div id="callbar">
+  <div class="cq" id="callq"></div>
+  <div class="cbtns" id="callbtns"></div>
+</div>
+
+<div id="sheet">
+  <div style="flex:1" id="sheetdim"></div>
+  <div id="sheetin">
+    <div class="grab"></div>
+    <h3>THE OOH LA MAHJ CARD</h3>
+    <div class="sub">SEASON 2026 · F=FLOWER · 0=SOAP · C/X = CONCEALED/EXPOSED</div>
+    <div id="cardlist"></div>
+  </div>
+</div>
+
+<div id="modal"><div id="modalin"></div></div>
+
+<div id="title">
+  <div id="titlemural"></div>
+  <div class="crest">
+    <svg viewBox="0 0 80 80" fill="none">
+      <path d="M40 68 C40 50 39 40 40 28" stroke="#C9A24B" stroke-width="3" stroke-linecap="round"/>
+      <path d="M40 30 C30 22 18 22 10 28 C20 30 30 32 40 30 Z" fill="#C9A24B" opacity=".9"/>
+      <path d="M40 30 C50 22 62 22 70 28 C60 30 50 32 40 30 Z" fill="#C9A24B" opacity=".9"/>
+      <path d="M40 29 C34 18 26 12 16 12 C24 18 32 26 40 29 Z" fill="#C9A24B" opacity=".75"/>
+      <path d="M40 29 C46 18 54 12 64 12 C56 18 48 26 40 29 Z" fill="#C9A24B" opacity=".75"/>
+      <path d="M40 28 C38 16 40 8 40 4 C42 12 42 20 40 28 Z" fill="#C9A24B"/>
+      <circle cx="34" cy="34" r="2.4" fill="#E2725B"/><circle cx="46" cy="34" r="2.4" fill="#E2725B"/><circle cx="40" cy="38" r="2.4" fill="#E2725B"/>
+    </svg>
+  </div>
+  <h1>OOH LA MAHJ</h1>
+  <h2>AMERICAN MAH JONGG</h2>
+  <div class="est">AMERICAN · EST. 2026</div>
+  <div class="tbtns">
+    <button class="abtn big" id="btnplay">TAKE A SEAT</button>
+    <button class="abtn ghost" id="btncard2">VIEW THE CARD</button>
+    <button class="abtn ghost" id="btnhow">HOUSE RULES</button>
+  </div>
+  <div id="matlabel">THE CHINOISERIE MATS</div>
+  <div class="matrow" id="matrow"></div>
+  <div id="matname"></div>
+</div>
+
+<script>
+/* ============ THE PALM CLUB MAH JONGG ============ */
+'use strict';
+const $=id=>document.getElementById(id);
+
+/* extra CSS for center-art tiles */
+document.head.insertAdjacentHTML('beforeend',`<style>
+body{touch-action:manipulation}
+.tile .lbl{color:#8A7F5F}
+.t-lg .m.art svg{width:27px;height:27px}
+.t-md .m.art svg{width:17px;height:17px}
+.t-sm .m.art svg{width:14px;height:14px}
+.t-xs .m.art svg{width:9px;height:9px}
+.t-lg .nz{font-size:clamp(21px,6.6vw,28px)}
+.t-md .nz{font-size:18px}.t-sm .nz{font-size:15px}.t-xs .nz{font-size:10px}
+</style>`);
+
+/* ---------- tiles ---------- */
+const SUITS=['C','B','D'];
+const SUITCLR={C:'red',B:'grn',D:'blu'};
+const DRAGON={C:'GR',B:'GG',D:'G0'};
+const WINDS=['WN','WE','WW','WS'];
+const key=t=>t.s+(t.n!==undefined?t.n:'');
+let _tid=0;
+function mk(s,n){return {s,n,id:++_tid}}
+function makeDeck(){
+  const d=[];
+  for(const s of SUITS) for(let n=1;n<=9;n++) for(let i=0;i<4;i++) d.push(mk(s,n));
+  for(const w of ['N','E','W','S']) for(let i=0;i<4;i++) d.push(mk('W',w));
+  for(const g of ['R','G','0']) for(let i=0;i<4;i++) d.push(mk('G',g));
+  for(let i=0;i<8;i++) d.push(mk('F',undefined));
+  for(let i=0;i<8;i++) d.push(mk('J',undefined));
+  return d;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+const SVGS={
+  bam:c=>`<svg viewBox="0 0 24 24"><g fill="${c}"><rect x="3.5" y="3" width="4.4" height="18" rx="2.2"/><rect x="9.8" y="3" width="4.4" height="18" rx="2.2"/><rect x="16.1" y="3" width="4.4" height="18" rx="2.2"/></g></svg>`,
+  dot:c=>`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="none" stroke="${c}" stroke-width="3"/><circle cx="12" cy="12" r="3.1" fill="${c}"/></svg>`,
+  soap:c=>`<svg viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="3.5" fill="none" stroke="${c}" stroke-width="2.6"/><rect x="8.5" y="8" width="7" height="8" rx="1.6" fill="none" stroke="${c}" stroke-width="1.4" opacity=".55"/></svg>`,
+  flower:`<svg viewBox="0 0 24 24"><g fill="#E2725B"><ellipse cx="12" cy="5.4" rx="3.1" ry="4.2"/><ellipse cx="12" cy="18.6" rx="3.1" ry="4.2"/><ellipse cx="5.4" cy="12" rx="4.2" ry="3.1"/><ellipse cx="18.6" cy="12" rx="4.2" ry="3.1"/><ellipse cx="7.4" cy="7.4" rx="2.9" ry="2.9" opacity=".7"/><ellipse cx="16.6" cy="7.4" rx="2.9" ry="2.9" opacity=".7"/><ellipse cx="7.4" cy="16.6" rx="2.9" ry="2.9" opacity=".7"/><ellipse cx="16.6" cy="16.6" rx="2.9" ry="2.9" opacity=".7"/></g><circle cx="12" cy="12" r="3" fill="#C9A24B"/></svg>`,
+  palm:`<svg viewBox="0 0 80 80" fill="none"><path d="M40 70 C40 52 39 42 40 30" stroke="#C9A24B" stroke-width="4" stroke-linecap="round"/><path d="M40 32 C30 24 18 24 10 30 C20 32 30 34 40 32 Z" fill="#C9A24B"/><path d="M40 32 C50 24 62 24 70 30 C60 32 50 34 40 32 Z" fill="#C9A24B"/><path d="M40 31 C34 20 26 14 16 14 C24 20 32 28 40 31 Z" fill="#C9A24B" opacity=".8"/><path d="M40 31 C46 20 54 14 64 14 C56 20 48 28 40 31 Z" fill="#C9A24B" opacity=".8"/><path d="M40 30 C38 18 40 10 40 6 C42 14 42 22 40 30 Z" fill="#C9A24B"/></svg>`
+};
+function tileDOM(t,size){
+  const d=document.createElement('div');
+  d.className='tile '+size;
+  if(!t){d.classList.add('back');return d}
+  d.dataset.id=t.id;
+  const n=document.createElement('span');
+  const m=document.createElement('span'); m.className='m';
+  const l=document.createElement('span'); l.className='lbl';
+  if(t.s==='C'||t.s==='B'||t.s==='D'){
+    d.classList.add(SUITCLR[t.s]);
+    n.className='n'; n.textContent=t.n;
+    if(t.s==='C') m.innerHTML=`<span class="zi" style="color:var(--red);font-weight:600">萬</span>`;
+    else if(t.s==='B') m.innerHTML=SVGS.bam('var(--grn)');
+    else m.innerHTML=SVGS.dot('var(--blu)');
+    d.append(n,m);
+  }else if(t.s==='W'){
+    n.className='n'; n.style.color='#33413A'; n.textContent=t.n;
+    l.textContent='WIND';
+    d.append(n,l);
+  }else if(t.s==='G'){
+    if(t.n==='R'){n.className='n nz';n.style.color='var(--red)';n.textContent='中';l.textContent='RED';d.append(n,l)}
+    else if(t.n==='G'){n.className='n nz';n.style.color='var(--grn)';n.textContent='發';l.textContent='GREEN';d.append(n,l)}
+    else{m.classList.add('art');m.innerHTML=SVGS.soap('var(--blu)');l.textContent='SOAP';d.append(m,l)}
+  }else if(t.s==='F'){
+    m.classList.add('art'); m.innerHTML=SVGS.flower; l.textContent='FLOWER';
+    d.append(m,l);
+  }else{
+    d.classList.add('joker');
+    m.classList.add('art'); m.innerHTML=SVGS.palm; l.textContent='JOKER';
+    d.append(m,l);
+  }
+  return d;
+}
+function nameOf(t){
+  if(t.s==='C')return t.n+' Crak'; if(t.s==='B')return t.n+' Bam'; if(t.s==='D')return t.n+' Dot';
+  if(t.s==='W')return {N:'North',E:'East',W:'West',S:'South'}[t.n];
+  if(t.s==='G')return {R:'Red Dragon',G:'Green Dragon',0:'Soap'}[t.n];
+  if(t.s==='F')return 'Flower'; return 'Joker';
+}
+const ORD={C:0,B:1,D:2,W:3,G:4,F:5,J:6};
+const SUBORD={N:1,E:2,W:3,S:4,R:1,G:2,0:3};
+function sortHand(h){
+  return [...h].sort((a,b)=>{
+    if(ORD[a.s]!==ORD[b.s])return ORD[a.s]-ORD[b.s];
+    const av=typeof a.n==='number'?a.n:(SUBORD[a.n]||0), bv=typeof b.n==='number'?b.n:(SUBORD[b.n]||0);
+    return av-bv;
+  });
+}
+
+/* ---------- the card ---------- */
+const PERMS=[['C','B','D'],['C','D','B'],['B','C','D'],['B','D','C'],['D','B','C'],['D','C','B']];
+const HANDS=[];
+function addHand(h,gen){h.variants=gen();HANDS.push(h)}
+addHand({name:'Sunrise 2026',cat:'YEAR — 2026',pts:30,concealed:false,
+  disp:[['222','cR'],['0000','cN'],['222','cG'],['6666','cB']],
+  note:'2s in any two suits · 6s in the third · Soap = zero'},
+  ()=>{const v=[];for(const c of SUITS){const o=SUITS.filter(s=>s!==c);
+    v.push([[o[0]+'2',3],['G0',4],[o[1]+'2',3],[c+'6',4]])}return v});
+addHand({name:'Palm Court Run',cat:'CONSECUTIVE RUNS',pts:25,concealed:false,
+  disp:[['11 222 3333 444 55','cR']],
+  note:'Any one suit · any five consecutive numbers'},
+  ()=>{const v=[];for(const s of SUITS)for(let n=1;n<=5;n++)
+    v.push([[s+n,2],[s+(n+1),3],[s+(n+2),4],[s+(n+3),3],[s+(n+4),2]]);return v});
+addHand({name:'Ocean Run',cat:'CONSECUTIVE RUNS',pts:30,concealed:false,
+  disp:[['11 22','cR'],['333 444','cG'],['5555','cB']],
+  note:'Three suits · any five consecutive numbers'},
+  ()=>{const v=[];for(const p of PERMS)for(let n=1;n<=5;n++)
+    v.push([[p[0]+n,2],[p[0]+(n+1),2],[p[1]+(n+2),3],[p[1]+(n+3),3],[p[2]+(n+4),4]]);return v});
+addHand({name:'Island Trio',cat:'LIKE NUMBERS',pts:25,concealed:false,
+  disp:[['FF','cF'],['1111','cR'],['1111','cG'],['1111','cB']],
+  note:'Any like number · kongs in all three suits'},
+  ()=>{const v=[];for(let n=1;n<=9;n++)
+    v.push([['F',2],['C'+n,4],['B'+n,4],['D'+n,4]]);return v});
+addHand({name:'The Trellis',cat:'PUNGS & DRAGONS',pts:30,concealed:false,
+  disp:[['111 222 333 444','cG'],['DD','cG']],
+  note:'Any one suit, four consecutive pungs · pair of matching dragons'},
+  ()=>{const v=[];for(const s of SUITS)for(let n=1;n<=6;n++)
+    v.push([[s+n,3],[s+(n+1),3],[s+(n+2),3],[s+(n+3),3],[DRAGON[s],2]]);return v});
+addHand({name:'Dragon Garden',cat:'PUNGS & DRAGONS',pts:35,concealed:false,
+  disp:[['FFFF','cF'],['DDDD','cR'],['DDDD','cG'],['DD','cB']],
+  note:'Kongs of two dragons · pair of the third'},
+  ()=>{const D=['GR','GG','G0'],v=[];for(const pr of D){const o=D.filter(x=>x!==pr);
+    v.push([['F',4],[o[0],4],[o[1],4],[pr,2]])}return v});
+addHand({name:'Four Winds',cat:'WINDS',pts:30,concealed:false,
+  disp:[['NNNN EEEE WWWW','cN'],['SS','cN']],
+  note:'Kongs of any three winds · pair of the fourth'},
+  ()=>{const v=[];for(const pr of WINDS){const o=WINDS.filter(x=>x!==pr);
+    v.push([[o[0],4],[o[1],4],[o[2],4],[pr,2]])}return v});
+addHand({name:'Quint Royale',cat:'QUINTS',pts:40,concealed:false,
+  disp:[['FFFF','cF'],['11111','cR'],['22222','cG']],
+  note:'Quints of any two consecutive numbers · any suits · needs jokers'},
+  ()=>{const v=[];for(const a of SUITS)for(const b of SUITS)for(let n=1;n<=8;n++)
+    v.push([['F',4],[a+n,5],[b+(n+1),5]]);return v});
+addHand({name:'Flamingo Pairs',cat:'SINGLES & PAIRS',pts:50,concealed:true,
+  disp:[['NN EE WW SS','cN'],['11 22 33','cR']],
+  note:'Concealed · no jokers · any one suit, three consecutive pairs'},
+  ()=>{const v=[];for(const s of SUITS)for(let n=1;n<=7;n++)
+    v.push([['WN',2],['WE',2],['WW',2],['WS',2],[s+n,2],[s+(n+1),2],[s+(n+2),2]]);return v});
+
+/* ---------- validation ---------- */
+function countsOf(tiles){
+  const c={};let jk=0;
+  for(const t of tiles){if(t.s==='J')jk++;else c[key(t)]=(c[key(t)]||0)+1}
+  return {c,jk};
+}
+function tryVariant(counts,jokers,variant){
+  const c=Object.assign({},counts);let jk=jokers;
+  for(const [tk,k] of variant){
+    if(k<=2){ if((c[tk]||0)<k)return false; c[tk]-=k; }
+    else{ const have=Math.min(c[tk]||0,k); c[tk]-=have; const need=k-have;
+      if(need>jk)return false; jk-=need; }
+  }
+  if(jk!==0)return false;
+  for(const tk in c)if(c[tk]>0)return false;
+  return true;
+}
+function allTiles(p){return p.hand.concat(...p.exp.map(e=>e.tiles))}
+function checkWinTiles(tiles,hasExp){
+  if(tiles.length!==14)return null;
+  const {c,jk}=countsOf(tiles);
+  for(const h of HANDS){
+    if(h.concealed&&hasExp)continue;
+    for(const v of h.variants) if(tryVariant(c,jk,v)) return {hand:h,variant:v};
+  }
+  return null;
+}
+function checkWin(p){return checkWinTiles(allTiles(p),p.exp.length>0)}
+function checkWinWith(p,extra){return checkWinTiles(allTiles(p).concat([extra]),p.exp.length>0)}
+
+/* fit scoring: best hand match for progress + bot AI */
+function scoreVariant(counts,jk,variant){
+  const c=Object.assign({},counts);
+  let used=0,slots=0;
+  for(const [tk,k] of variant){
+    const have=Math.min(c[tk]||0,k); used+=have; c[tk]-=have;
+    if(k>=3) slots+=k-have;
+  }
+  return used+Math.min(jk,slots);
+}
+function bestFit(p){
+  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  let best=null;
+  for(const h of HANDS){
+    if(h.concealed&&(hasExp||jk>0))continue;
+    for(const v of h.variants){
+      const s=scoreVariant(c,jk,v);
+      if(!best||s>best.score)best={hand:h,variant:v,score:s};
+    }
+  }
+  return best;
+}
+function keepIdsFor(p,variant){
+  const keep=new Set(),taken={};
+  for(const [tk,k] of variant)taken[tk]=(taken[tk]||0)+k;
+  for(const t of p.hand){
+    if(t.s==='J'){keep.add(t.id);continue}
+    const tk=key(t);
+    if((taken[tk]||0)>0){taken[tk]--;keep.add(t.id)}
+  }
+  return keep;
+}
+function handProgress(p){
+  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  return HANDS.map(h=>{
+    if(h.concealed&&hasExp)return {h,score:0,dead:true};
+    let s=0;for(const v of h.variants)s=Math.max(s,scoreVariant(c,jk,v));
+    return {h,score:s,dead:false};
+  });
+}
+
+/* ---------- game state ---------- */
+const BOTNAMES=['Evelyn','Dinah','Bitsy'];
+let G=null,SEQ=0;
+function later(ms,fn){const s=SEQ;setTimeout(()=>{if(s===SEQ&&G&&G.phase!=='over')fn()},ms)}
+
+function newGame(){
+  SEQ++;
+  _tid=0;
+  const wall=shuffle(makeDeck());
+  const players=[{name:'You',isBot:false,hand:[],exp:[]}]
+    .concat(BOTNAMES.map(n=>({name:n,isBot:true,hand:[],exp:[]})));
+  for(let i=0;i<13;i++)for(const p of players)p.hand.push(wall.pop());
+  const dealer=Math.floor(Math.random()*4);
+  players[dealer].hand.push(wall.pop());
+  G={phase:'charleston',wall,players,dealer,turn:dealer,step:'discard',
+     chStep:0,sel:new Set(),discards:[],winNow:null};
+  $('title').classList.add('hide');
+  closeCall();closeModal();
+  renderAll();
+  showMsg('THE CHARLESTON');
+  promptCharleston();
+}
+
+/* ---------- charleston ---------- */
+const CHDIR=['RIGHT','ACROSS','LEFT'];
+function promptCharleston(){
+  G.sel.clear();
+  setStatus(`Charleston — choose 3 tiles to pass <b>${CHDIR[G.chStep].toLowerCase()}</b>`);
+  renderRack();renderActions();
+}
+function botPassTiles(p){
+  const bf=bestFit(p),keep=keepIdsFor(p,bf.variant);
+  let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
+  const extra=p.hand.filter(t=>t.s!=='J'&&keep.has(t.id));
+  shuffle(cand);shuffle(extra);
+  cand=cand.concat(extra);
+  return cand.slice(0,3);
+}
+function doCharlestonPass(){
+  if(G.sel.size!==3)return;
+  const passes=[];
+  for(let i=0;i<4;i++){
+    const p=G.players[i];
+    let out;
+    if(i===0){out=p.hand.filter(t=>G.sel.has(t.id))}
+    else{out=botPassTiles(p)}
+    p.hand=p.hand.filter(t=>!out.includes(t));
+    passes.push(out);
+  }
+  const off=[1,2,3][G.chStep];
+  for(let i=0;i<4;i++){
+    G.players[(i+off)%4].hand.push(...passes[i]);
+  }
+  G.sel.clear();
+  G.chStep++;
+  renderAll();
+  if(G.chStep<3){
+    showMsg('PASS '+CHDIR[G.chStep]);
+    promptCharleston();
+  }else{
+    startPlay();
+  }
+}
+function startPlay(){
+  G.phase='play';G.turn=G.dealer;G.step='discard';
+  showMsg('GAME ON');
+  setStatus(G.dealer===0?'You are East — discard to begin':`<b>${G.players[G.dealer].name}</b> is East`);
+  renderAll();
+  if(G.turn===0)playerDiscardPhase();
+  else later(1100,()=>botAct());
+}
+
+/* ---------- turn flow ---------- */
+function nextTurnFrom(i){
+  G.turn=(i+1)%4;G.step='draw';
+  renderAll();
+  if(G.turn===0)later(500,playerDraw);
+  else later(900,botAct);
+}
+function playerDraw(){
+  if(!G.wall.length)return wallGame();
+  const t=G.wall.pop();
+  G.players[0].hand.push(t);
+  G.step='discard';
+  setStatus(`You draw <b>${nameOf(t)}</b>`);
+  renderAll();
+  playerDiscardPhase();
+}
+function playerDiscardPhase(){
+  G.winNow=checkWin(G.players[0]);
+  G.sel.clear();
+  renderRack();renderActions();
+  if(!G.winNow)setStatus('Your turn — select a tile to discard');
+}
+function findJokerSwap(){
+  const me=G.players[0];
+  for(const p of G.players)for(const e of p.exp){
+    const j=e.tiles.find(t=>t.s==='J');
+    if(!j)continue;
+    const real=me.hand.find(t=>key(t)===e.rep);
+    if(real)return {e,j,real};
+  }
+  return null;
+}
+function doJokerSwap(){
+  const sw=findJokerSwap();if(!sw)return;
+  const me=G.players[0];
+  me.hand=me.hand.filter(t=>t!==sw.real);
+  const idx=sw.e.tiles.indexOf(sw.j);
+  sw.e.tiles[idx]=sw.real;
+  me.hand.push(sw.j);
+  setStatus(`You swap <b>${nameOf(sw.real)}</b> for a <b>Joker</b>`);
+  renderAll();
+  playerDiscardPhase();
+}
+function discardSelected(){
+  if(G.sel.size!==1)return;
+  const me=G.players[0];
+  const t=me.hand.find(x=>G.sel.has(x.id));
+  me.hand=me.hand.filter(x=>x!==t);
+  G.sel.clear();
+  G.discards.push({t,by:0});
+  setStatus(`You discard <b>${nameOf(t)}</b>`);
+  renderAll();
+  afterDiscard(0,t);
+}
+function afterDiscard(by,t){
+  if(t.s==='J'){later(700,()=>nextTurnFrom(by));return}
+  if(by!==0){
+    const me=G.players[0];
+    const win=checkWinWith(me,t);
+    const {c,jk}=countsOf(me.hand);
+    const copies=c[key(t)]||0;
+    const opts=[];
+    if(win)opts.push({label:'MAH JONGG!',cls:'gold',fn:()=>playerCallWin(t,win)});
+    const callable=copies>=2||(copies>=1&&jk>=1)||jk>=2;
+    if(callable){
+      for(const k of [3,4,5]){
+        const need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
+        if(jNeed<=jk&&copies+jk>=need&&(realUse+jNeed===need))
+          opts.push({label:k===3?'PUNG':k===4?'KONG':'QUINT',cls:'',fn:()=>playerCallExpose(t,k)});
+      }
+    }
+    if(opts.length){openCallBar(t,opts,()=>botClaims(by,t));return}
+  }
+  botClaims(by,t);
+}
+function botClaims(by,t){
+  for(let j=1;j<4;j++){
+    if(j===by)continue;
+    const p=G.players[j];
+    const win=checkWinWith(p,t);
+    if(win){
+      G.discards.pop();
+      p.hand.push(t);
+      declareWin(j,checkWin(p)||win);
+      return;
+    }
+  }
+  for(let j=1;j<4;j++){
+    if(j===by)continue;
+    const p=G.players[j];
+    const bf=bestFit(p);
+    const grp=bf.variant.find(([tk,k])=>tk===key(t)&&k>=3);
+    if(!grp)continue;
+    const {c,jk}=countsOf(p.hand);
+    const copies=c[key(t)]||0;
+    if(copies<2)continue;
+    const k=grp[1],need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
+    if(jNeed>jk)continue;
+    if(Math.random()<0.8){
+      G.discards.pop();
+      const used=[];
+      for(const x of p.hand){if(key(x)===key(t)&&used.length<realUse)used.push(x)}
+      let jc=0;
+      for(const x of p.hand){if(x.s==='J'&&jc<jNeed){used.push(x);jc++}}
+      p.hand=p.hand.filter(x=>!used.includes(x));
+      p.exp.push({tiles:[t,...used],rep:key(t)});
+      G.turn=j;G.step='discard';
+      setStatus(`<b>${p.name}</b> calls <b>${nameOf(t)}</b>!`);
+      renderAll();
+      later(1200,()=>botDiscard(p,j));
+      return;
+    }
+  }
+  nextTurnFrom(by);
+}
+function playerCallExpose(t,k){
+  closeCall();
+  const me=G.players[0];
+  G.discards.pop();
+  const {c}=countsOf(me.hand);
+  const copies=c[key(t)]||0,need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
+  const used=[];
+  for(const x of me.hand){if(key(x)===key(t)&&used.filter(u=>u.s!=='J').length<realUse)used.push(x)}
+  let jc=0;
+  for(const x of me.hand){if(x.s==='J'&&jc<jNeed){used.push(x);jc++}}
+  me.hand=me.hand.filter(x=>!used.includes(x));
+  me.exp.push({tiles:[t,...used],rep:key(t)});
+  G.turn=0;G.step='discard';
+  setStatus(`You call <b>${nameOf(t)}</b> — now discard`);
+  renderAll();
+  playerDiscardPhase();
+}
+function playerCallWin(t,win){
+  closeCall();
+  G.discards.pop();
+  G.players[0].hand.push(t);
+  declareWin(0,win);
+}
+function botAct(){
+  const j=G.turn,p=G.players[j];
+  if(G.step==='draw'){
+    if(!G.wall.length)return wallGame();
+    p.hand.push(G.wall.pop());
+    G.step='discard';
+    setStatus(`<b>${p.name}</b> draws…`);
+    renderAll();
+    const win=checkWin(p);
+    if(win){later(900,()=>declareWin(j,win));return}
+    later(850,()=>botDiscard(p,j));
+  }else{
+    const win=checkWin(p);
+    if(win){later(900,()=>declareWin(j,win));return}
+    botDiscard(p,j);
+  }
+}
+function botDiscard(p,j){
+  const bf=bestFit(p),keep=keepIdsFor(p,bf.variant);
+  let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
+  if(!cand.length)cand=p.hand.filter(t=>t.s!=='J');
+  if(!cand.length)cand=[...p.hand];
+  const t=cand[Math.floor(Math.random()*cand.length)];
+  p.hand=p.hand.filter(x=>x!==t);
+  G.discards.push({t,by:j});
+  setStatus(`<b>${p.name}</b> discards <b>${nameOf(t)}</b>`);
+  renderAll();
+  later(600,()=>afterDiscard(j,t));
+}
+
+/* ---------- endings ---------- */
+function declareWin(i,win){
+  G.phase='over';SEQ++;
+  const p=G.players[i];
+  const final=sortHand(allTiles(p));
+  const jokerless=!final.some(t=>t.s==='J');
+  const pts=win.hand.pts*(jokerless?2:1);
+  const mine=i===0;
+  renderAll();
+  const box=$('modalin');
+  box.innerHTML='';
+  box.insertAdjacentHTML('beforeend',
+    `<div class="mtop">OOH LA MAHJ</div>
+     <h2>${mine?'MAH JONGG!':p.name+' wins'}</h2>
+     <div class="msub">“${win.hand.name}” · ${win.hand.cat}${jokerless?' · jokerless ×2':''}</div>
+     <div class="mtiles" id="mtiles"></div>
+     <div class="mpts">${pts} points</div>
+     <div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
+     <button class="abtn ghost" id="mcard" style="color:var(--deep);border-color:#B9AD8B">THE CARD</button></div>`);
+  const mt=box.querySelector('#mtiles');
+  for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
+  box.querySelector('#mnew').onclick=newGame;
+  box.querySelector('#mcard').onclick=()=>{closeModal();openSheet()};
+  $('modal').classList.add('open');
+}
+function wallGame(){
+  G.phase='over';SEQ++;
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
+    <div class="msub">The wall is spent and no one made their hand.<br>The ladies order another round of spritzes.</div>
+    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button></div>`;
+  box.querySelector('#mnew').onclick=newGame;
+  $('modal').classList.add('open');
+}
+function closeModal(){$('modal').classList.remove('open')}
+
+/* ---------- call bar ---------- */
+let callTimer=null;
+function openCallBar(t,opts,onPass){
+  const bar=$('callbar');
+  $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`;
+  const bb=$('callbtns');bb.innerHTML='';
+  for(const o of opts){
+    const b=document.createElement('button');
+    b.className='abtn '+(o.cls||'');b.textContent=o.label;
+    b.onclick=()=>{clearTimeout(callTimer);o.fn()};
+    bb.appendChild(b);
+  }
+  const pass=document.createElement('button');
+  pass.className='abtn ghost';pass.textContent='PASS';
+  pass.onclick=()=>{clearTimeout(callTimer);closeCall();onPass()};
+  bb.appendChild(pass);
+  bar.classList.add('open');
+  clearTimeout(callTimer);
+  callTimer=setTimeout(()=>{closeCall();onPass()},6500);
+}
+function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open')}
+
+/* ---------- rendering ---------- */
+function setStatus(html){$('statusline').innerHTML=html}
+let msgTimer=null;
+function showMsg(txt){
+  $('tablemsgtxt').textContent=txt;
+  $('tablemsg').style.display='flex';
+  clearTimeout(msgTimer);
+  msgTimer=setTimeout(()=>$('tablemsg').style.display='none',1600);
+}
+function renderAll(){
+  $('wallnum').textContent=G.wall.length;
+  renderOpps();renderDiscards();renderExp();renderRack();renderActions();
+}
+function renderOpps(){
+  const box=$('opps');box.innerHTML='';
+  for(let j=1;j<4;j++){
+    const p=G.players[j];
+    const d=document.createElement('div');
+    d.className='opp'+(G.phase==='play'&&G.turn===j?' active':'');
+    d.innerHTML=`<div class="oname"><span class="dotad"></span>${p.name}${G.dealer===j?' <span style="color:var(--gold);font-size:9px">E</span>':''}</div>
+      <div class="octr">${p.hand.length} TILES</div>`;
+    const ex=document.createElement('div');ex.className='oexp';
+    for(const e of p.exp)for(const t of e.tiles)ex.appendChild(tileDOM(t,'t-xs'));
+    d.appendChild(ex);
+    box.appendChild(d);
+  }
+}
+function renderDiscards(){
+  const box=$('discards');box.innerHTML='';
+  G.discards.forEach((d,i)=>{
+    const td=tileDOM(d.t,'t-sm');
+    if(i===G.discards.length-1)td.classList.add('just');
+    box.appendChild(td);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+function renderExp(){
+  const box=$('myexp');box.innerHTML='';
+  for(const e of G.players[0].exp){
+    const g=document.createElement('div');g.className='egrp';
+    for(const t of e.tiles)g.appendChild(tileDOM(t,'t-md'));
+    box.appendChild(g);
+  }
+}
+function renderRack(){
+  const box=$('rack');box.innerHTML='';
+  const me=G.players[0];
+  for(const t of sortHand(me.hand)){
+    const td=tileDOM(t,'t-lg');
+    if(G.sel.has(t.id))td.classList.add('sel');
+    td.onclick=()=>tapTile(t);
+    box.appendChild(td);
+  }
+}
+function tapTile(t){
+  if(G.phase==='charleston'){
+    if(t.s==='J'){setStatus('Jokers may never be passed, darling');return}
+    if(G.sel.has(t.id))G.sel.delete(t.id);
+    else if(G.sel.size<3)G.sel.add(t.id);
+    renderRack();renderActions();
+  }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
+    if(G.sel.has(t.id))G.sel.delete(t.id);
+    else{G.sel.clear();G.sel.add(t.id)}
+    renderRack();renderActions();
+  }
+}
+function renderActions(){
+  const box=$('actions');box.innerHTML='';
+  const mk=(label,cls,fn,dis)=>{
+    const b=document.createElement('button');
+    b.className='abtn '+cls;b.innerHTML=label;b.onclick=fn;b.disabled=!!dis;
+    box.appendChild(b);return b;
+  };
+  if(G.phase==='charleston'){
+    mk(`PASS ${G.sel.size}/3 ${CHDIR[G.chStep]}`,G.sel.size===3?'':'ghost',doCharlestonPass,G.sel.size!==3);
+  }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
+    if(G.winNow)mk('MAH JONGG!','gold',()=>declareWin(0,G.winNow));
+    if(findJokerSwap())mk('SWAP JOKER','ghost',doJokerSwap);
+    mk('DISCARD','',discardSelected,G.sel.size!==1);
+  }
+}
+
+/* ---------- card sheet ---------- */
+function openSheet(){
+  const list=$('cardlist');list.innerHTML='';
+  const prog=G&&G.phase!=='title'?handProgress(G.players[0]):null;
+  let bestIdx=-1;
+  if(prog){let bs=-1;prog.forEach((p,i)=>{if(!p.dead&&p.score>bs){bs=p.score;bestIdx=i}})}
+  let lastCat='';
+  HANDS.forEach((h,i)=>{
+    if(h.cat!==lastCat){
+      lastCat=h.cat;
+      list.insertAdjacentHTML('beforeend',`<div class="ccat">${h.cat}</div>`);
+    }
+    const pct=prog?Math.round(prog[i].score/14*100):0;
+    const away=prog?14-prog[i].score:null;
+    const div=document.createElement('div');
+    div.className='chand'+(i===bestIdx?' best':'');
+    div.innerHTML=`<div class="chtop"><span class="chname">${h.name}</span>
+        <span class="chpts">${h.pts} PTS · ${h.concealed?'C':'X'}</span></div>
+      <div class="chpat">${h.disp.map(([s,c])=>`<i class="${c}">${s}</i>`).join('')}</div>
+      <div class="cnote">${h.note}</div>`
+      +(prog?`<div class="prog"><div class="bar"><i style="width:${pct}%"></i></div>
+        <span class="away">${prog[i].dead?'not available':away+' away'}</span></div>`:'');
+    list.appendChild(div);
+  });
+  $('sheet').classList.add('open');
+}
+$('btncard').onclick=openSheet;
+$('btncard2').onclick=openSheet;
+$('sheetdim').onclick=()=>$('sheet').classList.remove('open');
+$('sheetin').addEventListener('click',e=>e.stopPropagation());
+$('sheet').addEventListener('click',()=>$('sheet').classList.remove('open'));
+
+/* ---------- how to play ---------- */
+$('btnhow').onclick=()=>{
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">HOUSE RULES</div><h2 style="font-size:24px">How We Play</h2>
+  <div class="rules" style="margin-top:12px">
+  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Palm Club card (tap CARD anytime — it shows how close you are).</p>
+  <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. Never pass a joker.</p>
+  <p><b>Your turn.</b> Draw a tile, discard a tile. Tap a tile, then DISCARD.</p>
+  <p><b>Calling.</b> When someone discards a tile you need for a group of 3+ (pung, kong, quint), you may call it — the group is then exposed. Pairs may never be called.</p>
+  <p><b>Jokers.</b> A joker stands for any tile in a group of 3 or more — never in pairs. If an exposed group holds a joker and you have the real tile, swap for it on your turn.</p>
+  <p><b>Scoring.</b> Each hand has a point value; winning with no jokers doubles it.</p>
+  </div>
+  <div class="mbtns" style="margin-top:14px"><button class="abtn" id="mok">LOVELY</button></div>`;
+  box.querySelector('#mok').onclick=closeModal;
+  $('modal').classList.add('open');
+};
+$('btnplay').onclick=newGame;
+
+/* ---------- the chinoiserie mats ---------- */
+const THEMES=[
+  {name:'JARDIN VERT',bg1:'#14523F',bg2:'#0C3B2E',bg3:'#082E23',
+   branch:'#C9A24B',blossom:'#E8B4A6',blossom2:'#D98A75',leaf:'#4E8F6C',bird:'#E8D9AE',heart:'#C9A24B'},
+  {name:'VERDIGRIS GARDEN',bg1:'#33625A',bg2:'#264A44',bg3:'#1A3531',
+   branch:'#A8BFA0',blossom:'#F0C7BE',blossom2:'#E2A491',leaf:'#7FA98C',bird:'#E8D9AE',heart:'#C9A24B'},
+  {name:'MIDNIGHT AVIARY',bg1:'#1D3C4E',bg2:'#152D3D',bg3:'#0D202C',
+   branch:'#C9A24B',blossom:'#E88F7A',blossom2:'#D97862',leaf:'#3E6E63',bird:'#E8D9AE',heart:'#E8D9AE'},
+  {name:'ROSÉ SALON',bg1:'#5C3040',bg2:'#472430',bg3:'#341822',
+   branch:'#C9A24B',blossom:'#F4C7B8',blossom2:'#E8A68F',leaf:'#7A8F6C',bird:'#E8D9AE',heart:'#C9A24B'}
+];
+function blossomSVG(x,y,r,th,op){
+  let s='';
+  for(let i=0;i<5;i++){
+    const a=i/5*Math.PI*2-Math.PI/2;
+    s+=`<circle cx="${(x+Math.cos(a)*r).toFixed(1)}" cy="${(y+Math.sin(a)*r).toFixed(1)}" r="${(r*.78).toFixed(1)}" fill="${i%2?th.blossom:th.blossom2}" opacity="${op}"/>`;
+  }
+  s+=`<circle cx="${x}" cy="${y}" r="${(r*.4).toFixed(1)}" fill="${th.heart}" opacity="${op+0.1}"/>`;
+  return s;
+}
+function budSVG(x,y,th){
+  return `<circle cx="${x}" cy="${y}" r="4.5" fill="${th.blossom2}" opacity=".5"/><circle cx="${x+7}" cy="${y-6}" r="3" fill="${th.blossom}" opacity=".45"/>`;
+}
+function leafSVG(x,y,rot,th){
+  return `<ellipse cx="${x}" cy="${y}" rx="11" ry="4.2" fill="${th.leaf}" opacity=".5" transform="rotate(${rot} ${x} ${y})"/>`;
+}
+function muralURI(th){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 620">
+  <g fill="none" stroke="${th.branch}" stroke-linecap="round" opacity=".55">
+    <path d="M-12 618 C 55 545 88 480 148 434 C 208 388 262 372 306 330" stroke-width="3.2"/>
+    <path d="M148 434 C 168 402 174 372 163 338" stroke-width="2.4"/>
+    <path d="M92 500 C 132 486 166 484 198 462" stroke-width="2.2"/>
+    <path d="M262 372 C 276 398 300 412 330 414" stroke-width="2"/>
+    <path d="M412 52 C 352 84 322 126 282 148 C 242 170 222 204 214 246" stroke-width="2.8"/>
+    <path d="M282 148 C 272 118 278 92 294 70" stroke-width="2"/>
+    <path d="M322 126 C 344 138 366 138 386 128" stroke-width="1.8"/>
+  </g>
+  ${leafSVG(120,466,-32,th)}${leafSVG(180,420,-20,th)}${leafSVG(236,388,-14,th)}
+  ${leafSVG(84,516,-45,th)}${leafSVG(302,352,-30,th)}${leafSVG(252,182,28,th)}
+  ${leafSVG(236,220,40,th)}${leafSVG(306,116,18,th)}${leafSVG(174,448,-26,th)}
+  ${blossomSVG(163,332,11,th,.6)}${blossomSVG(306,324,13,th,.6)}${blossomSVG(200,458,9.5,th,.55)}
+  ${blossomSVG(296,64,11,th,.6)}${blossomSVG(214,252,9,th,.55)}${blossomSVG(334,416,10,th,.55)}
+  ${blossomSVG(390,124,8.5,th,.5)}${budSVG(120,480,th)}${budSVG(260,164,th)}${budSVG(60,548,th)}
+  <g opacity=".62">
+    <path d="M226 380 q16 -14 38 -9 q-11 7 -13 14 q16 -3 25 7 q-18 2 -27 11 q-4 14 -18 18 q5 -11 3 -20 q-13 4 -22 -1 q9 -6 14 -20 z" fill="${th.bird}"/>
+    <circle cx="258" cy="368" r="1.6" fill="${th.bg3}"/>
+  </g>
+  <g opacity=".5">
+    <path d="M96 150 q10 -9 24 -6 q-7 5 -8 9 q10 -2 16 5 q-11 1 -17 7 q-3 9 -12 12 q3 -7 2 -13 q-8 3 -14 -1 q6 -4 9 -13 z" fill="${th.bird}"/>
+  </g>
+</svg>`;
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+}
+let MAT=0;
+function applyMat(i){
+  MAT=i;
+  const th=THEMES[i],rs=document.documentElement.style;
+  rs.setProperty('--bg1',th.bg1);rs.setProperty('--bg2',th.bg2);rs.setProperty('--bg3',th.bg3);
+  const uri=muralURI(th);
+  const bd=$('board');
+  bd.style.backgroundImage=`url("${uri}")`;
+  bd.style.backgroundSize='cover';bd.style.backgroundPosition='center';
+  $('titlemural').style.backgroundImage=`url("${uri}")`;
+  $('btnmat').style.background=`conic-gradient(${th.bg1} 0 33%, ${th.blossom} 33% 66%, ${th.branch} 66% 100%)`;
+  document.querySelector('meta[name=theme-color]').setAttribute('content',th.bg2);
+  document.querySelectorAll('.matsw').forEach((b,j)=>b.classList.toggle('on',j===i));
+  $('matname').textContent=th.name;
+}
+(function buildMatRow(){
+  const row=$('matrow');
+  THEMES.forEach((th,i)=>{
+    const b=document.createElement('button');
+    b.className='matsw';
+    b.style.background=`linear-gradient(140deg, ${th.bg1} 30%, ${th.blossom} 100%)`;
+    b.onclick=()=>applyMat(i);
+    row.appendChild(b);
+  });
+})();
+$('btnmat').onclick=()=>applyMat((MAT+1)%THEMES.length);
+applyMat(0);
+</script>
+</body>
+</html>
