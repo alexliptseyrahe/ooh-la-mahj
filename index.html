@@ -227,6 +227,14 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 }
 #sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E2D8BC}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
+#cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
+.cbtn{font-size:10px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CBBF9E;border-radius:13px;padding:5px 13px;background:#fff}
+.cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
+.cbtn.imp{color:var(--coral-dk);border-color:var(--coral)}
+.cbtn:disabled{opacity:.35}
+#imparea{width:100%;height:110px;border:1px solid #CBBF9E;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:10px 0;resize:none;background:#FDFBF4;color:var(--ink)}
+#impfile{font-size:12px;margin:2px 0 6px;max-width:100%}
+.imperr{color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px}
 .ccat{font-size:10.5px;font-weight:600;letter-spacing:.26em;color:var(--gold-dk);margin:14px 0 6px}
 .chand{
   background:#fff;border:1px solid #E6DCC0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
@@ -319,8 +327,13 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
   <div style="flex:1" id="sheetdim"></div>
   <div id="sheetin">
     <div class="grab"></div>
-    <h3>THE OOH LA MAHJ CARD</h3>
-    <div class="sub">SEASON 2026 · F=FLOWER · 0=SOAP · C/X = CONCEALED/EXPOSED</div>
+    <h3 id="sheettitle">THE OOH LA MAHJ CARD</h3>
+    <div class="sub">F=FLOWER · 0=SOAP · C/X = CONCEALED/EXPOSED</div>
+    <div id="cardctl">
+      <button class="cbtn" id="ccclub">CLUB CARD</button>
+      <button class="cbtn" id="ccmine">MY CARD</button>
+      <button class="cbtn imp" id="ccimport">IMPORT…</button>
+    </div>
     <div id="cardlist"></div>
   </div>
 </div>
@@ -447,8 +460,9 @@ function sortHand(h){
 
 /* ---------- the card ---------- */
 const PERMS=[['C','B','D'],['C','D','B'],['B','C','D'],['B','D','C'],['D','B','C'],['D','C','B']];
-const HANDS=[];
-function addHand(h,gen){h.variants=gen();HANDS.push(h)}
+const CLUB_HANDS=[];
+let HANDS=CLUB_HANDS,CUSTOM=null;
+function addHand(h,gen){h.variants=gen();CLUB_HANDS.push(h)}
 addHand({name:'Sunrise 2026',cat:'YEAR — 2026',pts:30,concealed:false,
   disp:[['222','cR'],['0000','cN'],['222','cG'],['6666','cB']],
   note:'2s in any two suits · 6s in the third · Soap = zero'},
@@ -494,6 +508,55 @@ addHand({name:'Flamingo Pairs',cat:'SINGLES & PAIRS',pts:50,concealed:true,
   note:'Concealed · no jokers · any one suit, three consecutive pairs'},
   ()=>{const v=[];for(const s of SUITS)for(let n=1;n<=7;n++)
     v.push([['WN',2],['WE',2],['WW',2],['WS',2],[s+n,2],[s+(n+1),2],[s+(n+2),2]]);return v});
+
+/* ---------- custom card ---------- */
+function validateCard(c){
+  if(!c||typeof c!=='object')return 'Not a card file';
+  if(!Array.isArray(c.hands)||!c.hands.length)return 'No hands found';
+  const rx=/^([CBD][1-9]|W[NEWS]|G[RG0]|F)$/;
+  for(const h of c.hands){
+    if(!Array.isArray(h.variants)||!h.variants.length)return 'A hand is missing its patterns';
+    if(typeof h.pts!=='number')h.pts=25;
+    h.concealed=!!h.concealed;
+    h.name=h.name||'Hand';h.cat=h.cat||'CARD';h.note=h.note||'';
+    if(!Array.isArray(h.disp))h.disp=[[h.name,'cN']];
+    for(const v of h.variants){
+      let sum=0;
+      for(const g of v){
+        if(!Array.isArray(g)||typeof g[0]!=='string'||!rx.test(g[0])||!(g[1]>=1&&g[1]<=6))
+          return 'Bad tile group in "'+h.name+'"';
+        sum+=g[1];
+      }
+      if(sum!==14)return 'A pattern in "'+h.name+'" does not total 14 tiles';
+    }
+  }
+  return null;
+}
+function useCard(which){
+  if(which==='custom'&&CUSTOM)HANDS=CUSTOM.hands;
+  else{which='club';HANDS=CLUB_HANDS}
+  try{localStorage.setItem('olmUse',which)}catch(e){}
+}
+function activeCardName(){return HANDS===CLUB_HANDS?'club':'custom'}
+function bootCard(){
+  try{
+    const c=JSON.parse(localStorage.getItem('olmCard')||'null');
+    if(c&&!validateCard(c))CUSTOM=c;
+  }catch(e){}
+  let pref='club';
+  try{pref=localStorage.getItem('olmUse')||'club'}catch(e){}
+  useCard(pref);
+}
+function saveCustomCard(text){
+  let c;
+  try{c=JSON.parse(text)}catch(e){return 'That is not valid card data'}
+  const err=validateCard(c);
+  if(err)return err;
+  CUSTOM=c;
+  try{localStorage.setItem('olmCard',JSON.stringify(c))}catch(e){return 'Could not save (storage unavailable)'}
+  useCard('custom');
+  return null;
+}
 
 /* ---------- validation ---------- */
 function countsOf(tiles){
@@ -909,15 +972,33 @@ function renderExp(){
     box.appendChild(g);
   }
 }
-let DRAG=false,HINTON=false;
+let DRAG=false,HINTON=false,HINTIDX=0;
+function topFits(p){
+  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  const list=[];
+  for(const h of HANDS){
+    if(h.concealed&&(hasExp||jk>0))continue;
+    let best=null;
+    for(const v of h.variants){
+      const s=scoreVariant(c,jk,v);
+      if(!best||s>best.score)best={hand:h,variant:v,score:s};
+    }
+    if(best)list.push(best);
+  }
+  list.sort((a,b)=>b.score-a.score);
+  return list.slice(0,5);
+}
 function renderRack(){
   if(DRAG)return;
   const box=$('rack');box.innerHTML='';
   const me=G.players[0];
   let hintKeep=null;
   if(HINTON&&(G.phase==='charleston'||G.phase==='play')){
-    const bf=bestFit(me);
-    if(bf)hintKeep=keepIdsFor(me,bf.variant);
+    const fits=topFits(me);
+    if(fits.length){
+      if(HINTIDX>=fits.length)HINTIDX=0;
+      hintKeep=keepIdsFor(me,fits[HINTIDX].variant);
+    }
   }
   for(const t of me.hand){
     const td=tileDOM(t,'t-lg');
@@ -1011,7 +1092,64 @@ function renderActions(){
 }
 
 /* ---------- card sheet ---------- */
+function renderCardCtl(){
+  $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA MAHJ CARD';
+  $('ccclub').classList.toggle('on',activeCardName()==='club');
+  $('ccmine').classList.toggle('on',activeCardName()==='custom');
+  $('ccmine').disabled=!CUSTOM;
+}
+$('ccclub').onclick=()=>{useCard('club');openSheet()};
+$('ccmine').onclick=()=>{if(CUSTOM){useCard('custom');openSheet()}};
+function openImport(backToSheet){
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
+  <div class="msub" style="text-align:left">Play with the hands from your own card for the year. Making your card file takes two minutes, once a year:
+  <br><br><b>1.</b> Photograph each panel of your card.
+  <br><b>2.</b> Send the photos to Claude (claude.ai) and ask: <i>"turn my American mah jongg card into an Ooh La Mahj card file."</i>
+  <br><b>3.</b> Save the file Claude gives you, then load it below.
+  <br><br>Your card stays private on this device — it never becomes part of the game site.</div>
+  <input type="file" id="impfile" accept=".json,application/json">
+  <textarea id="imparea" placeholder="…or paste the card data here"></textarea>
+  <div class="imperr" id="imperr"></div>
+  <div class="mbtns"><button class="abtn" id="impsave">SAVE CARD</button>
+  <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="impcancel">${backToSheet?'CANCEL':'LATER — USE THE CLUB CARD'}</button></div>`;
+  box.querySelector('#impfile').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{box.querySelector('#imparea').value=r.result};
+    r.readAsText(f);
+  });
+  box.querySelector('#impsave').onclick=()=>{
+    const err=saveCustomCard(box.querySelector('#imparea').value.trim());
+    if(err){box.querySelector('#imperr').textContent=err;return}
+    closeModal();
+    if(backToSheet)openSheet();
+    showMsg('CARD IMPORTED');
+  };
+  box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
+  $('modal').classList.add('open');
+}
+$('ccimport').onclick=()=>{
+  $('sheet').classList.remove('open');
+  openImport(true);
+};
+function showWelcome(){
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">WELCOME TO</div><h2>Ooh La Mahj</h2>
+  <div class="msub">American mah jongg with three worthy opponents.<br><br>
+  Most players load <b>their own card</b> for the year, so the hands, values, and the HINT button all match the card on your table.
+  Or jump straight in with the built-in Club Card and set yours up anytime under CARD → IMPORT.</div>
+  <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
+    <button class="abtn" id="wmine">SET UP MY OWN CARD</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="wclub">PLAY THE CLUB CARD</button>
+  </div>`;
+  const seen=()=>{try{localStorage.setItem('olmSeen','1')}catch(e){}};
+  box.querySelector('#wmine').onclick=()=>{seen();openImport(false)};
+  box.querySelector('#wclub').onclick=()=>{seen();closeModal()};
+  $('modal').classList.add('open');
+}
 function openSheet(){
+  renderCardCtl();
   const list=$('cardlist');list.innerHTML='';
   const prog=G&&G.phase!=='title'?handProgress(G.players[0]):null;
   let bestIdx=-1;
@@ -1066,12 +1204,15 @@ $('btnsort').onclick=()=>{
 };
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
-  HINTON=!HINTON;
+  const fits=topFits(G.players[0]);
+  if(!fits.length)return;
+  if(!HINTON){HINTON=true;HINTIDX=0}
+  else{HINTIDX++;if(HINTIDX>=fits.length){HINTON=false;HINTIDX=0}}
   $('btnhint').classList.toggle('on',HINTON);
   if(HINTON){
-    const bf=bestFit(G.players[0]);
-    if(bf)setStatus(`Aim for <b>${bf.hand.name}</b> — ${Math.max(0,14-bf.score)} tiles to go`);
-  }
+    const bf=fits[HINTIDX];
+    setStatus(`Hint ${HINTIDX+1}/${fits.length}: <b>${bf.hand.name}</b> — ${Math.max(0,14-bf.score)} to go · tap HINT for next`);
+  }else setStatus('Hints off');
   renderRack();
 };
 
@@ -1155,6 +1296,13 @@ function applyMat(i){
 })();
 $('btnmat').onclick=()=>applyMat((MAT+1)%THEMES.length);
 applyMat(0);
+bootCard();
+(function(){
+  let seen=false;
+  try{seen=!!localStorage.getItem('olmSeen')}catch(e){}
+  if(!seen&&!CUSTOM)showWelcome();
+  else{try{localStorage.setItem('olmSeen','1')}catch(e){}}
+})();
 </script>
 </body>
 </html>
