@@ -690,23 +690,38 @@ function fileToJpeg(file,max=1568){
     img.src=URL.createObjectURL(file);
   });
 }
-const MODEL_CHAIN=['claude-opus-4-5','claude-opus-4-1','claude-sonnet-4-5'];
-let MODEL_IDX=0;
-async function callAI(content){
-  for(;MODEL_IDX<MODEL_CHAIN.length;MODEL_IDX++){
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'content-type':'application/json','x-api-key':OLM_API_KEY,
-        'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:MODEL_CHAIN[MODEL_IDX],max_tokens:16000,temperature:0,messages:[{role:'user',content}]})
-    });
-    if(r.status===404||r.status===400){const j=await r.json().catch(()=>null);
-      if(!j||/model/i.test(JSON.stringify(j)))continue;}
-    if(!r.ok)throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
-    const j=await r.json();
-    return (j.content||[]).map(c=>c.text||'').join('').trim();
+let OLM_MODEL=null;
+const AIHDRS={'content-type':'application/json','x-api-key':'',
+  'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+async function pickModel(){
+  if(OLM_MODEL)return OLM_MODEL;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/models?limit=100',{
+      headers:{...AIHDRS,'x-api-key':OLM_API_KEY}});
+    if(r.ok){
+      const ids=((await r.json()).data||[]).map(m=>m.id);
+      const pick=fam=>ids.filter(i=>i.includes(fam)&&!i.includes('haiku')).sort().reverse()[0];
+      OLM_MODEL=pick('opus')||pick('sonnet')||ids[0];
+    }
+  }catch(e){}
+  if(!OLM_MODEL)OLM_MODEL='claude-sonnet-4-5';
+  window.__modelUsed=OLM_MODEL;
+  return OLM_MODEL;
+}
+async function callAI(content,think){
+  const model=await pickModel();
+  const body={model,max_tokens:think?20000:16000,messages:[{role:'user',content}]};
+  if(think)body.thinking={type:'enabled',budget_tokens:6000};
+  else body.temperature=0;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{...AIHDRS,'x-api-key':OLM_API_KEY},
+    body:JSON.stringify(body)});
+  if(!r.ok){
+    if(r.status===404){OLM_MODEL=null;throw new Error('reading model unavailable — try again')}
+    throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
   }
-  throw new Error('No reading model available');
+  const j=await r.json();
+  return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text||'').join('').trim();
 }
 function parseLoose(txt,arr){
   txt=txt.replace(/```(json)?/g,'').trim();
@@ -716,24 +731,43 @@ function parseLoose(txt,arr){
   return JSON.parse(txt.slice(a,b+1));
 }
 const IMGP=b64=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
+function cropHalf(file,y0,y1,max=1568){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const sh=Math.round(img.height*(y1-y0));
+      const sc=Math.min(1,max/Math.max(img.width,sh));
+      const cv=document.createElement('canvas');
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(sh*sc);
+      cv.getContext('2d').drawImage(img,0,Math.round(img.height*y0),img.width,sh,0,0,cv.width,cv.height);
+      URL.revokeObjectURL(img.src);
+      res(cv.toDataURL('image/jpeg',.9).split(',')[1]);
+    };
+    img.onerror=()=>rej(new Error('Could not read a photo'));
+    img.src=URL.createObjectURL(file);
+  });
+}
+const normText=s=>String(s||'').replace(/[^0-9A-Z]/gi,'').toUpperCase();
 async function transcribePanel(file){
-  const b64=await fileToJpeg(file);
-  let lines=null;
-  for(let a=0;a<2;a++){
-    try{
-      const txt=await callAI([{type:'text',text:STAGE_A_PROMPT},IMGP(b64)]);
-      lines=parseLoose(txt,true).filter(x=>x&&x.text);
-      if(lines.length)break;
-    }catch(e){if(a===1)throw e}
+  const [full,top,bottom]=await Promise.all([
+    fileToJpeg(file),cropHalf(file,0,.56),cropHalf(file,.44,1)]);
+  async function readCrop(b64,which){
+    const p=STAGE_A_PROMPT+`\n\nThis image is the ${which} portion of the panel. A row cut off at the image edge must still be included, with "partial":true added.`;
+    const txt=await callAI([{type:'text',text:p},IMGP(b64)],true);
+    return parseLoose(txt,true).filter(x=>x&&x.text);
   }
-  if(!lines||!lines.length)throw new Error('Could not read the panel text');
+  const [tl,bl]=await Promise.all([readCrop(top,'TOP'),readCrop(bottom,'BOTTOM')]);
+  const seen=new Set(),lines=[];
+  for(const l of tl){if(l.partial)continue;const k=normText(l.text);if(!seen.has(k)){seen.add(k);lines.push(l)}}
+  for(const l of bl){if(l.partial)continue;const k=normText(l.text);if(!seen.has(k)){seen.add(k);lines.push(l)}}
+  if(!lines.length)throw new Error('Could not read the panel text');
   try{
-    const vtxt=await callAI([{type:'text',text:VERIFY_PROMPT+JSON.stringify(lines)},IMGP(b64)]);
+    const vtxt=await callAI([{type:'text',text:VERIFY_PROMPT+JSON.stringify(lines)},IMGP(full)],true);
     const vlines=parseLoose(vtxt,true).filter(x=>x&&x.text);
-    if(vlines.length>=lines.length*.7)lines=vlines;
+    if(vlines.length>=lines.length*.7)return finish(vlines);
   }catch(e){}
-  window.__reading=(window.__reading||[]).concat(lines);
-  return lines;
+  return finish(lines);
+  function finish(ls){window.__reading=(window.__reading||[]).concat(ls);return ls}
 }
 async function convertLines(lines){
   let extra=null,best=null;
@@ -742,7 +776,7 @@ async function convertLines(lines){
       +JSON.stringify(lines)
       +(extra?'\n\nYOUR PREVIOUS ATTEMPT HAD PROBLEMS: '+extra+' — output the complete corrected JSON.':'');
     try{
-      const cc=parseLoose(await callAI([{type:'text',text:prompt}]),false);
+      const cc=parseLoose(await callAI([{type:'text',text:prompt}],true),false);
       const r=expandCompact(cc);
       if(!best||r.hands.length>best.hands.length)best=r;
       const missing=lines.length-((cc.hands||[]).length);
@@ -1462,10 +1496,11 @@ function reviewCard(card,fails,backToSheet){
     if(h.cat!==lastCat){lastCat=h.cat;list+=`<div class="revcat">${h.cat}</div>`}
     list+=`<div><b>${h.name}</b> · ${h.pts} ${h.concealed?'C':'X'}</div>`;
   }
-  const failNote=fails&&fails.length?`<div class="msub" style="color:var(--red);font-size:12px">⚠︎ ${fails.length} line${fails.length>1?'s':''} could not be read:
-    ${fails.map(f=>'<b>'+f.name+'</b>').join(', ')}. You can save without ${fails.length>1?'them':'it'}, or retry with clearer photos.</div>`:'';
-  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Your card is ready</h2>
-    <div class="msub">I read <b>${card.hands.length} hands</b>. Give the list a quick glance against your card:</div>
+  const nf=(fails||[]).length,rough=nf>card.hands.length*.25;
+  const failNote=nf?`<div class="msub" style="color:var(--red);font-size:12px">⚠︎ ${nf} line${nf>1?'s':''} could not be read:
+    ${fails.map(f=>'<b>'+f.name+'</b>').join(', ')}. You can save without ${nf>1?'them':'it'}, or retry with clearer photos.</div>`:'';
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">${rough?'That reading was rough':'Your card is ready'}</h2>
+    <div class="msub">${rough?`Only <b>${card.hands.length} hands</b> came through cleanly — this card deserves a retry with brighter, flatter photos before saving.`:`I read <b>${card.hands.length} hands</b>. Give the list a quick glance against your card:`}</div>
     ${failNote}
     <div class="revlist">${list}</div>
     <details class="altimp"><summary>Troubleshooting — copy reading details</summary>
@@ -1475,7 +1510,7 @@ function reviewCard(card,fails,backToSheet){
     <div class="mbtns" style="margin-top:10px"><button class="abtn" id="revsave">LOOKS RIGHT — SAVE</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="revretry">RETRY PHOTOS</button></div>`;
   box.querySelector('#revcopy').onclick=()=>{
-    const data=JSON.stringify({read:window.__reading||[],failed:fails||[]},null,1);
+    const data=JSON.stringify({model:window.__modelUsed||'?',read:window.__reading||[],failed:fails||[]},null,1);
     (navigator.clipboard?navigator.clipboard.writeText(data):Promise.reject()).then(
       ()=>{box.querySelector('#revcopy').textContent='COPIED ✓'},
       ()=>{prompt('Copy this:',data)});
