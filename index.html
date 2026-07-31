@@ -113,7 +113,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #hdr .brand b{color:var(--gold);font-weight:700}
 #wallct{font-size:11px;letter-spacing:.12em;color:rgba(251,247,236,.75)}
 #wallct b{color:var(--gold);font-weight:600}
-#hdr .hbtn{font-size:11px;letter-spacing:.14em;color:var(--gold-pale);border:1px solid rgba(201,162,75,.5);border-radius:14px;padding:4px 11px}
+#hdr .hbtn{font-size:10px;letter-spacing:.12em;color:var(--gold-pale);border:1px solid rgba(201,162,75,.5);border-radius:14px;padding:4px 9px}
 
 #opps{flex:none;display:flex;gap:8px;padding:2px 10px 6px}
 .opp{
@@ -293,9 +293,10 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 <div id="hdr">
   <div class="brand">OOH <b>LA</b> MAHJ</div>
   <div id="wallct">WALL <b id="wallnum">—</b></div>
-  <div style="display:flex;align-items:center">
+  <div style="display:flex;align-items:center;gap:7px">
     <button id="btnmat" title="Change mat"></button>
     <button class="hbtn" id="btncard">CARD</button>
+    <button class="hbtn" id="btnmenu">MENU</button>
   </div>
 </div>
 
@@ -1197,6 +1198,28 @@ $('btnhow').onclick=()=>{
   $('modal').classList.add('open');
 };
 $('btnplay').onclick=newGame;
+function goTitle(){
+  SEQ++;
+  if(G)G.phase='over';
+  closeCall();closeModal();
+  $('sheet').classList.remove('open');
+  $('title').classList.remove('hide');
+}
+$('btnmenu').onclick=()=>{
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
+  <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
+    <button class="abtn" id="mnewg">NEW GAME</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">BACK TO TITLE</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mclose">KEEP PLAYING</button>
+  </div>`;
+  box.querySelector('#mnewg').onclick=()=>{closeModal();newGame()};
+  box.querySelector('#mtitle').onclick=goTitle;
+  box.querySelector('#mrules').onclick=()=>{closeModal();$('btnhow').click()};
+  box.querySelector('#mclose').onclick=closeModal;
+  $('modal').classList.add('open');
+};
 $('btnsort').onclick=()=>{
   if(!G||G.phase==='over')return;
   G.players[0].hand=sortHand(G.players[0].hand);
