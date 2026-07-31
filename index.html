@@ -374,7 +374,7 @@ details.altimp summary{font-size:11px;letter-spacing:.08em;color:#8A7F5F;cursor:
   </div>
   <h1>OOH LA MAHJ</h1>
   <h2>AMERICAN MAH JONGG</h2>
-  <div class="est">AMERICAN · EST. 2026</div>
+  <div class="est">EST. 2026</div>
   <div class="tbtns">
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
     <button class="abtn ghost" id="btncard2">VIEW THE CARD</button>
@@ -869,6 +869,19 @@ function tryVariant(counts,jokers,variant){
   return true;
 }
 function allTiles(p){return p.hand.concat(...p.exp.map(e=>e.tiles))}
+function expCount(p){return p.exp.reduce((s,e)=>s+e.tiles.length,0)}
+function lockGroups(p,variant){
+  if(!p.exp.length)return variant;
+  const rem=variant.slice();
+  for(const e of p.exp){
+    const k=e.tiles.length,tk=e.rep;
+    let f=-1;
+    for(let i=0;i<rem.length;i++)if(rem[i][0]===tk&&rem[i][1]===k){f=i;break}
+    if(f<0)return null;
+    rem.splice(f,1);
+  }
+  return rem;
+}
 function checkWinTiles(tiles,hasExp){
   if(tiles.length!==14)return null;
   const {c,jk}=countsOf(tiles);
@@ -878,8 +891,22 @@ function checkWinTiles(tiles,hasExp){
   }
   return null;
 }
-function checkWin(p){return checkWinTiles(allTiles(p),p.exp.length>0)}
-function checkWinWith(p,extra){return checkWinTiles(allTiles(p).concat([extra]),p.exp.length>0)}
+function checkWinRack(p,rack){
+  if(rack.length+expCount(p)!==14)return null;
+  const {c,jk}=countsOf(rack);
+  const hasExp=p.exp.length>0;
+  for(const h of HANDS){
+    if(h.concealed&&hasExp)continue;
+    for(const v of h.variants){
+      const rem=lockGroups(p,v);
+      if(!rem)continue;
+      if(tryVariant(c,jk,rem))return {hand:h,variant:v};
+    }
+  }
+  return null;
+}
+function checkWin(p){return checkWinRack(p,p.hand)}
+function checkWinWith(p,extra){return checkWinRack(p,p.hand.concat([extra]))}
 
 /* fit scoring: best hand match for progress + bot AI */
 function scoreVariant(counts,jk,variant){
@@ -892,13 +919,15 @@ function scoreVariant(counts,jk,variant){
   return used+Math.min(jk,slots);
 }
 function bestFit(p){
-  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   let best=null;
   for(const h of HANDS){
     if(h.concealed&&(hasExp||jk>0))continue;
     for(const v of h.variants){
-      const s=scoreVariant(c,jk,v);
-      if(!best||s>best.score)best={hand:h,variant:v,score:s};
+      const rem=lockGroups(p,v);
+      if(!rem)continue;
+      const s=ec+scoreVariant(c,jk,rem);
+      if(!best||s>best.score)best={hand:h,variant:v,rem,score:s};
     }
   }
   return best;
@@ -914,10 +943,17 @@ function keepIdsFor(p,variant){
   return keep;
 }
 function handProgress(p){
-  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   return HANDS.map(h=>{
     if(h.concealed&&hasExp)return {h,score:0,dead:true};
-    let s=0;for(const v of h.variants)s=Math.max(s,scoreVariant(c,jk,v));
+    let s=-1;
+    for(const v of h.variants){
+      const rem=lockGroups(p,v);
+      if(!rem)continue;
+      const sc=ec+scoreVariant(c,jk,rem);
+      if(sc>s)s=sc;
+    }
+    if(s<0)return {h,score:0,dead:true};
     return {h,score:s,dead:false};
   });
 }
@@ -954,7 +990,7 @@ function promptCharleston(){
   renderRack();renderActions();
 }
 function botPassTiles(p){
-  const bf=bestFit(p),keep=keepIdsFor(p,bf.variant);
+  const bf=bestFit(p),keep=bf?keepIdsFor(p,bf.rem):new Set();
   let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
   const extra=p.hand.filter(t=>t.s!=='J'&&keep.has(t.id));
   shuffle(cand);shuffle(extra);
@@ -1012,10 +1048,15 @@ function playerDraw(){
   playerDiscardPhase();
 }
 function playerDiscardPhase(){
-  G.winNow=checkWin(G.players[0]);
+  const me=G.players[0];
+  G.winNow=checkWin(me);
   G.sel.clear();
   renderRack();renderActions();
-  if(!G.winNow)setStatus('Your turn — select a tile to discard');
+  if(!G.winNow){
+    if(me.exp.length&&!topFits(me).length)
+      setStatus('Your turn — <b>hand is dead</b> (no card line fits your exposures). Discard safely.');
+    else setStatus('Your turn — select a tile to discard');
+  }
 }
 function findJokerSwap(){
   const me=G.players[0];
@@ -1086,7 +1127,8 @@ function botClaims(by,t){
     if(j===by)continue;
     const p=G.players[j];
     const bf=bestFit(p);
-    const grp=bf.variant.find(([tk,k])=>tk===key(t)&&k>=3);
+    if(!bf)continue;
+    const grp=bf.rem.find(([tk,k])=>tk===key(t)&&k>=3);
     if(!grp)continue;
     const {c,jk}=countsOf(p.hand);
     const copies=c[key(t)]||0;
@@ -1151,7 +1193,7 @@ function botAct(){
   }
 }
 function botDiscard(p,j){
-  const bf=bestFit(p),keep=keepIdsFor(p,bf.variant);
+  const bf=bestFit(p),keep=bf?keepIdsFor(p,bf.rem):new Set();
   let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
   if(!cand.length)cand=p.hand.filter(t=>t.s!=='J');
   if(!cand.length)cand=[...p.hand];
@@ -1267,19 +1309,21 @@ function renderExp(){
 }
 let DRAG=false,HINTON=false,HINTIDX=0;
 function topFits(p){
-  const tiles=allTiles(p),{c,jk}=countsOf(tiles),hasExp=p.exp.length>0;
+  const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   const list=[];
   for(const h of HANDS){
     if(h.concealed&&(hasExp||jk>0))continue;
     let best=null;
     for(const v of h.variants){
-      const s=scoreVariant(c,jk,v);
-      if(!best||s>best.score)best={hand:h,variant:v,score:s};
+      const rem=lockGroups(p,v);
+      if(!rem)continue;
+      const s=ec+scoreVariant(c,jk,rem);
+      if(!best||s>best.score)best={hand:h,variant:v,rem,score:s};
     }
     if(best)list.push(best);
   }
   list.sort((a,b)=>b.score-a.score);
-  return list.slice(0,5);
+  return list.slice(0,3);
 }
 function renderRack(){
   if(DRAG)return;
@@ -1290,7 +1334,7 @@ function renderRack(){
     const fits=topFits(me);
     if(fits.length){
       if(HINTIDX>=fits.length)HINTIDX=0;
-      hintKeep=keepIdsFor(me,fits[HINTIDX].variant);
+      hintKeep=keepIdsFor(me,fits[HINTIDX].rem);
     }
   }
   for(const t of me.hand){
@@ -1661,7 +1705,11 @@ $('btnsort').onclick=()=>{
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
   const fits=topFits(G.players[0]);
-  if(!fits.length)return;
+  if(!fits.length){
+    HINTON=false;$('btnhint').classList.remove('on');
+    setStatus('No line on the card fits your exposures — <b>this hand is dead</b>. Play defense, darling.');
+    renderRack();return;
+  }
   if(!HINTON){HINTON=true;HINTIDX=0}
   else{HINTIDX++;if(HINTIDX>=fits.length){HINTON=false;HINTIDX=0}}
   $('btnhint').classList.toggle('on',HINTON);
