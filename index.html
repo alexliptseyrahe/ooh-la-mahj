@@ -965,6 +965,7 @@ function later(ms,fn){const s=SEQ;setTimeout(()=>{if(s===SEQ&&G&&G.phase!=='over
 
 function newGame(){
   SEQ++;
+  killClones();
   _tid=0;
   const wall=shuffle(makeDeck());
   const players=[{name:'You',isBot:false,hand:[],exp:[]}]
@@ -1307,7 +1308,13 @@ function renderExp(){
     box.appendChild(g);
   }
 }
-let DRAG=false,HINTON=false,HINTIDX=0;
+let DRAG=false,DRAGT=0,HINTON=false,HINTIDX=0;
+function killClones(){
+  DRAG=false;
+  document.querySelectorAll('.dragclone').forEach(el=>el.remove());
+}
+window.addEventListener('gesturestart',killClones);
+window.addEventListener('pointercancel',killClones);
 function topFits(p){
   const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   const list=[];
@@ -1326,7 +1333,11 @@ function topFits(p){
   return list.slice(0,3);
 }
 function renderRack(){
-  if(DRAG)return;
+  if(DRAG){
+    if(Date.now()-DRAGT>10000)killClones();
+    else return;
+  }
+  document.querySelectorAll('.dragclone').forEach(el=>el.remove());
   const box=$('rack');box.innerHTML='';
   const me=G.players[0];
   let hintKeep=null;
@@ -1347,13 +1358,17 @@ function renderRack(){
 }
 function rackPointer(e,t,td){
   if(!G||G.phase==='over')return;
+  if(e.isPrimary===false)return;
+  killClones();
   e.preventDefault();
   const sx=e.clientX,sy=e.clientY;let clone=null;
   const move=ev=>{
+    if(ev.isPrimary===false)return;
     if(!DRAG&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>10){
-      DRAG=true;
+      DRAG=true;DRAGT=Date.now();
       clone=td.cloneNode(true);
       clone.classList.remove('sel');
+      clone.classList.add('dragclone');
       clone.style.cssText='position:fixed;z-index:999;pointer-events:none;margin:0;width:'+td.offsetWidth+'px;height:'+td.offsetHeight+'px;opacity:.95;transform:scale(1.12);transition:none';
       document.body.appendChild(clone);
       td.style.opacity='.25';
@@ -1368,8 +1383,7 @@ function rackPointer(e,t,td){
     window.removeEventListener('pointerup',up);
     window.removeEventListener('pointercancel',up);
     if(DRAG){
-      DRAG=false;
-      if(clone)clone.remove();
+      killClones();
       td.style.opacity='';
       const me=G.players[0];
       const kids=[...$('rack').children];
@@ -1677,6 +1691,7 @@ $('btnhow').onclick=()=>{
 $('btnplay').onclick=newGame;
 function goTitle(){
   SEQ++;
+  killClones();
   if(G)G.phase='over';
   closeCall();closeModal();
   $('sheet').classList.remove('open');
