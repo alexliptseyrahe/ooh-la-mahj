@@ -531,7 +531,18 @@ addHand({name:'Flamingo Pairs',cat:'SINGLES & PAIRS',pts:50,concealed:true,
 /* ---------- photo card reading ---------- */
 let OLM_API_KEY='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';
 function aiReady(){return /^sk-ant-/.test(OLM_API_KEY)}
-const CARD_PROMPT=`You are reading a photo of ONE PANEL of an American mah jongg scoring card (the yearly hand card). Transcribe EVERY printed hand line on this panel into a compact JSON notation. First count the hand lines on the panel (each line with a point value is one hand; "- or -" belongs to the same hand). Your output MUST contain exactly that many hand entries — never skip a line, even if you are unsure (make your best reading and note doubts in that hand's "note").
+const STAGE_A_PROMPT=`You are given two overlapping photos: the TOP half and the BOTTOM half of ONE panel of an American mah jongg scoring card. Transcribe every printed hand line on the panel.
+
+Output ONLY a JSON array. One element per hand line:
+{"text":"<tile text exactly as printed, e.g. FFF 2026 222 6666, including any - or - alternate>","colors":"<color of each segment in printed order, e.g. FFF black, 2026 green, 222 red, 6666 red>","ann":"<the parenthetical annotation exactly as printed>","val":"<the value code, e.g. X25 or C30>"}
+
+Rules:
+- The two photos overlap in the middle: merge into ONE list in printed order, no duplicated lines.
+- Copy digits and letters EXACTLY. Count repeated characters with extreme care (2222 is four 2s, 222 is three; FFFFFF is six flowers). Re-check every group's character count before output.
+- Section headers (like 2468, QUINTS) are not hands, but remember which section each line sits under and add "cat":"<section header>" to each element.
+- Do not skip any line. No markdown fences, no commentary — the JSON array only.`;
+
+const STAGE_B_HEAD=`You are given transcribed lines from one panel of an American mah jongg scoring card. Convert EVERY line into a compact JSON notation. Each input line gives: text (tile groups as printed), colors (segments printed in the SAME color share a suit; DIFFERENT colors are different suits; flowers, winds, soap/zero and standalone dragons are neutral), ann (the annotation - TRUST THIS over colors if they conflict), val (X=exposed so "c":false, C=concealed so "c":true; the number is "pts"), cat (section).
 
 TILES: three suits exist (we call them a, b, c - distinct suits). Colors on the card indicate suit grouping: groups printed in the SAME color share a suit; DIFFERENT colors mean different suits. Black is also a suit color.
 
@@ -564,7 +575,8 @@ Line "NN EE WW SS 1D 1D 1D (Any 3 Suits, Any Like No. w Matching Dragon) C50" �
 {"name":"NN EE WW SS 1D 1D 1D","cat":"SINGLES AND PAIRS","pts":50,"c":true,"note":"Any like number with matching dragons","alts":[{"n":"1-9","g":["2:N","2:E","2:W","2:S","1:na","1:da","1:nb","1:db","1:nc","1:dc"]}]}
 
 OUTPUT: only raw JSON, no markdown fences, no commentary:
-{"title":"MY <year> CARD","hands":[ ...every line from every section, in card order... ]}`;
+{"title":"MY <year> CARD","hands":[ ...one entry per input line, in order... ]}
+The number of hand entries MUST equal the number of input lines. Never merge or skip lines. Use each line's "text" as the hand's "name" and its "cat" as the category.`;
 
 function parseNums(spec,maxOff){
   let vals=[];
@@ -659,24 +671,27 @@ function expandCompact(cc){
   }
   return {title:String(cc.title||'MY CARD'),hands,fails};
 }
-function fileToJpeg(file,max=1568){
+function fileToCrops(file,max=1568){
   return new Promise((res,rej)=>{
     const img=new Image();
     img.onload=()=>{
-      const sc=Math.min(1,max/Math.max(img.width,img.height));
-      const cv=document.createElement('canvas');
-      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
-      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      const crops=[];
+      for(const [y0,y1] of [[0,.58],[.42,1]]){
+        const sh=Math.round(img.height*(y1-y0));
+        const sc=Math.min(1,max/Math.max(img.width,sh));
+        const cv=document.createElement('canvas');
+        cv.width=Math.round(img.width*sc);cv.height=Math.round(sh*sc);
+        cv.getContext('2d').drawImage(img,0,Math.round(img.height*y0),img.width,sh,0,0,cv.width,cv.height);
+        crops.push(cv.toDataURL('image/jpeg',.88).split(',')[1]);
+      }
       URL.revokeObjectURL(img.src);
-      res(cv.toDataURL('image/jpeg',.82).split(',')[1]);
+      res(crops);
     };
     img.onerror=()=>rej(new Error('Could not read a photo'));
     img.src=URL.createObjectURL(file);
   });
 }
-async function callCardAI(imgs,extra){
-  const content=[{type:'text',text:CARD_PROMPT+(extra?'\n\nPREVIOUS ATTEMPT FAILED: '+extra+' — fix and output the full JSON again.':'')}];
-  for(const b64 of imgs)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
+async function callAI(content){
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'content-type':'application/json','x-api-key':OLM_API_KEY,
@@ -685,11 +700,44 @@ async function callCardAI(imgs,extra){
   });
   if(!r.ok)throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
   const j=await r.json();
-  let txt=(j.content||[]).map(c=>c.text||'').join('').trim();
-  txt=txt.replace(/^```(json)?/,'').replace(/```$/,'').trim();
-  const a=txt.indexOf('{'),b=txt.lastIndexOf('}');
+  return (j.content||[]).map(c=>c.text||'').join('').trim();
+}
+function parseLoose(txt,arr){
+  txt=txt.replace(/```(json)?/g,'').trim();
+  const o=arr?'[':'{',c=arr?']':'}';
+  const a=txt.indexOf(o),b=txt.lastIndexOf(c);
   if(a<0||b<0)throw new Error('Could not understand the reading');
   return JSON.parse(txt.slice(a,b+1));
+}
+const IMGP=b64=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
+async function transcribePanel(file){
+  const [top,bottom]=await fileToCrops(file);
+  for(let a=0;a<2;a++){
+    try{
+      const txt=await callAI([{type:'text',text:STAGE_A_PROMPT},IMGP(top),IMGP(bottom)]);
+      const lines=parseLoose(txt,true).filter(x=>x&&x.text);
+      if(lines.length)return lines;
+    }catch(e){if(a===1)throw e}
+  }
+  throw new Error('Could not read the panel text');
+}
+async function convertLines(lines){
+  let extra=null,best=null;
+  for(let a=0;a<3;a++){
+    const prompt=STAGE_B_HEAD+'\n\nINPUT LINES ('+lines.length+' hands — output exactly '+lines.length+' entries):\n'
+      +JSON.stringify(lines)
+      +(extra?'\n\nYOUR PREVIOUS ATTEMPT HAD PROBLEMS: '+extra+' — output the complete corrected JSON.':'');
+    try{
+      const cc=parseLoose(await callAI([{type:'text',text:prompt}]),false);
+      const r=expandCompact(cc);
+      if(!best||r.hands.length>best.hands.length)best=r;
+      const missing=lines.length-((cc.hands||[]).length);
+      if(!r.fails.length&&missing<=0)return r;
+      extra=(r.fails.length?'invalid hands: '+r.fails.map(f=>'"'+f.name+'" ('+f.reason+')').join('; '):'')
+        +(missing>0?'; you output '+(lines.length-missing)+' of '+lines.length+' hands — every input line needs an entry':'');
+    }catch(e){if(a===2&&!best)throw e;extra='previous output was not valid JSON in the required format'}
+  }
+  return best;
 }
 
 /* ---------- custom card ---------- */
@@ -1360,23 +1408,15 @@ async function convertPhotos(files,backToSheet){
     <div class="msub" style="font-size:11px;color:#A08F63">This takes about a minute — keep this page open.</div>`;
   let mi=0;const mt=setInterval(()=>{const el=$('convmsg');if(el)el.textContent=msgs[++mi%msgs.length]},9000);
   try{
-    const imgs=[];
-    for(const f of files)imgs.push(await fileToJpeg(f));
-    async function readPanel(b64){
-      let extra=null,best=null;
-      for(let a=0;a<2;a++){
-        try{
-          const cc=await callCardAI([b64],extra);
-          const r=expandCompact(cc);
-          if(!best||r.hands.length>best.hands.length)best=r;
-          if(!r.fails.length)return best;
-          extra='You already transcribed this panel but these hands were invalid — fix ONLY these and output the complete panel again: '
-            +r.fails.map(f=>'"'+f.name+'" ('+f.reason+')').join('; ');
-        }catch(e){if(a===1&&!best)throw e;extra='Your previous output was not valid JSON in the required format. Output the full panel again, raw JSON only.'}
+    async function readPanel(file){
+      const lines=await transcribePanel(file);
+      const r=await convertLines(lines);
+      if(r&&lines.length>r.hands.length+r.fails.length){
+        r.fails.push({name:(lines.length-r.hands.length-r.fails.length)+' line(s) from this panel',reason:'missing from conversion'});
       }
-      return best;
+      return r;
     }
-    const results=await Promise.all(imgs.map(readPanel));
+    const results=await Promise.all(files.map(readPanel));
     const hands=[],fails=[];
     let title='MY CARD';
     for(const r of results){
