@@ -152,6 +152,12 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #myexp{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;padding:2px 0 5px;min-height:0}
 #myexp .egrp{display:flex;gap:2px;background:rgba(8,40,30,.5);border:1px solid rgba(201,162,75,.3);border-radius:8px;padding:3px 4px}
 #rack{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:6px 0 2px}
+#rack .tile{touch-action:none}
+.tile.hint{box-shadow:0 2px 5px rgba(10,25,18,.35),0 0 0 2px var(--gold),0 0 12px rgba(201,162,75,.65), inset 0 1.5px 0 rgba(255,255,255,.9)}
+.tile.dim{opacity:.5}
+#rackbar{display:flex;justify-content:flex-end;align-items:center;gap:6px;padding:2px 6px 0}
+.mini{font-size:9.5px;letter-spacing:.18em;color:var(--gold-pale);border:1px solid rgba(201,162,75,.45);border-radius:12px;padding:4px 11px}
+.mini.on{background:rgba(201,162,75,.3);color:#fff;border-color:var(--gold)}
 #actions{
   display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;
   min-height:46px;padding-top:6px;
@@ -242,7 +248,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 
 /* ---------- call bar ---------- */
 #callbar{
-  position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,10px) + 150px);z-index:40;display:none;
+  position:fixed;left:10px;right:10px;top:130px;bottom:auto;z-index:40;display:none;
   background:rgba(9,42,32,.96);border:1px solid var(--gold);border-radius:16px;padding:12px;
   flex-direction:column;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);
 }
@@ -295,6 +301,10 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 
 <div id="me">
   <div id="myexp"></div>
+  <div id="rackbar">
+    <button class="mini" id="btnhint">HINT</button>
+    <button class="mini" id="btnsort">SORT</button>
+  </div>
   <div id="rack"></div>
   <div id="statusline"></div>
   <div id="actions"></div>
@@ -570,6 +580,7 @@ function newGame(){
   for(let i=0;i<13;i++)for(const p of players)p.hand.push(wall.pop());
   const dealer=Math.floor(Math.random()*4);
   players[dealer].hand.push(wall.pop());
+  players[0].hand=sortHand(players[0].hand);
   G={phase:'charleston',wall,players,dealer,turn:dealer,step:'discard',
      chStep:0,sel:new Set(),discards:[],winNow:null};
   $('title').classList.add('hide');
@@ -898,15 +909,78 @@ function renderExp(){
     box.appendChild(g);
   }
 }
+let DRAG=false,HINTON=false;
 function renderRack(){
+  if(DRAG)return;
   const box=$('rack');box.innerHTML='';
   const me=G.players[0];
-  for(const t of sortHand(me.hand)){
+  let hintKeep=null;
+  if(HINTON&&(G.phase==='charleston'||G.phase==='play')){
+    const bf=bestFit(me);
+    if(bf)hintKeep=keepIdsFor(me,bf.variant);
+  }
+  for(const t of me.hand){
     const td=tileDOM(t,'t-lg');
     if(G.sel.has(t.id))td.classList.add('sel');
-    td.onclick=()=>tapTile(t);
+    if(hintKeep){if(hintKeep.has(t.id))td.classList.add('hint');else td.classList.add('dim')}
+    td.addEventListener('pointerdown',e=>rackPointer(e,t,td));
     box.appendChild(td);
   }
+}
+function rackPointer(e,t,td){
+  if(!G||G.phase==='over')return;
+  e.preventDefault();
+  const sx=e.clientX,sy=e.clientY;let clone=null;
+  const move=ev=>{
+    if(!DRAG&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>10){
+      DRAG=true;
+      clone=td.cloneNode(true);
+      clone.classList.remove('sel');
+      clone.style.cssText='position:fixed;z-index:999;pointer-events:none;margin:0;width:'+td.offsetWidth+'px;height:'+td.offsetHeight+'px;opacity:.95;transform:scale(1.12);transition:none';
+      document.body.appendChild(clone);
+      td.style.opacity='.25';
+    }
+    if(DRAG&&clone){
+      clone.style.left=(ev.clientX-td.offsetWidth/2)+'px';
+      clone.style.top=(ev.clientY-td.offsetHeight*.9)+'px';
+    }
+  };
+  const up=ev=>{
+    window.removeEventListener('pointermove',move);
+    window.removeEventListener('pointerup',up);
+    window.removeEventListener('pointercancel',up);
+    if(DRAG){
+      DRAG=false;
+      if(clone)clone.remove();
+      td.style.opacity='';
+      const me=G.players[0];
+      const kids=[...$('rack').children];
+      let best=-1,bd=Infinity;
+      kids.forEach((k,i)=>{
+        const r=k.getBoundingClientRect();
+        const d=Math.pow(ev.clientX-(r.left+r.width/2),2)+Math.pow(ev.clientY-(r.top+r.height/2),2);
+        if(d<bd){bd=d;best=i}
+      });
+      if(best>=0){
+        const r=kids[best].getBoundingClientRect();
+        let target=best+(ev.clientX>r.left+r.width/2?1:0);
+        const old=me.hand.indexOf(t);
+        if(old>=0){
+          me.hand.splice(old,1);
+          if(target>old)target--;
+          if(target<0)target=0;
+          if(target>me.hand.length)target=me.hand.length;
+          me.hand.splice(target,0,t);
+        }
+      }
+      renderRack();
+    }else{
+      tapTile(t);
+    }
+  };
+  window.addEventListener('pointermove',move);
+  window.addEventListener('pointerup',up);
+  window.addEventListener('pointercancel',up);
 }
 function tapTile(t){
   if(G.phase==='charleston'){
@@ -985,6 +1059,21 @@ $('btnhow').onclick=()=>{
   $('modal').classList.add('open');
 };
 $('btnplay').onclick=newGame;
+$('btnsort').onclick=()=>{
+  if(!G||G.phase==='over')return;
+  G.players[0].hand=sortHand(G.players[0].hand);
+  renderRack();
+};
+$('btnhint').onclick=()=>{
+  if(!G||G.phase==='over')return;
+  HINTON=!HINTON;
+  $('btnhint').classList.toggle('on',HINTON);
+  if(HINTON){
+    const bf=bestFit(G.players[0]);
+    if(bf)setStatus(`Aim for <b>${bf.hand.name}</b> — ${Math.max(0,14-bf.score)} tiles to go`);
+  }
+  renderRack();
+};
 
 /* ---------- the chinoiserie mats ---------- */
 const THEMES=[
