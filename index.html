@@ -531,16 +531,20 @@ addHand({name:'Flamingo Pairs',cat:'SINGLES & PAIRS',pts:50,concealed:true,
 /* ---------- photo card reading ---------- */
 let OLM_API_KEY='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';
 function aiReady(){return /^sk-ant-/.test(OLM_API_KEY)}
-const STAGE_A_PROMPT=`You are given two overlapping photos: the TOP half and the BOTTOM half of ONE panel of an American mah jongg scoring card. Transcribe every printed hand line on the panel.
+const STAGE_A_PROMPT=`This photo shows ONE panel of an American mah jongg scoring card. Transcribe every printed hand line.
 
-Output ONLY a JSON array. One element per hand line:
-{"text":"<tile text exactly as printed, e.g. FFF 2026 222 6666, including any - or - alternate>","colors":"<color of each segment in printed order, e.g. FFF black, 2026 green, 222 red, 6666 red>","ann":"<the parenthetical annotation exactly as printed>","val":"<the value code, e.g. X25 or C30>"}
+Output ONLY a JSON array. One element per printed hand row:
+{"text":"<the TILE GROUPS ONLY exactly as printed, e.g. FFF 2026 222 6666 — include a - or - alternate if the row has one, NEVER include the annotation or value here>","colors":"<color of each tile segment in printed order, e.g. FFF black, 2026 green, 222 red, 6666 red>","ann":"<the parenthetical annotation exactly as printed, e.g. (Any 3 Suits)>","val":"<the value code at the right edge, e.g. X25 or C30>","cat":"<the section header this row sits under, e.g. 2468>"}
 
 Rules:
-- The two photos overlap in the middle: merge into ONE list in printed order, no duplicated lines.
-- Copy digits and letters EXACTLY. Count repeated characters with extreme care (2222 is four 2s, 222 is three; FFFFFF is six flowers). Re-check every group's character count before output.
-- Section headers (like 2468, QUINTS) are not hands, but remember which section each line sits under and add "cat":"<section header>" to each element.
-- Do not skip any line. No markdown fences, no commentary — the JSON array only.`;
+- One element per printed row. Never combine two rows. Never split one row into two.
+- Copy digits and letters EXACTLY. Count repeated characters with extreme care: 2222 is four 2s, 222 is three, FFFFFF is six Fs. Re-check every group's count against the photo before output.
+- Section headers (2468, QUINTS, etc.) are not hands — they go only in "cat".
+- Do not skip any row. No markdown fences, no commentary — the JSON array only.`;
+const VERIFY_PROMPT=`Here is the same card panel photo and a draft transcription of its hand rows. Verify the draft against the photo, row by row: check every group's exact repeated-character count (222 vs 2222 vs 22), missing or merged rows, wrong colors, wrong annotations, wrong values. Return the fully corrected JSON array in the same format — every printed row, one element each, tile groups only in "text". Output the corrected JSON array only, no commentary.
+
+DRAFT:
+`;
 
 const STAGE_B_HEAD=`You are given transcribed lines from one panel of an American mah jongg scoring card. Convert EVERY line into a compact JSON notation. Each input line gives: text (tile groups as printed), colors (segments printed in the SAME color share a suit; DIFFERENT colors are different suits; flowers, winds, soap/zero and standalone dragons are neutral), ann (the annotation - TRUST THIS over colors if they conflict), val (X=exposed so "c":false, C=concealed so "c":true; the number is "pts"), cat (section).
 
@@ -671,36 +675,38 @@ function expandCompact(cc){
   }
   return {title:String(cc.title||'MY CARD'),hands,fails};
 }
-function fileToCrops(file,max=1568){
+function fileToJpeg(file,max=1568){
   return new Promise((res,rej)=>{
     const img=new Image();
     img.onload=()=>{
-      const crops=[];
-      for(const [y0,y1] of [[0,.58],[.42,1]]){
-        const sh=Math.round(img.height*(y1-y0));
-        const sc=Math.min(1,max/Math.max(img.width,sh));
-        const cv=document.createElement('canvas');
-        cv.width=Math.round(img.width*sc);cv.height=Math.round(sh*sc);
-        cv.getContext('2d').drawImage(img,0,Math.round(img.height*y0),img.width,sh,0,0,cv.width,cv.height);
-        crops.push(cv.toDataURL('image/jpeg',.88).split(',')[1]);
-      }
+      const sc=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
       URL.revokeObjectURL(img.src);
-      res(crops);
+      res(cv.toDataURL('image/jpeg',.9).split(',')[1]);
     };
     img.onerror=()=>rej(new Error('Could not read a photo'));
     img.src=URL.createObjectURL(file);
   });
 }
+const MODEL_CHAIN=['claude-opus-4-5','claude-opus-4-1','claude-sonnet-4-5'];
+let MODEL_IDX=0;
 async function callAI(content){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'content-type':'application/json','x-api-key':OLM_API_KEY,
-      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:16000,temperature:0,messages:[{role:'user',content}]})
-  });
-  if(!r.ok)throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
-  const j=await r.json();
-  return (j.content||[]).map(c=>c.text||'').join('').trim();
+  for(;MODEL_IDX<MODEL_CHAIN.length;MODEL_IDX++){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'content-type':'application/json','x-api-key':OLM_API_KEY,
+        'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:MODEL_CHAIN[MODEL_IDX],max_tokens:16000,temperature:0,messages:[{role:'user',content}]})
+    });
+    if(r.status===404||r.status===400){const j=await r.json().catch(()=>null);
+      if(!j||/model/i.test(JSON.stringify(j)))continue;}
+    if(!r.ok)throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
+    const j=await r.json();
+    return (j.content||[]).map(c=>c.text||'').join('').trim();
+  }
+  throw new Error('No reading model available');
 }
 function parseLoose(txt,arr){
   txt=txt.replace(/```(json)?/g,'').trim();
@@ -711,15 +717,23 @@ function parseLoose(txt,arr){
 }
 const IMGP=b64=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
 async function transcribePanel(file){
-  const [top,bottom]=await fileToCrops(file);
+  const b64=await fileToJpeg(file);
+  let lines=null;
   for(let a=0;a<2;a++){
     try{
-      const txt=await callAI([{type:'text',text:STAGE_A_PROMPT},IMGP(top),IMGP(bottom)]);
-      const lines=parseLoose(txt,true).filter(x=>x&&x.text);
-      if(lines.length)return lines;
+      const txt=await callAI([{type:'text',text:STAGE_A_PROMPT},IMGP(b64)]);
+      lines=parseLoose(txt,true).filter(x=>x&&x.text);
+      if(lines.length)break;
     }catch(e){if(a===1)throw e}
   }
-  throw new Error('Could not read the panel text');
+  if(!lines||!lines.length)throw new Error('Could not read the panel text');
+  try{
+    const vtxt=await callAI([{type:'text',text:VERIFY_PROMPT+JSON.stringify(lines)},IMGP(b64)]);
+    const vlines=parseLoose(vtxt,true).filter(x=>x&&x.text);
+    if(vlines.length>=lines.length*.7)lines=vlines;
+  }catch(e){}
+  window.__reading=(window.__reading||[]).concat(lines);
+  return lines;
 }
 async function convertLines(lines){
   let extra=null,best=null;
@@ -1407,6 +1421,7 @@ async function convertPhotos(files,backToSheet){
     <div class="msub" id="convmsg">${msgs[0]}</div>
     <div class="msub" style="font-size:11px;color:#A08F63">This takes about a minute — keep this page open.</div>`;
   let mi=0;const mt=setInterval(()=>{const el=$('convmsg');if(el)el.textContent=msgs[++mi%msgs.length]},9000);
+  window.__reading=[];
   try{
     async function readPanel(file){
       const lines=await transcribePanel(file);
@@ -1453,8 +1468,18 @@ function reviewCard(card,fails,backToSheet){
     <div class="msub">I read <b>${card.hands.length} hands</b>. Give the list a quick glance against your card:</div>
     ${failNote}
     <div class="revlist">${list}</div>
-    <div class="mbtns"><button class="abtn" id="revsave">LOOKS RIGHT — SAVE</button>
+    <details class="altimp"><summary>Troubleshooting — copy reading details</summary>
+      <div class="msub" style="font-size:11px">If lines are wrong or missing, tap COPY and paste it to whoever maintains the app so the reader can be tuned.</div>
+      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B;font-size:11px;padding:8px 14px" id="revcopy">COPY READING DETAILS</button></div>
+    </details>
+    <div class="mbtns" style="margin-top:10px"><button class="abtn" id="revsave">LOOKS RIGHT — SAVE</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="revretry">RETRY PHOTOS</button></div>`;
+  box.querySelector('#revcopy').onclick=()=>{
+    const data=JSON.stringify({read:window.__reading||[],failed:fails||[]},null,1);
+    (navigator.clipboard?navigator.clipboard.writeText(data):Promise.reject()).then(
+      ()=>{box.querySelector('#revcopy').textContent='COPIED ✓'},
+      ()=>{prompt('Copy this:',data)});
+  };
   box.querySelector('#revsave').onclick=()=>{
     const err=saveCustomCard(JSON.stringify(card));
     if(err){alert(err);return}
