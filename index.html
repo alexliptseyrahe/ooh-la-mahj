@@ -529,7 +529,7 @@ addHand({name:'Flamingo Pairs',cat:'SINGLES & PAIRS',pts:50,concealed:true,
     v.push([['WN',2],['WE',2],['WW',2],['WS',2],[s+n,2],[s+(n+1),2],[s+(n+2),2]]);return v});
 
 /* ---------- photo card reading ---------- */
-let OLM_API_KEY='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';
+let OLM_API_KEY='';
 function aiReady(){return /^sk-ant-/.test(OLM_API_KEY)}
 const STAGE_A_PROMPT=`This photo shows ONE panel of an American mah jongg scoring card. Transcribe every printed hand line.
 
@@ -717,8 +717,14 @@ async function callAI(content,think){
     method:'POST',headers:{...AIHDRS,'x-api-key':OLM_API_KEY},
     body:JSON.stringify(body)});
   if(!r.ok){
-    if(r.status===404){OLM_MODEL=null;throw new Error('reading model unavailable — try again')}
-    throw new Error(r.status===401?'The card reader is not set up correctly (key)':'The card reading service had a problem ('+r.status+')');
+    let msg='';
+    try{const j=await r.json();msg=(j.error&&j.error.message)||''}catch(e){}
+    if(r.status===404||/model/i.test(msg)&&r.status===400&&!/thinking|credit|billing/i.test(msg)){
+      OLM_MODEL=null;throw new Error('reading model unavailable — try again');
+    }
+    if(think&&r.status===400&&/thinking|budget/i.test(msg))return callAI(content,false);
+    if(r.status===401)throw new Error('The card reader is not set up correctly (key)');
+    throw new Error('Reading service says: '+(msg?msg.slice(0,300):'error '+r.status));
   }
   const j=await r.json();
   return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text||'').join('').trim();
@@ -1400,8 +1406,12 @@ function openImport(backToSheet){
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
   <div class="msub">Play with the hands from your own card for the year.<br>Your card stays private on this device.</div>
   ${photoUI}
+  ${aiReady()?'':`<div class="photozone">
+    <div class="pz1">Load your card file</div>
+    <div class="pz2">Got a card file from whoever shared this game with you?<br>Load it here and you're set for the year.</div>
+  </div>`}
   <details class="altimp" ${aiReady()?'':'open'}>
-    <summary>Have a card file? Load it here</summary>
+    <summary>${aiReady()?'Have a card file? Load it here':'Choose your card file'}</summary>
     <input type="file" id="impfile" accept=".json,application/json">
     <textarea id="imparea" placeholder="…or paste the card data here"></textarea>
     <div class="mbtns"><button class="abtn" id="impsave" style="font-size:11px;padding:9px 16px">SAVE CARD FILE</button></div>
