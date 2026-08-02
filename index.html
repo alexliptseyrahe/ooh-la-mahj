@@ -1718,7 +1718,7 @@ $('btnhow').onclick=()=>{
 $('btnplay').onclick=newGame;
 
 /* ================= MULTIPLAYER ================= */
-let OLM_SERVER='';   // wss://... baked after deploy; empty disables multiplayer UI
+let OLM_SERVER='wss://ooh-la-mahj.onrender.com';
 const MP={ws:null,active:false,view:null,token:null,name:'',retry:0,intended:false};
 function mpToken(){
   if(MP.token)return MP.token;
