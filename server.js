@@ -570,9 +570,12 @@ function leaveTable(p, T, seat) {
     T.seats[seat] = seat === 0 ? T.seats[seat] : null;   // host slot persists until table dies
     if (seat === 0) { tables.delete(T.code); clearTimers(T); for (const i of humanSeats(T)) if (i !== 0) send(T.seats[i].token, { type: 'err', msg: 'Host closed the table' }); return; }
   } else {
-    T.seats[seat].botSub = true; T.seats[seat].connected = false;
+    const s = T.seats[seat];
+    s.botSub = true; s.connected = false; s.token = null;   // deliberate exit: stop sending this player anything
+    clearTimeout(s.graceTimer);
     if (T.phase === 'charleston') tryResolveCharleston(T);
     else if (T.phase === 'play' && T.turn === seat && T.step === 'discard' && !T.callWin) driveTurn(T);
+    else if (T.callWin && T.callWin.eligible[seat] && T.callWin.responses[seat] === undefined) respondCall(T, seat, 'pass');
   }
   broadcast(T, eventMsg('leftseat', { seat }));
 }

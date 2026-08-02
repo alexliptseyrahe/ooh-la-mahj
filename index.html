@@ -1750,12 +1750,14 @@ function mpConnect(then){
 function mpOnMsg(m){
   switch(m.type){
     case 'view':{
+      if(!MP.intended)return;
       MP.view=m;
       if(m.phase==='lobby')renderLobby(m);
       else{closeModal();mpRenderGame(m)}
       break;
     }
     case 'callwin':{
+      if(!MP.intended)return;
       mpShowCallBar(m);
       break;
     }
@@ -1769,7 +1771,7 @@ function mpOnMsg(m){
       if(m.kind==='rejoin')setStatus(`<b>${seatName(m.seat)}</b> is back`);
       break;
     }
-    case 'end':{mpShowEnd(m);break}
+    case 'end':{if(!MP.intended)return;mpShowEnd(m);break}
     case 'err':{setStatus(m.msg||'Hmm, that did not work');if(MP.view&&MP.view.phase==='lobby')renderLobby(MP.view);else if(!MP.view){closeModal();openFriends(m.msg)}break}
     case 'left':{MP.active=false;MP.intended=false;MP.view=null;goTitle();break}
   }
@@ -1861,16 +1863,32 @@ function mpShowEnd(m){
 function renderLobby(v){
   $('title').classList.add('hide');
   const box=$('modalin');
+  const isHost=v.you.seat===0;
+  const hostName=v.seats[0]?v.seats[0].name:'the host';
   const seats=v.seats.map((s,i)=>{
     if(!s)return `<div style="color:#A08F63">Seat ${i+1} — <i>open (a bot will fill it)</i></div>`;
     return `<div><b>${s.name}</b>${s.isYou?' (you)':''}${s.connected?'':' · reconnecting…'}</div>`;
   }).join('');
-  box.innerHTML=`<div class="mtop">YOUR TABLE</div>
+  const cardLine=isHost
+    ?`This table plays <b>your</b> card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(set when you created the table — everyone at the table plays it)</span>`
+    :`Everyone plays ${hostName}'s card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(the host's card rules the table — nothing for you to set up)</span>`;
+  box.innerHTML=`<div class="mtop">TABLE CODE — SHARE IT WITH YOUR FOURSOME</div>
     <h2 style="letter-spacing:.3em">${v.code}</h2>
-    <div class="msub">Friends join from the title screen —<br>PLAY WITH FRIENDS → JOIN → code <b>${v.code}</b><br><br>Card: <b>${v.cardTitle}</b></div>
+    <div class="mbtns" style="margin:4px 0 10px"><button class="abtn gold" id="lshare" style="font-size:11px;padding:9px 18px">SHARE INVITE</button></div>
+    <div class="msub">${cardLine}</div>
     <div class="revlist" style="max-height:120px">${seats}</div>
-    <div class="mbtns">${v.you.seat===0?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
+    <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
+  box.querySelector('#lshare').onclick=()=>{
+    const url=location.origin+location.pathname;
+    const text=`Mahj? Join my Ooh La Mahj table:\n1. Open ${url}\n2. Tap PLAY WITH FRIENDS → JOIN\n3. Enter code ${v.code}`;
+    if(navigator.share){navigator.share({text}).catch(()=>{})}
+    else{
+      (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
+        ()=>{box.querySelector('#lshare').textContent='COPIED ✓'},
+        ()=>{prompt('Copy this invite:',text)});
+    }
+  };
   const st=box.querySelector('#lstart');
   if(st)st.onclick=()=>mpSend({type:'start'});
   box.querySelector('#lleave').onclick=()=>mpSend({type:'leave'});
@@ -1893,6 +1911,7 @@ function openFriends(errMsg){
       style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
     <div class="mbtns" style="margin-top:12px;flex-direction:column;align-items:center;gap:10px">
       <button class="abtn" id="fcreate">CREATE A TABLE</button>
+      <div class="msub" style="font-size:11px;margin:0">Your table plays whichever card you have selected right now.</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
           style="width:90px;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink)">
