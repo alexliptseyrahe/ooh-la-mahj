@@ -380,6 +380,7 @@ details.altimp summary{font-size:11px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <div class="est">EST. 2026</div>
   <div class="tbtns">
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
+    <button class="abtn gold" id="btnfriends">PLAY WITH FRIENDS</button>
     <button class="abtn ghost" id="btncard2">VIEW THE CARD</button>
     <button class="abtn ghost" id="btnhow">HOUSE RULES</button>
   </div>
@@ -1003,6 +1004,14 @@ function botPassTiles(p){
 }
 function doCharlestonPass(){
   if(G.sel.size!==3)return;
+  if(MP.active){
+    mpSend({type:'chpass',tiles:[...G.sel]});
+    MP.chSubmitted=true;
+    G.sel.clear();
+    setStatus('Passed — waiting for the table…');
+    renderActions();renderRack();
+    return;
+  }
   const passes=[];
   for(let i=0;i<4;i++){
     const p=G.players[i];
@@ -1085,6 +1094,12 @@ function doJokerSwap(){
 }
 function discardSelected(){
   if(G.sel.size!==1)return;
+  if(MP.active){
+    mpSend({type:'discard',id:[...G.sel][0]});
+    G.sel.clear();
+    renderRack();renderActions();
+    return;
+  }
   const me=G.players[0];
   const t=me.hand.find(x=>G.sel.has(x.id));
   me.hand=me.hand.filter(x=>x!==t);
@@ -1408,6 +1423,7 @@ function rackPointer(e,t,td){
           me.hand.splice(target,0,t);
         }
       }
+      if(MP.active)MP.orderIds=G.players[0].hand.map(x=>x.id);
       renderRack();
     }else{
       tapTile(t);
@@ -1419,6 +1435,7 @@ function rackPointer(e,t,td){
 }
 function tapTile(t){
   if(G.phase==='charleston'){
+    if(MP.active&&MP.chSubmitted)return;
     if(t.s==='J'){setStatus('Jokers may never be passed, darling');return}
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else if(G.sel.size<3)G.sel.add(t.id);
@@ -1437,11 +1454,18 @@ function renderActions(){
     box.appendChild(b);return b;
   };
   if(G.phase==='charleston'){
-    mk(`PASS ${G.sel.size}/3 ${CHDIR[G.chStep]}`,G.sel.size===3?'':'ghost',doCharlestonPass,G.sel.size!==3);
+    if(MP.active&&MP.chSubmitted){mk('PASSED ✓','ghost',()=>{},true)}
+    else mk(`PASS ${G.sel.size}/3 ${CHDIR[G.chStep]}`,G.sel.size===3?'':'ghost',doCharlestonPass,G.sel.size!==3);
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
-    if(G.winNow)mk('MAH JONGG!','gold',()=>declareWin(0,G.winNow));
-    if(findJokerSwap())mk('SWAP JOKER','ghost',doJokerSwap);
-    mk('DISCARD','',discardSelected,G.sel.size!==1);
+    if(MP.active){
+      if(G.winNow)mk('MAH JONGG!','gold',()=>mpSend({type:'mahjong'}));
+      if(MP.swaps&&MP.swaps.length)mk('SWAP JOKER','ghost',()=>mpSend({type:'swap',seat:MP.swaps[0].seat,exp:MP.swaps[0].exp}));
+      mk('DISCARD','',discardSelected,G.sel.size!==1);
+    }else{
+      if(G.winNow)mk('MAH JONGG!','gold',()=>declareWin(0,G.winNow));
+      if(findJokerSwap())mk('SWAP JOKER','ghost',doJokerSwap);
+      mk('DISCARD','',discardSelected,G.sel.size!==1);
+    }
   }
 }
 
@@ -1692,9 +1716,219 @@ $('btnhow').onclick=()=>{
   $('modal').classList.add('open');
 };
 $('btnplay').onclick=newGame;
+
+/* ================= MULTIPLAYER ================= */
+let OLM_SERVER='';   // wss://... baked after deploy; empty disables multiplayer UI
+const MP={ws:null,active:false,view:null,token:null,name:'',retry:0,intended:false};
+function mpToken(){
+  if(MP.token)return MP.token;
+  try{
+    let t=localStorage.getItem('olmTok');
+    if(!t){t='t'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('olmTok',t)}
+    MP.token=t;
+  }catch(e){MP.token='t'+Math.random().toString(36).slice(2)}
+  return MP.token;
+}
+function mpName(){
+  try{return localStorage.getItem('olmName')||''}catch(e){return ''}
+}
+function mpSend(m){if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m))}
+function mpConnect(then){
+  if(MP.ws&&MP.ws.readyState===1){if(then)then();return}
+  const ws=new WebSocket(OLM_SERVER+'?t='+encodeURIComponent(mpToken()));
+  MP.ws=ws;
+  ws.onopen=()=>{MP.retry=0;mpSend({type:'hello',name:MP.name});if(then)then()};
+  ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data)}catch(e){return}mpOnMsg(m)};
+  ws.onclose=()=>{
+    if(MP.intended&&MP.retry<8){
+      MP.retry++;
+      setStatus('Reconnecting…');
+      setTimeout(()=>mpConnect(),Math.min(500*Math.pow(2,MP.retry),8000));
+    }
+  };
+}
+function mpOnMsg(m){
+  switch(m.type){
+    case 'view':{
+      MP.view=m;
+      if(m.phase==='lobby')renderLobby(m);
+      else{closeModal();mpRenderGame(m)}
+      break;
+    }
+    case 'callwin':{
+      mpShowCallBar(m);
+      break;
+    }
+    case 'event':{
+      if(m.kind==='discard'&&MP.view)setStatus(`<b>${seatName(m.seat)}</b> discards`);
+      if(m.kind==='charleston')showMsg('PASS '+['RIGHT','ACROSS','LEFT'][m.step]);
+      if(m.kind==='start')showMsg('THE CHARLESTON');
+      if(m.kind==='gameon')showMsg('GAME ON');
+      if(m.kind==='call')setStatus(`<b>${seatName(m.seat)}</b> calls!`);
+      if(m.kind==='botsub')setStatus(`<b>${seatName(m.seat)}</b> lost connection — a bot fills in`);
+      if(m.kind==='rejoin')setStatus(`<b>${seatName(m.seat)}</b> is back`);
+      break;
+    }
+    case 'end':{mpShowEnd(m);break}
+    case 'err':{setStatus(m.msg||'Hmm, that did not work');if(MP.view&&MP.view.phase==='lobby')renderLobby(MP.view);else if(!MP.view){closeModal();openFriends(m.msg)}break}
+    case 'left':{MP.active=false;MP.intended=false;MP.view=null;goTitle();break}
+  }
+}
+function seatName(i){return MP.view&&MP.view.seats[i]?MP.view.seats[i].name:'Seat '+(i+1)}
+/* fake-G so the existing renderers draw server views */
+function mpRenderGame(v){
+  MP.active=true;
+  $('title').classList.add('hide');
+  const meIdx=v.you.seat;
+  let myRack=v.you.rack;
+  if(MP.orderIds&&MP.orderIds.length){
+    const pos=new Map(MP.orderIds.map((id,ix)=>[id,ix]));
+    myRack=myRack.slice().sort((a,b)=>(pos.has(a.id)?pos.get(a.id):999)-(pos.has(b.id)?pos.get(b.id):999));
+  }
+  v=Object.assign({},v,{you:Object.assign({},v.you,{rack:myRack})});
+  const players=[];
+  for(let d=0;d<4;d++){
+    const i=(meIdx+d)%4,s=v.seats[i];
+    players.push({
+      name:s.isYou?'You':s.name+(s.botSub?' 🤖':''),isBot:s.kind==='bot',
+      hand:s.isYou?v.you.rack:Array.from({length:s.count},()=>({s:'X'})),
+      exp:s.exp.map(e=>({tiles:e.tiles,rep:e.rep})),
+    });
+  }
+  G={phase:v.phase==='charleston'?'charleston':'play',
+     chStep:v.chStep,wall:{length:v.wall},
+     players,dealer:(v.dealer-meIdx+4)%4,
+     turn:(v.turn-meIdx+4)%4,step:v.step,
+     discards:v.discards.map(d=>({t:d.t,by:(d.by-meIdx+4)%4})),
+     sel:G&&MP.lastSeat===meIdx?G.sel:new Set(),winNow:null};
+  MP.lastSeat=meIdx;
+  G.winNow=v.you.canMahjong?{mp:true}:null;
+  MP.swaps=v.you.swaps||[];
+  MP.chSubmitted=v.you.chSubmitted;
+  renderAll();
+  if(v.phase==='charleston'){
+    setStatus(MP.chSubmitted?'Passed — waiting for the table…':`Charleston — choose 3 tiles to pass <b>${['right','across','left'][v.chStep]}</b>`);
+  }else if(v.phase==='play'){
+    if(v.turn===meIdx&&v.step==='discard'){
+      setStatus(v.you.dead?'Your turn — <b>hand is dead</b>. Discard safely.':'Your turn — select a tile to discard');
+    }
+  }
+}
+function mpShowCallBar(m){
+  const bar=$('callbar');
+  $('callq').innerHTML=`${nameOf(m.tile)} was discarded — call it?`;
+  const bb=$('callbtns');bb.innerHTML='';
+  const mkb=(label,choice,cls)=>{
+    const b=document.createElement('button');
+    b.className='abtn '+(cls||'');b.textContent=label;
+    b.onclick=()=>{mpSend({type:'call',choice});closeCall()};
+    bb.appendChild(b);
+  };
+  for(const o of m.options){
+    if(o==='mahjong')mkb('MAH JONGG!','mahjong','gold');
+    else mkb(o.toUpperCase(),o,'');
+  }
+  mkb('PASS','pass','ghost');
+  bar.classList.add('open');
+  clearTimeout(callTimer);
+  callTimer=setTimeout(()=>{mpSend({type:'call',choice:'pass'});closeCall()},m.ms||8000);
+}
+function mpShowEnd(m){
+  closeCall();
+  const box=$('modalin');
+  if(m.result==='wall'){
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
+      <div class="msub">The wall is spent — nobody made their hand.</div>
+      <div class="mbtns" style="margin-top:16px">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':''}
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+  }else{
+    const mine=MP.view&&m.seat===MP.view.you.seat;
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div>
+      <h2>${mine?'MAH JONGG!':m.name+' wins'}</h2>
+      <div class="msub">“${m.hand}” · ${m.cat}${m.jokerless?' · jokerless ×2':''}</div>
+      <div class="mtiles" id="mtiles"></div>
+      <div class="mpts">${m.pts} points</div>
+      <div class="mbtns">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':'<div class="msub">waiting for the host to re-deal…</div>'}
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+    const mt=box.querySelector('#mtiles');
+    for(const t of m.tiles)mt.appendChild(tileDOM(t,'t-md'));
+  }
+  const rem=box.querySelector('#mrem');
+  if(rem)rem.onclick=()=>{closeModal();mpSend({type:'rematch'})};
+  box.querySelector('#mleave').onclick=()=>{mpSend({type:'leave'})};
+  $('modal').classList.add('open');
+}
+function renderLobby(v){
+  $('title').classList.add('hide');
+  const box=$('modalin');
+  const seats=v.seats.map((s,i)=>{
+    if(!s)return `<div style="color:#A08F63">Seat ${i+1} — <i>open (a bot will fill it)</i></div>`;
+    return `<div><b>${s.name}</b>${s.isYou?' (you)':''}${s.connected?'':' · reconnecting…'}</div>`;
+  }).join('');
+  box.innerHTML=`<div class="mtop">YOUR TABLE</div>
+    <h2 style="letter-spacing:.3em">${v.code}</h2>
+    <div class="msub">Friends join from the title screen —<br>PLAY WITH FRIENDS → JOIN → code <b>${v.code}</b><br><br>Card: <b>${v.cardTitle}</b></div>
+    <div class="revlist" style="max-height:120px">${seats}</div>
+    <div class="mbtns">${v.you.seat===0?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
+  const st=box.querySelector('#lstart');
+  if(st)st.onclick=()=>mpSend({type:'start'});
+  box.querySelector('#lleave').onclick=()=>mpSend({type:'leave'});
+  $('modal').classList.add('open');
+}
+function openFriends(errMsg){
+  if(!OLM_SERVER){
+    const box=$('modalin');
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Friend tables</h2>
+    <div class="msub">Multiplayer isn't switched on for this copy of the game yet.</div>
+    <div class="mbtns" style="margin-top:14px"><button class="abtn" id="fok">OK</button></div>`;
+    box.querySelector('#fok').onclick=closeModal;
+    $('modal').classList.add('open');
+    return;
+  }
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Play with friends</h2>
+    <div class="imperr">${errMsg||''}</div>
+    <input type="text" id="fname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
+      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
+    <div class="mbtns" style="margin-top:12px;flex-direction:column;align-items:center;gap:10px">
+      <button class="abtn" id="fcreate">CREATE A TABLE</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
+          style="width:90px;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink)">
+        <button class="abtn gold" id="fjoin">JOIN</button>
+      </div>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fcancel">CANCEL</button>
+    </div>`;
+  const getName=()=>{
+    const n=box.querySelector('#fname').value.trim().slice(0,14);
+    if(!n){box.querySelector('.imperr').textContent='Type your name first';return null}
+    MP.name=n;try{localStorage.setItem('olmName',n)}catch(e){}
+    return n;
+  };
+  box.querySelector('#fcreate').onclick=()=>{
+    if(!getName())return;
+    MP.intended=true;
+    let card=null;
+    try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
+    mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed'}}));
+  };
+  box.querySelector('#fjoin').onclick=()=>{
+    if(!getName())return;
+    const code=box.querySelector('#fcode').value.trim().toUpperCase();
+    if(code.length!==4){box.querySelector('.imperr').textContent='Codes are 4 letters';return}
+    MP.intended=true;
+    mpConnect(()=>mpSend({type:'join',code}));
+  };
+  box.querySelector('#fcancel').onclick=closeModal;
+  $('modal').classList.add('open');
+}
+$('btnfriends').onclick=()=>openFriends();
+
 function goTitle(){
   SEQ++;
   killClones();
+  MP.active=false;MP.intended=false;MP.view=null;MP.chSubmitted=false;
   if(G)G.phase='over';
   closeCall();closeModal();
   $('sheet').classList.remove('open');
@@ -1702,15 +1936,22 @@ function goTitle(){
 }
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
+  const top=MP.active
+    ?`<button class="abtn" id="mleavet">LEAVE TABLE</button>`
+    :`<button class="abtn" id="mnewg">NEW GAME</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">BACK TO TITLE</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
-    <button class="abtn" id="mnewg">NEW GAME</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">BACK TO TITLE</button>
+    ${top}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mclose">KEEP PLAYING</button>
   </div>`;
-  box.querySelector('#mnewg').onclick=()=>{closeModal();newGame()};
-  box.querySelector('#mtitle').onclick=goTitle;
+  const lt=box.querySelector('#mleavet');
+  if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
+  const ng=box.querySelector('#mnewg');
+  if(ng)ng.onclick=()=>{closeModal();newGame()};
+  const bt=box.querySelector('#mtitle');
+  if(bt)bt.onclick=goTitle;
   box.querySelector('#mrules').onclick=()=>{closeModal();$('btnhow').click()};
   box.querySelector('#mclose').onclick=closeModal;
   $('modal').classList.add('open');
@@ -1718,8 +1959,35 @@ $('btnmenu').onclick=()=>{
 $('btnsort').onclick=()=>{
   if(!G||G.phase==='over')return;
   G.players[0].hand=sortHand(G.players[0].hand);
+  if(MP.active)MP.orderIds=G.players[0].hand.map(x=>x.id);
   renderRack();
 };
+function describeVariant(v){
+  const SN={C:'Craks',B:'Bams',D:'Dots'};
+  const DN={GR:'Red',GG:'Green',G0:'Soap'};
+  const order=[],suitG={},other=[];
+  let fl=0;
+  for(const [tk,k] of v){
+    if(tk==='F'){fl+=k;continue}
+    const s=tk[0];
+    if(s==='C'||s==='B'||s==='D'){
+      if(!suitG[s]){suitG[s]=[];order.push(s)}
+      suitG[s].push([+tk.slice(1),k]);
+    }else if(s==='W'){
+      other.push(tk[1].repeat(k));
+    }else{
+      other.push((tk==='G0'?'0':'D').repeat(k)+' '+DN[tk]);
+    }
+  }
+  const parts=[];
+  if(fl)parts.push('F'.repeat(fl));
+  for(const s of order){
+    suitG[s].sort((a,b)=>a[0]-b[0]);
+    parts.push(suitG[s].map(([n,k])=>String(n).repeat(k)).join(' ')+' '+SN[s]);
+  }
+  if(other.length)parts.push(other.join(' '));
+  return parts.join(' · ');
+}
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
   const fits=topFits(G.players[0]);
@@ -1733,7 +2001,7 @@ $('btnhint').onclick=()=>{
   $('btnhint').classList.toggle('on',HINTON);
   if(HINTON){
     const bf=fits[HINTIDX];
-    setStatus(`Hint ${HINTIDX+1}/${fits.length}: <b>${bf.hand.name}</b> — ${Math.max(0,14-bf.score)} to go · tap HINT for next`);
+    setStatus(`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`);
   }else setStatus('Hints off');
   renderRack();
 };
