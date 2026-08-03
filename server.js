@@ -623,11 +623,335 @@ setInterval(() => {
   }
 }, 600000);
 
+
+/* ================= CARD READER LAB ================= */
+const { webcrypto: wcrypto } = require('crypto');
+const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
+const OLM_API_KEY = process.env.OLM_API_KEY || '';
+const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
+const MOCK_AI = !!process.env.MOCK_AI;
+
+async function decryptBundle(txt, code) {
+  const o = JSON.parse(txt);
+  const b = s => Uint8Array.from(Buffer.from(s, 'base64'));
+  const km = await wcrypto.subtle.importKey('raw', new TextEncoder().encode(code.trim().toUpperCase()), 'PBKDF2', false, ['deriveKey']);
+  const key = await wcrypto.subtle.deriveKey({ name: 'PBKDF2', salt: b(o.s), iterations: 200000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const pt = await wcrypto.subtle.decrypt({ name: 'AES-GCM', iv: b(o.i) }, key, b(o.c));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+let FIXCACHE = {};
+async function loadFixture(set, code) {
+  if (FIXCACHE[set]) return FIXCACHE[set];
+  const r = await fetch(SITE_BASE + '/fixtures/set-' + set + '.enc');
+  if (!r.ok) throw new Error('fixture fetch ' + r.status);
+  const fx = await decryptBundle(await r.text(), code);
+  FIXCACHE[set] = fx;
+  return fx;
+}
+
+/* ---- AI calls ---- */
+let LAB_MODEL = null;
+async function labPickModel(prefer) {
+  if (prefer) return prefer;
+  if (LAB_MODEL) return LAB_MODEL;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+      headers: { 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' } });
+    if (r.ok) {
+      const ids = ((await r.json()).data || []).map(m => m.id);
+      const pick = f => ids.filter(i => i.includes(f) && !i.includes('haiku')).sort().reverse()[0];
+      LAB_MODEL = pick('opus') || pick('sonnet') || ids[0];
+    }
+  } catch (e) {}
+  if (!LAB_MODEL) LAB_MODEL = 'claude-sonnet-4-5';
+  return LAB_MODEL;
+}
+async function labCallAI(content, opts) {
+  opts = opts || {};
+  if (MOCK_AI) return mockAI(content);
+  const model = await labPickModel(opts.model);
+  const body = { model, max_tokens: opts.think ? 24000 : 16000, messages: [{ role: 'user', content }] };
+  if (opts.think) body.thinking = { type: 'enabled', budget_tokens: 8000 };
+  else body.temperature = 0;
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error('AI ' + r.status + ': ' + ((j.error && j.error.message) || '').slice(0, 200));
+  const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text || '').join('').trim();
+  return { text, usage: j.usage || {}, model };
+}
+function mockAI(content) {
+  const t = content[0].text;
+  const mockLines = [
+    { text: '222 000 2222 6666', colors: '222 green, 000 black, 2222 red, 6666 red', ann: '(Any 2 Suits)', val: 'X25', cat: '2026' },
+    { text: 'FFF 2026 222 6666', colors: 'FFF black, 2026 green, 222 red, 6666 black', ann: '(Any 3 Suits)', val: 'X25', cat: '2026' },
+  ];
+  if (t.startsWith('This photo shows') || t.includes('DRAFT:'))
+    return { text: JSON.stringify(mockLines), usage: { input_tokens: 100, output_tokens: 50 }, model: 'mock' };
+  return { text: JSON.stringify({ title: 'MY 2026 CARD', hands: [
+    { name: '222 000 2222 6666', cat: '2026', pts: 25, c: false, alts: [{ g: ['3:2a','3:0','4:2b','4:6b'] }] },
+    { name: 'FFF 2026 222 6666', cat: '2026', pts: 25, c: false, alts: [{ g: ['3:F','2:2a','1:0','1:6a','3:2b','4:6c'] }] },
+  ]}), usage: { input_tokens: 200, output_tokens: 80 }, model: 'mock' };
+}
+
+/* ---- prompts ---- */
+const LAB_STAGE_A = `This photo shows ONE panel of an American mah jongg scoring card. Transcribe every printed hand line.
+
+Output ONLY a JSON array. One element per printed hand row:
+{"text":"<the TILE GROUPS ONLY exactly as printed, e.g. FFF 2026 222 6666 - include a - or - alternate if the row has one, NEVER include the annotation or value here>","colors":"<color of each tile segment in printed order, e.g. FFF black, 2026 green, 222 red, 6666 red>","ann":"<the parenthetical annotation exactly as printed>","val":"<the value code at the right edge, e.g. X25 or C30>","cat":"<the section header this row sits under, e.g. 2468>"}
+
+Rules:
+- One element per printed row. Never combine two rows. Never split one row into two.
+- Copy digits and letters EXACTLY. Count repeated characters with extreme care: 2222 is four 2s, 222 is three, FFFFFF is six Fs. Re-check every group's count against the photo before output.
+- Section headers are not hands - they go only in "cat".
+- Do not skip any row. No markdown fences, no commentary - the JSON array only.`;
+const LAB_VERIFY = `Here is the same card panel photo and a draft transcription of its hand rows. Verify the draft against the photo, row by row: check every group's exact repeated-character count (222 vs 2222 vs 22), missing or merged rows, wrong colors, wrong annotations, wrong values. Return the fully corrected JSON array in the same format - every printed row, one element each, tile groups only in "text". Output the corrected JSON array only, no commentary.
+
+DRAFT:
+`;
+const LAB_STAGE_B_HEAD = `You are given transcribed lines from one panel of an American mah jongg scoring card. Convert EVERY line into a compact JSON notation. Each input line gives: text (tile groups as printed), colors (segments printed in the SAME color share a suit; DIFFERENT colors are different suits; flowers, winds, soap/zero and standalone dragons are neutral), ann (the annotation - TRUST THIS over colors if they conflict), val (X=exposed so "c":false, C=concealed so "c":true; the number is "pts"), cat (section).
+
+TILES: three suits exist (we call them a, b, c - distinct suits).
+GROUP SYNTAX: each group is "<count>:<tiles>" where count 1-6 is how many tiles.
+- Number tile in a suit: "2a" (a 2 in suit a), "7b", etc.
+- "0" = white dragon used as zero (soap). "F" = flower. "N","E","W","S" = winds.
+- "DR","DG","DW" = specific red/green/white dragon.
+- "da" = the dragon MATCHING suit a (likewise "db","dc").
+- "xa" = a dragon NOT matching suit a (opposite dragon).
+- "dd" = any one dragon (same dragon throughout the alternative).
+- Variable number: "na" = number n in suit a; "n1a" = n+1 in suit a, up to "n6a". Set n's range with "n" field: "1-5", "odd", "even", "1,5", "1-9".
+- "ma" = a second independent number m (never equal to n), range via "m".
+- "pa" = a chosen number p, range via "p" (e.g. "2,4,6,8" for "kong 2, 4, 6 or 8").
+
+HAND ENTRY: {"name":"<the line text>","cat":"<section>","pts":<number>,"c":<true if C else false>,"note":"<annotation>","alts":[{...}]}
+Each alt: {"g":["3:2a","3:0","4:2b","4:6b"],"n":"1-5"} (n/m/p only when used). Group counts in an alt MUST total 14.
+- "- or -" versions and "Any 1 or 2 Suits" style annotations need one alt per arrangement.
+- When structure depends on a chosen number in a way p cannot express (e.g. "pair any odd, singles of the remaining odds"), write one alt per choice with literal numbers.
+- "These Nos. Only" means literal numbers; "Any ... Consec." means n variables.
+
+EXAMPLES:
+"222 000 2222 6666 (Any 2 Suits) X25" in 2026 -> {"name":"222 000 2222 6666","cat":"2026","pts":25,"c":false,"note":"Any 2 suits","alts":[{"g":["3:2a","3:0","4:2b","4:6b"]}]}
+"FFF 1111 234 5555 (Any 1 or 2 Suits, Any 5 Consec. Nos.) X25" -> {"name":"FFF 1111 234 5555","cat":"CONSECUTIVE RUN","pts":25,"c":false,"note":"Any 1 or 2 suits, any 5 consecutive","alts":[{"n":"1-5","g":["3:F","4:na","1:n1a","1:n2a","1:n3a","4:n4a"]},{"n":"1-5","g":["3:F","4:na","1:n1b","1:n2b","1:n3b","4:n4b"]}]}
+"11111 44444 DDDD (Any 2 Nos. in Any 1 Suit w Opp. Dragon) X40" -> {"name":"11111 44444 DDDD","cat":"QUINTS","pts":40,"c":false,"note":"Any 2 numbers, 1 suit, opposite dragon","alts":[{"n":"1-9","m":"1-9","g":["5:na","5:ma","4:xa"]}]}
+"NN EE WW SS 1D 1D 1D (Any 3 Suits, Any Like No. w Matching Dragon) C50" -> {"name":"NN EE WW SS 1D 1D 1D","cat":"SINGLES AND PAIRS","pts":50,"c":true,"note":"Any like number with matching dragons","alts":[{"n":"1-9","g":["2:N","2:E","2:W","2:S","1:na","1:da","1:nb","1:db","1:nc","1:dc"]}]}
+
+OUTPUT: only raw JSON, no fences: {"title":"MY <year> CARD","hands":[ one entry per input line, in order ]}
+The number of hand entries MUST equal the number of input lines. Never merge or skip lines.`;
+
+/* ---- expander (ported from client) ---- */
+function labParseNums(spec, maxOff) {
+  let vals = [];
+  if (spec === 'odd') vals = [1,3,5,7,9];
+  else if (spec === 'even') vals = [2,4,6,8];
+  else if (/^\d+-\d+$/.test(spec)) { const [a,b] = spec.split('-').map(Number); for (let i=a;i<=b;i++) vals.push(i); }
+  else vals = spec.split(',').map(Number).filter(x=>x>=1&&x<=9);
+  return vals.filter(v => v + maxOff <= 9);
+}
+function labSuitAssigns(k) {
+  if (k === 0) return [[]];
+  const out = [];
+  for (const a of SUITS) { if (k===1){out.push([a]);continue}
+    for (const b of SUITS) { if (b===a) continue; if (k===2){out.push([a,b]);continue}
+      for (const c of SUITS) { if (c===a||c===b) continue; out.push([a,b,c]); } } }
+  return out;
+}
+function labExpand(cc) {
+  if (!cc || !Array.isArray(cc.hands) || !cc.hands.length) throw new Error('no hands in reading');
+  const DRAGS = ['GR','GG','G0'];
+  const hands = [], fails = [];
+  for (const h of cc.hands) {
+    const seen = new Set(), variants = [];
+    let failReason = '';
+    for (const alt of (h.alts || [])) {
+      const toks = []; const suitVars = new Set();
+      let useN=false, useM=false, useP=false, useDD=false, xRef=null, maxOff=0, bad=false;
+      for (const t of (alt.g || [])) {
+        const mm = /^([1-6]):(.+)$/.exec(String(t).replace(/\s+/g,''));
+        if (!mm) { bad=true; failReason='could not parse group "'+t+'"'; break; }
+        const k = +mm[1], sp = mm[2]; let r;
+        if (/^(F|N|E|W|S|0|DR|DG|DW)$/.test(sp)) {}
+        else if (sp === 'dd') useDD = true;
+        else if (r = /^d([abc])$/.exec(sp)) suitVars.add(r[1]);
+        else if (r = /^x([abc])$/.exec(sp)) { suitVars.add(r[1]); xRef = r[1]; }
+        else if (r = /^([1-9])([abc])$/.exec(sp)) suitVars.add(r[2]);
+        else if (r = /^n([0-6]?)([abc])$/.exec(sp)) { useN=true; suitVars.add(r[2]); maxOff=Math.max(maxOff, +(r[1]||0)); }
+        else if (r = /^m([abc])$/.exec(sp)) { useM=true; suitVars.add(r[1]); }
+        else if (r = /^p([abc])$/.exec(sp)) { useP=true; suitVars.add(r[1]); }
+        else { bad=true; failReason='unknown tile token "'+sp+'"'; break; }
+        toks.push({ k, sp });
+      }
+      if (bad || !toks.length) continue;
+      const tot = toks.reduce((s,t)=>s+t.k,0);
+      if (tot !== 14) { failReason='groups total '+tot+' tiles, must be 14'; continue; }
+      const nV = useN ? labParseNums(String(alt.n||h.n||'1-9'), maxOff) : [0];
+      const mV = useM ? labParseNums(String(alt.m||h.m||'1-9'), 0) : [0];
+      const pV = useP ? labParseNums(String(alt.p||h.p||'1-9'), 0) : [0];
+      const dV = useDD ? DRAGS : [null];
+      const sv = [...suitVars];
+      for (const asg of labSuitAssigns(sv.length)) {
+        const smap = {}; sv.forEach((v,i)=>smap[v]=asg[i]);
+        const xV = xRef ? DRAGS.filter(d=>d!==DRAGON[smap[xRef]]) : [null];
+        for (const n of nV) for (const m of mV) {
+          if (useN && useM && m === n) continue;
+          for (const p of pV) for (const dd of dV) for (const xx of xV) {
+            const v = []; let good = true;
+            for (const { k, sp } of toks) {
+              let tk = null, r;
+              if (sp==='F') tk='F';
+              else if (/^[NEWS]$/.test(sp)) tk='W'+sp;
+              else if (sp==='0') tk='G0';
+              else if (sp==='DR') tk='GR';
+              else if (sp==='DG') tk='GG';
+              else if (sp==='DW') tk='G0';
+              else if (sp==='dd') tk=dd;
+              else if (r=/^d([abc])$/.exec(sp)) tk=DRAGON[smap[r[1]]];
+              else if (r=/^x([abc])$/.exec(sp)) tk=xx;
+              else if (r=/^([1-9])([abc])$/.exec(sp)) tk=smap[r[2]]+r[1];
+              else if (r=/^n([0-6]?)([abc])$/.exec(sp)) { const num=n+ +(r[1]||0); if(num<1||num>9){good=false;break} tk=smap[r[2]]+num; }
+              else if (r=/^m([abc])$/.exec(sp)) tk=smap[r[1]]+m;
+              else if (r=/^p([abc])$/.exec(sp)) tk=smap[r[1]]+p;
+              if (!tk) { good=false; break; }
+              v.push([tk,k]);
+            }
+            if (!good) continue;
+            const kv = v.map(x=>x[0]+x[1]).sort().join('|');
+            if (seen.has(kv) || variants.length > 4000) continue;
+            seen.add(kv); variants.push(v);
+          }
+        }
+      }
+    }
+    if (!variants.length) { fails.push({ name: String(h.name||'Hand'), reason: failReason || 'no valid arrangements' }); continue; }
+    hands.push({ name: String(h.name||'Hand'), cat: String(h.cat||'CARD'), pts: +h.pts||25,
+      concealed: !!h.c, note: String(h.note||''), disp: [[String(h.name||'Hand'),'cN']], variants });
+  }
+  return { title: String(cc.title||'MY CARD'), hands, fails };
+}
+function labParseLoose(txt, arr) {
+  txt = txt.replace(/```(json)?/g, '').trim();
+  const o = arr ? '[' : '{', c = arr ? ']' : '}';
+  const a = txt.indexOf(o), b = txt.lastIndexOf(c);
+  if (a < 0 || b < 0) throw new Error('unparseable output');
+  return JSON.parse(txt.slice(a, b + 1));
+}
+const IMG = b64 => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
+
+/* ---- strategies ---- */
+const STRATS = {
+  A: { desc: 'top model, two-stage, verify pass, thinking', verify: true, think: true, model: null },
+  B: { desc: 'top model, two-stage, NO verify, thinking', verify: false, think: true, model: null },
+  C: { desc: 'sonnet, two-stage, verify pass, thinking', verify: true, think: true, model: 'claude-sonnet-4-5' },
+};
+async function runPanel(b64, S, usage) {
+  const track = r => { usage.in += (r.usage.input_tokens||0); usage.out += (r.usage.output_tokens||0); usage.model = r.model; return r.text; };
+  let lines = null;
+  for (let a = 0; a < 2; a++) {
+    try {
+      const txt = track(await labCallAI([{ type:'text', text: LAB_STAGE_A }, IMG(b64)], { think: S.think, model: S.model }));
+      lines = labParseLoose(txt, true).filter(x => x && x.text);
+      if (lines.length) break;
+    } catch (e) { if (a === 1) throw e; }
+  }
+  if (!lines || !lines.length) throw new Error('no lines read');
+  if (S.verify) {
+    try {
+      const vtxt = track(await labCallAI([{ type:'text', text: LAB_VERIFY + JSON.stringify(lines) }, IMG(b64)], { think: S.think, model: S.model }));
+      const vlines = labParseLoose(vtxt, true).filter(x => x && x.text);
+      if (vlines.length >= lines.length * .7) lines = vlines;
+    } catch (e) {}
+  }
+  let best = null, extra = null;
+  for (let a = 0; a < 3; a++) {
+    const prompt = LAB_STAGE_B_HEAD + '\n\nINPUT LINES (' + lines.length + ' hands - output exactly ' + lines.length + ' entries):\n'
+      + JSON.stringify(lines) + (extra ? '\n\nYOUR PREVIOUS ATTEMPT HAD PROBLEMS: ' + extra + ' - output the complete corrected JSON.' : '');
+    try {
+      const cc = labParseLoose(track(await labCallAI([{ type:'text', text: prompt }], { think: S.think, model: S.model })), false);
+      const r = labExpand(cc);
+      if (!best || r.hands.length > best.hands.length) best = r;
+      const missing = lines.length - ((cc.hands||[]).length);
+      if (!r.fails.length && missing <= 0) return { lines, result: best };
+      extra = (r.fails.length ? 'invalid: ' + r.fails.map(f=>'"'+f.name+'" ('+f.reason+')').join('; ') : '')
+        + (missing > 0 ? '; output ' + (lines.length-missing) + ' of ' + lines.length + ' hands' : '');
+    } catch (e) { if (a === 2 && !best) throw e; extra = 'previous output was not valid JSON'; }
+  }
+  return { lines, result: best };
+}
+const normName = s => String(s||'').replace(/[^0-9A-Z]/gi,'').toUpperCase();
+const canonV = v => v.map(g => g[0] + ':' + g[1]).sort().join('|');
+const handSig = h => h.variants.map(canonV).sort().join('~');
+function scoreCard(got, golden) {
+  const gBySig = new Map(), gByName = new Map();
+  for (const h of golden.hands) { gBySig.set(handSig(h), h); gByName.set(normName(h.name), h); }
+  const matchedGolden = new Set();
+  let exact = 0, nameOnly = 0, extra = 0;
+  const nameOnlyList = [], extraList = [];
+  for (const h of got) {
+    const sig = handSig(h);
+    if (gBySig.has(sig) && !matchedGolden.has(gBySig.get(sig))) { exact++; matchedGolden.add(gBySig.get(sig)); continue; }
+    const gn = gByName.get(normName(h.name));
+    if (gn && !matchedGolden.has(gn)) { nameOnly++; matchedGolden.add(gn); nameOnlyList.push({ got: h.name, gotV: h.variants.length, wantV: gn.variants.length }); continue; }
+    extra++; extraList.push(h.name);
+  }
+  const missing = golden.hands.filter(h => !matchedGolden.has(h)).map(h => h.name);
+  return { goldenHands: golden.hands.length, exact, nameOnly, missing, extra, nameOnlyList: nameOnlyList.slice(0,8), extraList: extraList.slice(0,8) };
+}
+
+/* ---- eval jobs ---- */
+const JOBS = new Map();
+let JOBSEQ = 0;
+async function runEval(job, stratKey, set, code) {
+  const S = STRATS[stratKey];
+  const usage = { in: 0, out: 0, model: '?' };
+  const t0 = Date.now();
+  try {
+    const fx = await loadFixture(set, code);
+    const panels = await Promise.all(fx.photos.map(p => runPanel(p, S, usage).catch(e => ({ error: e.message }))));
+    const hands = [], fails = [], panelInfo = [];
+    for (const p of panels) {
+      if (p.error) { panelInfo.push({ error: p.error }); continue; }
+      panelInfo.push({ linesRead: p.lines.length, handsOut: p.result.hands.length, fails: p.result.fails.map(f => f.name + ' (' + f.reason + ')').slice(0,6) });
+      hands.push(...p.result.hands); fails.push(...p.result.fails);
+    }
+    const score = scoreCard(hands, fx.golden);
+    job.status = 'done';
+    job.result = { strat: stratKey + ' — ' + S.desc, model: usage.model, ms: Date.now() - t0,
+      tokens: usage, panels: panelInfo, score, pipelineFails: fails.length };
+  } catch (e) {
+    job.status = 'error';
+    job.result = { error: e.message, ms: Date.now() - t0 };
+  }
+}
+
 /* ---------- server ---------- */
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
-  res.end(JSON.stringify({ ok: true, app: 'ooh-la-mahj', tables: tables.size, results: (typeof RESULTS !== 'undefined' ? RESULTS : []) }));
+
+const server = http.createServer(async (req, res) => {
+  const u = new URL(req.url, 'http://x');
+  const send200 = o => { res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(o)); };
+  if (u.pathname === '/admin/eval') {
+    if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
+    if (!OLM_API_KEY && !MOCK_AI) return send200({ err: 'OLM_API_KEY env var is not set on the server' });
+    const strat = u.searchParams.get('strat') || 'A';
+    if (!STRATS[strat]) return send200({ err: 'unknown strategy', options: Object.keys(STRATS) });
+    const id = 'j' + (++JOBSEQ);
+    const job = { status: 'running', started: Date.now() };
+    JOBS.set(id, job);
+    runEval(job, strat, u.searchParams.get('set') || '2026', ADMIN_KEY);
+    return send200({ job: id, strat, note: 'poll /admin/job?k=...&id=' + id });
+  }
+  if (u.pathname === '/admin/job') {
+    if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
+    const job = JOBS.get(u.searchParams.get('id'));
+    if (!job) return send200({ err: 'no such job' });
+    return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000), result: job.result || null });
+  }
+  if (u.pathname === '/admin/strats') {
+    return send200({ strats: Object.fromEntries(Object.entries(STRATS).map(([k,s]) => [k, s.desc])) });
+  }
+  send200({ ok: true, app: 'ooh-la-mahj', tables: tables.size, results: (typeof RESULTS !== 'undefined' ? RESULTS : []) });
 });
+
 const wss = new WebSocketServer({ server });
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, 'http://x');
