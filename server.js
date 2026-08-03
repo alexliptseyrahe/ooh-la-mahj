@@ -497,15 +497,32 @@ function handleMsg(p, m) {
         JT.seats[existing].connected = true; JT.seats[existing].botSub = false;
         return broadcast(JT, eventMsg('rejoin', { seat: existing }));
       }
-      if (JT.phase !== 'lobby') return send(p.token, { type: 'err', msg: 'That game already started' });
-      let free = -1;
-      for (let i = 0; i < 4; i++) if (!JT.seats[i]) { free = i; break; }
-      if (free < 0) return send(p.token, { type: 'err', msg: 'Table is full' });
       if (T && seat >= 0) leaveTable(p, T, seat);
-      JT.seats[free] = newSeat('human', p.name);
-      JT.seats[free].token = p.token; JT.seats[free].connected = true;
-      p.tableCode = code;
-      broadcast(JT, eventMsg('joined', { seat: free, name: p.name }));
+      if (JT.phase === 'lobby') {
+        let free = -1;
+        for (let i = 0; i < 4; i++) if (!JT.seats[i]) { free = i; break; }
+        if (free < 0) return send(p.token, { type: 'err', msg: 'Table is full' });
+        JT.seats[free] = newSeat('human', p.name);
+        JT.seats[free].token = p.token; JT.seats[free].connected = true;
+        p.tableCode = code;
+        broadcast(JT, eventMsg('joined', { seat: free, name: p.name }));
+      } else {
+        // game in progress: take over a bot-driven seat, inheriting its tiles
+        let claim = -1;
+        for (let i = 0; i < 4; i++) {
+          const s = JT.seats[i];
+          if (s && (s.kind === 'bot' || (s.botSub && !s.token))) { claim = i; break; }
+        }
+        if (claim < 0) return send(p.token, { type: 'err', msg: 'Table is full — no bot seats to take over' });
+        const s = JT.seats[claim];
+        s.kind = 'human'; s.token = p.token; s.name = p.name;
+        s.connected = true; s.botSub = false;
+        clearTimeout(s.graceTimer);
+        p.tableCode = code;
+        if (JT.phase === 'play' && JT.turn === claim) clearTimeout(JT.timers.bot);
+        broadcast(JT, eventMsg('takeover', { seat: claim, name: p.name }));
+        if (JT.phase === 'charleston') tryResolveCharleston(JT);
+      }
       break;
     }
     case 'start': {

@@ -1769,6 +1769,7 @@ function mpOnMsg(m){
       if(m.kind==='call')setStatus(`<b>${seatName(m.seat)}</b> calls!`);
       if(m.kind==='botsub')setStatus(`<b>${seatName(m.seat)}</b> lost connection — a bot fills in`);
       if(m.kind==='rejoin')setStatus(`<b>${seatName(m.seat)}</b> is back`);
+      if(m.kind==='takeover'){setStatus(`<b>${m.name}</b> joins the table!`);showMsg(m.name.toUpperCase()+' JOINS')}
       break;
     }
     case 'end':{if(!MP.intended)return;mpShowEnd(m);break}
@@ -1877,6 +1878,7 @@ function renderLobby(v){
     <div class="mbtns" style="margin:4px 0 10px"><button class="abtn gold" id="lshare" style="font-size:11px;padding:9px 18px">SHARE INVITE</button></div>
     <div class="msub">${cardLine}</div>
     <div class="revlist" style="max-height:120px">${seats}</div>
+    ${isHost?'<div class="msub" style="font-size:11px">Start whenever you like — friends who join later simply take over a bot\'s seat.</div>':''}
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
@@ -1905,41 +1907,56 @@ function openFriends(errMsg){
     return;
   }
   const box=$('modalin');
-  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Play with friends</h2>
-    <div class="imperr">${errMsg||''}</div>
-    <input type="text" id="fname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
-    <div class="mbtns" style="margin-top:12px;flex-direction:column;align-items:center;gap:10px">
-      <button class="abtn" id="fcreate">CREATE A TABLE</button>
-      <div class="msub" style="font-size:11px;margin:0">Your table plays whichever card you have selected right now.</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
-          style="width:90px;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink)">
-        <button class="abtn gold" id="fjoin">JOIN</button>
-      </div>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fcancel">CANCEL</button>
-    </div>`;
+  const nameField=`<input type="text" id="fname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
+      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">`;
   const getName=()=>{
     const n=box.querySelector('#fname').value.trim().slice(0,14);
     if(!n){box.querySelector('.imperr').textContent='Type your name first';return null}
     MP.name=n;try{localStorage.setItem('olmName',n)}catch(e){}
     return n;
   };
-  box.querySelector('#fcreate').onclick=()=>{
-    if(!getName())return;
-    MP.intended=true;
-    let card=null;
-    try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-    mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed'}}));
+  const stepOne=()=>{
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Play with friends</h2>
+      <div class="imperr">${errMsg||''}</div>
+      ${nameField}
+      <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
+        <button class="abtn" id="fcreate">HOST A NEW TABLE</button>
+        <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fcancel">CANCEL</button>
+      </div>`;
+    errMsg='';
+    box.querySelector('#fcreate').onclick=()=>{
+      if(!getName())return;
+      MP.intended=true;
+      let card=null;
+      try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
+      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed'}}));
+    };
+    box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
+    box.querySelector('#fcancel').onclick=closeModal;
   };
-  box.querySelector('#fjoin').onclick=()=>{
-    if(!getName())return;
-    const code=box.querySelector('#fcode').value.trim().toUpperCase();
-    if(code.length!==4){box.querySelector('.imperr').textContent='Codes are 4 letters';return}
-    MP.intended=true;
-    mpConnect(()=>mpSend({type:'join',code}));
+  const stepTwo=()=>{
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Join a table</h2>
+      <div class="msub">Type the 4-letter code your host shared.<br>Game already started? You'll take over a bot's seat.</div>
+      <div class="imperr"></div>
+      <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
+        style="width:140px;border:1px solid #CBBF9E;border-radius:10px;padding:12px;font-size:22px;text-align:center;letter-spacing:.3em;background:#fff;color:var(--ink)">
+      <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
+        <button class="abtn gold" id="fjoin">JOIN TABLE</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fback">BACK</button>
+      </div>`;
+    const doJoin=()=>{
+      const code=box.querySelector('#fcode').value.trim().toUpperCase();
+      if(code.length!==4){box.querySelector('.imperr').textContent='Codes are 4 letters';return}
+      MP.intended=true;
+      mpConnect(()=>mpSend({type:'join',code}));
+    };
+    box.querySelector('#fjoin').onclick=doJoin;
+    box.querySelector('#fcode').addEventListener('keydown',e=>{if(e.key==='Enter')doJoin()});
+    box.querySelector('#fback').onclick=stepOne;
+    box.querySelector('#fcode').focus();
   };
-  box.querySelector('#fcancel').onclick=closeModal;
+  stepOne();
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
