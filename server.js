@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r10';
+const LAB_VERSION = 'r11';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -927,10 +927,24 @@ async function runPanel(b64, S, usage) {
       const r = labExpand(cc);
       if (!best || r.hands.length > best.hands.length) best = r;
       const missing = lines.length - ((cc.hands||[]).length);
-      if (!r.fails.length && missing <= 0) return { lines, result: best };
+      if (!r.fails.length && missing <= 0) { best = r; break; }
       extra = (r.fails.length ? 'invalid: ' + r.fails.map(f=>'"'+f.name+'" ('+f.reason+')').join('; ') : '')
         + (missing > 0 ? '; output ' + (lines.length-missing) + ' of ' + lines.length + ' hands' : '');
     } catch (e) { if (a === 2 && !best) throw e; extra = 'previous output was not valid JSON'; }
+  }
+  /* consensus pass: convert a second time, independently; any hand whose
+     patterns differ between the two readings gets flagged uncertain */
+  if (best && best.hands.length) {
+    try {
+      const p2 = LAB_STAGE_B_HEAD + '\n\nINPUT LINES (' + lines.length + ' hands - output exactly ' + lines.length + ' entries):\n' + JSON.stringify(lines);
+      const cc2 = labParseLoose(track(await labCallAI([{ type:'text', text: p2 }], { think: S.think, model: S.model })), false);
+      const r2 = labExpand(cc2);
+      const sig2 = new Map(r2.hands.map(h => [normName(h.name), handSig(h)]));
+      for (const h of best.hands) {
+        const s2 = sig2.get(normName(h.name));
+        if (!s2 || s2 !== handSig(h)) h.uncertain = true;
+      }
+    } catch (e) { /* consensus unavailable; no flags added */ }
   }
   return { lines, result: best };
 }
@@ -956,14 +970,17 @@ function scoreCard(got, golden) {
     if (gn && !matchedGolden.has(gn)) { nameOnly++; matchedGolden.add(gn);
       const gotSet = new Set(h.variants.map(canonV)), wantSet = new Set(gn.variants.map(canonV));
       nameOnlyList.push({ got: h.name, gotV: h.variants.length, wantV: gn.variants.length,
-        dsl: h.src || null,
+        flagged: !!h.uncertain, dsl: h.src || null,
         onlyGot: [...gotSet].filter(x => !wantSet.has(x)).slice(0, 3),
         onlyWant: [...wantSet].filter(x => !gotSet.has(x)).slice(0, 3) });
       continue; }
     extra++; extraList.push({ name: h.name, dsl: h.src || null });
   }
   const missing = golden.hands.filter(h => !matchedGolden.has(h)).map(h => h.name);
-  return { goldenHands: golden.hands.length, exact, nameOnly, missing, extra, nameOnlyList: nameOnlyList.slice(0,8), extraList: extraList.slice(0,8) };
+  const uncertain = got.filter(h => h.uncertain).length;
+  const silentWrong = nameOnlyList.filter(e => !e.flagged).length;
+  return { goldenHands: golden.hands.length, exact, nameOnly, missing, extra, uncertain, silentWrong,
+    nameOnlyList: nameOnlyList.slice(0,8), extraList: extraList.slice(0,8) };
 }
 
 /* ---- eval jobs ---- */
@@ -1015,7 +1032,10 @@ async function runReadJob(job, photos) {
       if (p.error) { panelInfo.push({ error: p.error }); fails.push({ name: 'one whole panel', reason: p.error }); continue; }
       panelInfo.push({ linesRead: p.lines.length, handsOut: p.result.hands.length });
       if (p.result.title && p.result.title !== 'MY CARD') title = p.result.title;
-      for (const h of p.result.hands) hands.push({ name: h.name, cat: h.cat, pts: h.pts, concealed: h.concealed, note: h.note, disp: h.disp, variants: h.variants });
+      for (const h of p.result.hands) {
+        hands.push({ name: h.name, cat: h.cat, pts: h.pts, concealed: h.concealed, note: h.note, disp: h.disp, variants: h.variants });
+        if (h.uncertain) fails.push({ name: h.name, reason: 'the reader double-checked this line and got two different answers — compare it against your card before trusting it' });
+      }
       fails.push(...p.result.fails.map(f => ({ name: f.name, reason: f.reason })));
     }
     if (!hands.length) throw new Error(fails.length ? 'No hands could be read: ' + (fails[0].reason || '') : 'No hands could be read from the photos');
