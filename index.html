@@ -1250,7 +1250,7 @@ function buildDebrief(){
         const have=Math.min(c[tk]||0,k);
         for(let x=0;x<k-have;x++)missing.push(tk);
       }
-      return {name:bf.hand.name,cat:bf.hand.cat,pts:bf.hand.pts,
+      return {name:bf.hand.name,cat:bf.hand.cat,pts:bf.hand.pts,disp:bf.hand.disp,conc:bf.hand.concealed,
         away:Math.max(0,14-bf.score),desc:describeVariant(bf.variant),
         missing:missing.slice(0,8),missAll:missing};
     });
@@ -1273,29 +1273,36 @@ function debriefDOM(){
   const top=d.items[0];
   const el=document.createElement('div');
   el.className='debrief';
-  el.innerHTML=`<div class="dbhead">WHAT COULD HAVE BEEN</div>
-    <div class="msub" style="margin:6px 0 2px">You were closest to <b>“${top.name}”</b> · ${top.cat} · ${top.pts} pts — <b>${top.away===0?'you had it!':top.away+' tile'+(top.away>1?'s':'')+' away'}</b></div>
-    <div class="msub" style="font-size:11px;color:#A08F63">${top.desc}</div>`;
+  const pct=Math.round((14-top.away)/14*100);
+  el.innerHTML=`<div class="dbhead">CLOSEST HAND</div>
+    <div class="chand" style="margin:9px 0 0;text-align:left">
+      <div class="chtop"><span class="chname">${top.name}</span>
+        <span class="chpts">${top.pts} PTS · ${top.conc?'C':'X'}</span></div>
+      <div class="chpat">${top.disp.map(([s,c])=>`<i class="${c}">${s}</i>`).join('')}</div>
+      <div class="cnote">${top.desc}</div>
+      <div class="prog"><div class="bar"><i style="width:${pct}%"></i></div>
+        <span class="away">${top.away===0?'complete':top.away+' away'}</span></div>
+    </div>`;
   if(top.missing.length){
     const row=document.createElement('div');
-    row.className='mtiles';row.style.margin='9px 0 2px';
+    row.className='mtiles';row.style.margin='10px 0 3px';
     for(const tk of top.missing)row.appendChild(tileDOM(tileFromKey(tk),'t-sm'));
     el.appendChild(row);
     const cap=document.createElement('div');
-    cap.className='msub';cap.style.cssText='font-size:11px;margin-top:2px;color:#A08F63';
-    cap.textContent='the tiles it still wanted'+(d.jk>0?' — your joker'+(d.jk>1?'s':'')+' could cover any of them in a group of 3+':'');
+    cap.className='msub';cap.style.cssText='font-size:10px;letter-spacing:.24em;color:#A08F63;margin:0';
+    cap.textContent='STILL NEEDED';
     el.appendChild(cap);
   }
   if(d.hurt){
     const p=document.createElement('div');
     p.className='msub';p.style.cssText='font-size:12px;margin-top:9px';
-    p.innerHTML=`Sharpest sting: your ${ordinalTxt(d.hurt.nth)} discard was <b>${nameOf(d.hurt.tile)}</b> — the very tile this hand wanted back.`;
+    p.innerHTML=`Turn ${d.hurt.nth} — you discarded the <b>${nameOf(d.hurt.tile)}</b> it needed.`;
     el.appendChild(p);
   }
   if(d.items[1]){
     const p=document.createElement('div');
-    p.className='msub';p.style.cssText='font-size:11px;color:#A08F63;margin-top:8px';
-    p.innerHTML=`Also within reach: “${d.items[1].name}” (${d.items[1].cat}) — ${d.items[1].away} away`;
+    p.className='msub';p.style.cssText='font-size:11px;color:#A08F63;margin-top:7px';
+    p.innerHTML=`Next closest: “${d.items[1].name}” — ${d.items[1].away} away`;
     el.appendChild(p);
   }
   return el;
@@ -1562,11 +1569,18 @@ function renderCardCtl(){
 $('ccclub').onclick=()=>{useCard('club');openSheet()};
 $('ccmine').onclick=()=>{if(CUSTOM){useCard('custom');openSheet()}};
 function openImport(backToSheet){
+  if(maybeOfferPendingCard(true))return;
   const box=$('modalin');
-  const photoUI=aiReady()?`
+  const reading=readInProgress();
+  const photoUI=aiReady()?(reading?`
   <div class="photozone">
     <div class="pz1">…or photograph your card</div>
-    <div class="pz2">Add one photo of each panel of this year's card.<br>Good light, card flat, whole panel in frame.<br>Reading takes 4–5 minutes.</div>
+    <div class="pz2">Your photos are being read now — about ${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))} more minute${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))>1?'s':''}.<br>Play on — your card will appear the moment it's ready.</div>
+  </div>`:`
+  <div class="photozone">
+    <div class="pz1">…or photograph your card</div>
+    ${READERR?`<div class="imperr" style="display:block">${READERR}</div>`:''}
+    <div class="pz2">Add one photo of each panel of this year's card.<br>Good light, card flat, whole panel in frame.<br>You can keep playing while it reads.</div>
     <div class="pslots">
       <button class="pslot" id="slot0"><b>+</b><span>PANEL 1</span></button>
       <button class="pslot" id="slot1"><b>+</b><span>PANEL 2</span></button>
@@ -1578,7 +1592,7 @@ function openImport(backToSheet){
     <div class="mbtns" id="convertrow" style="display:none;margin-top:14px">
       <button class="abtn gold" id="convertgo">READ MY CARD</button>
     </div>
-  </div>`:'';
+  </div>`):'';
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
   <div class="photozone">
     <div class="pz1">Enter your club code</div>
@@ -1614,7 +1628,7 @@ function openImport(backToSheet){
   };
   box.querySelector('#codein').addEventListener('keydown',e=>{if(e.key==='Enter')box.querySelector('#codego').click()});
   let photos=[null,null,null];
-  if(aiReady()){
+  if(aiReady()&&!reading){
     for(let i=0;i<3;i++){
       const slot=box.querySelector('#slot'+i),pin=box.querySelector('#pin'+i);
       slot.onclick=()=>pin.click();
@@ -1655,55 +1669,72 @@ function openImport(backToSheet){
   $('modal').classList.add('open');
 }
 function olmHttp(){return OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:')}
+/* background reading: the user plays on while the server reads their photos */
+let BGREAD={timer:null};
+let READERR=null;
+function readInProgress(){try{return JSON.parse(localStorage.getItem('olmReadJob')||'null')}catch(e){return null}}
+function bgReadClear(){clearTimeout(BGREAD.timer);BGREAD.timer=null;try{localStorage.removeItem('olmReadJob')}catch(e){}}
+async function bgReadPoll(job){
+  clearTimeout(BGREAD.timer);
+  try{
+    const r=await fetch(olmHttp()+'/api/readjob?id='+job+'&t='+Date.now());
+    const j=await r.json();
+    if(j.status==='done'&&j.result&&j.result.card&&!validateCard(j.result.card)){
+      bgReadClear();
+      try{localStorage.setItem('olmPendingCard',JSON.stringify({card:j.result.card,flags:j.result.flags||[],panels:j.result.panels||[],model:j.result.model||'?'}))}catch(e){}
+      showMsg('YOUR CARD IS READY');
+      maybeOfferPendingCard();
+      return;
+    }
+    if(j.status==='error'||j.err){
+      bgReadClear();
+      READERR=(j.result&&j.result.error)||j.err||'The reading failed — try again with brighter, flatter photos.';
+      showMsg('CARD READ FAILED');
+      return;
+    }
+  }catch(e){}
+  BGREAD.timer=setTimeout(()=>bgReadPoll(job),10000);
+}
+function maybeOfferPendingCard(force){
+  let p=null;try{p=JSON.parse(localStorage.getItem('olmPendingCard')||'null')}catch(e){}
+  if(!p)return false;
+  const titleVisible=!$('title').classList.contains('hide');
+  const inGame=!titleVisible&&G&&G.phase&&G.phase!=='over';
+  if(inGame&&!force)return false;
+  try{localStorage.removeItem('olmPendingCard')}catch(e){}
+  window.__reading=p.panels;window.__modelUsed=p.model;
+  reviewCard(p.card,p.flags,false);
+  return true;
+}
 async function convertPhotos(files,backToSheet){
   const box=$('modalin');
-  const msgs=['Reading every line of your card…','Transcribing the hands…','Double-checking each panel…','Converting the patterns…','Validating every hand…','Nearly there — polishing the card…'];
-  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Reading your card</h2>
-    <div class="spin"></div>
-    <div class="msub" id="convmsg">Preparing your photos…</div>
-    <div class="msub" style="font-size:11px;color:#A08F63">This takes 4–5 minutes — keep this page open.</div>`;
-  const say=t=>{const el=$('convmsg');if(el)el.textContent=t};
-  let mi=0;let mt=null;
-  window.__reading=[];
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">One moment</h2>
+    <div class="spin"></div><div class="msub">Preparing your photos…</div>`;
   try{
     const photos=await Promise.all(files.map(f=>fileToJpeg(f,2000)));
-    // wake the server (it naps when quiet)
-    say('Waking the reader…');
-    const base=olmHttp();
-    let awake=false;
-    for(let a=0;a<12&&!awake;a++){
-      try{const r=await fetch(base+'/?wake='+Date.now());awake=r.ok}catch(e){}
-      if(!awake)await new Promise(r=>setTimeout(r,8000));
-    }
-    if(!awake)throw new Error('The reading service is not reachable right now — try again in a minute');
-    say('Uploading your photos…');
-    const pr=await fetch(base+'/api/read',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({token:mpToken(),photos})});
-    const pj=await pr.json();
-    if(pj.err)throw new Error(pj.err);
-    say(msgs[0]);
-    mt=setInterval(()=>{say(msgs[++mi%msgs.length])},25000);
-    let res=null;
-    for(let a=0;a<120;a++){
-      await new Promise(r=>setTimeout(r,5000));
+    closeModal();
+    if(backToSheet)openSheet();
+    showMsg('READING YOUR CARD');
+    READERR=null;
+    (async()=>{
       try{
-        const jr=await fetch(base+'/api/readjob?id='+pj.job+'&t='+Date.now());
-        const jj=await jr.json();
-        if(jj.status==='done'){res=jj.result;break}
-        if(jj.status==='error')throw new Error((jj.result&&jj.result.error)||'The reading failed');
-        if(jj.err)throw new Error(jj.err);
-      }catch(e){if(!/failed to fetch|network/i.test(String(e.message)))throw e}
-    }
-    if(!res)throw new Error('The reading timed out — please try again');
-    const card=res.card;
-    const bad=validateCard(card);
-    if(bad)throw new Error(bad);
-    window.__reading=res.panels||[];
-    window.__modelUsed=res.model||'?';
-    clearInterval(mt);
-    reviewCard(card,res.flags||[],backToSheet);
+        const base=olmHttp();
+        let awake=false;
+        for(let a=0;a<15&&!awake;a++){
+          try{const r=await fetch(base+'/?wake='+Date.now());awake=r.ok}catch(e){}
+          if(!awake)await new Promise(r=>setTimeout(r,8000));
+        }
+        if(!awake)throw new Error('The reading service is not reachable — try again in a few minutes');
+        const pr=await fetch(base+'/api/read',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({token:mpToken(),photos})});
+        const pj=await pr.json();
+        if(pj.err)throw new Error(pj.err);
+        try{localStorage.setItem('olmReadJob',JSON.stringify({job:pj.job,ts:Date.now()}))}catch(e){}
+        bgReadPoll(pj.job);
+      }catch(e){READERR=e.message;showMsg('CARD READ FAILED')}
+    })();
+    return;
   }catch(e){
-    clearInterval(mt);
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Hmm, that didn't work</h2>
       <div class="msub">${(e&&e.message)||'Something went wrong reading the photos.'}<br><br>Try retaking the photos — flat card, bright light, one full panel per photo.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rtry">TRY AGAIN</button>
@@ -2120,6 +2151,7 @@ function goTitle(){
   closeCall();closeModal();
   $('sheet').classList.remove('open');
   $('title').classList.remove('hide');
+  setTimeout(()=>maybeOfferPendingCard(),400);
 }
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
@@ -2280,6 +2312,9 @@ bootCard();
   try{seen=!!localStorage.getItem('olmSeen')}catch(e){}
   if(!seen&&!CUSTOM)showWelcome();
   else{try{localStorage.setItem('olmSeen','1')}catch(e){}}
+  const rj=readInProgress();
+  if(rj)bgReadPoll(rj.job);
+  setTimeout(()=>maybeOfferPendingCard(),600);
 })();
 </script>
 </body>

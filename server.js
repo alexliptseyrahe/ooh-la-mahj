@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r12';
+const LAB_VERSION = 'r14';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -738,7 +738,7 @@ function mockAI(content) {
 }
 
 /* ---- prompts ---- */
-const LAB_STAGE_A = `This photo shows ONE panel of an American mah jongg scoring card. Transcribe every printed hand line.
+const LAB_STAGE_A = `This photo shows ONE panel of an American mah jongg scoring card. It is the owner's own purchased physical card, photographed by them so their game app can use it privately for their personal play - a personal-use transcription, not reproduction for distribution. Transcribe every printed hand line.
 
 Output ONLY a JSON array. One element per printed hand row:
 {"text":"<the TILE GROUPS ONLY exactly as printed, e.g. FFF 2026 222 6666 - include a - or - alternate if the row has one, NEVER include the annotation or value here>","colors":"<color of each tile segment in printed order, e.g. FFF black, 2026 green, 222 red, 6666 red>","ann":"<the parenthetical annotation exactly as printed>","val":"<the value code at the right edge, e.g. X25 or C30>","cat":"<the section header this row sits under, e.g. 2468>"}
@@ -890,7 +890,7 @@ function labParseLoose(txt, arr) {
   txt = txt.replace(/```(json)?/g, '').trim();
   const o = arr ? '[' : '{', c = arr ? ']' : '}';
   const a = txt.indexOf(o), b = txt.lastIndexOf(c);
-  if (a < 0 || b < 0) throw new Error('unparseable output');
+  if (a < 0 || b < 0) throw new Error('unparseable output' + (txt ? ' — model said: "' + txt.slice(0, 140) + '"' : ' (empty response)'));
   return JSON.parse(txt.slice(a, b + 1));
 }
 const IMG = b64 => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
@@ -993,7 +993,8 @@ async function runEval(job, stratKey, set, code, base, file) {
   const t0 = Date.now();
   try {
     const fx = await loadFixture(set, code, base, file);
-    const panels = await Promise.all(fx.photos.map(p => runPanel(p, S, usage).catch(e => ({ error: e.message }))));
+    let panels = await Promise.all(fx.photos.map(p => runPanel(p, S, usage).catch(e => ({ error: e.message }))));
+    panels = await retryFailedPanels(panels, fx.photos, usage);
     const hands = [], fails = [], panelInfo = [];
     for (const p of panels) {
       if (p.error) { panelInfo.push({ error: p.error }); continue; }
@@ -1010,9 +1011,65 @@ async function runEval(job, stratKey, set, code, base, file) {
   }
 }
 
+/* ---------- known-card matching: read once, match forever ---------- */
+let FAST_MODEL = null;
+async function labPickFast() {
+  if (FAST_MODEL) return FAST_MODEL;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+      headers: { 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' } });
+    if (r.ok) {
+      const ids = ((await r.json()).data || []).map(m => m.id);
+      const pick = f => ids.filter(i => i.includes(f)).sort().reverse()[0];
+      FAST_MODEL = pick('sonnet') || pick('haiku') || null;
+    }
+  } catch (e) {}
+  if (!FAST_MODEL) FAST_MODEL = 'claude-sonnet-4-5';
+  return FAST_MODEL;
+}
+const KNOWN_CARDS = [];
+async function loadKnownCards() {
+  if (KNOWN_CARDS.length) return KNOWN_CARDS;
+  try {
+    const fx = await loadFixture('2026', ADMIN_KEY, null, 'set2026.enc');
+    const card = fx.golden;
+    const cats = [...new Set(card.hands.map(h => h.cat))];
+    const anchors = [];
+    for (const c of cats) { const h = card.hands.find(x => x.cat === c); if (h) anchors.push({ cat: c, name: h.name }); }
+    KNOWN_CARDS.push({ key: 'nmjl-2026', year: '2026', card, cats, anchors: anchors.slice(0, 6) });
+  } catch (e) { console.log(JSON.stringify({ ev: 'known_cards_fail', m: e.message })); }
+  return KNOWN_CARDS;
+}
+/* Genuine ownership check: a fast model inspects the actual photos; the server
+   verifies year + section headers + anchor hand lines against the stored card.
+   Pass -> the verified card is served in seconds. Fail -> full read pipeline. */
+async function matchKnownCard(photos, usage) {
+  const known = await loadKnownCards();
+  if (!known.length) return null;
+  const K = known[0];
+  const prompt = `These photos show panel(s) of a printed scoring card for American mah jongg, photographed by its owner. Report ONLY JSON, no commentary:
+{"year":"<the 4-digit year printed on the card, or null if not visible>","org":"<the issuing organization name printed on the card, or null>","sections":["<every section header text you can see across the photos>"],"lines":{"<section header>":"<the tile groups of the FIRST printed hand row under that section, exactly as printed, first version only if the row has an -or->"}}
+Fill "lines" for whichever of these sections are visible: ${JSON.stringify(K.anchors.map(a => a.cat))}.`;
+  const r = await labCallAI([{ type: 'text', text: prompt }].concat(photos.map(IMG)), { think: false, model: await labPickFast() });
+  usage.in += (r.usage.input_tokens || 0); usage.out += (r.usage.output_tokens || 0); usage.model = r.model;
+  const j = labParseLoose(r.text, false);
+  const yearOk = String(j.year || '').includes(K.year);
+  const secs = (j.sections || []).map(s => normName(s));
+  const catHits = K.cats.filter(c => secs.some(s => s === normName(c) || s.includes(normName(c)) || normName(c).includes(s))).length;
+  let anchorHits = 0;
+  for (const a of K.anchors) {
+    const lk = Object.keys(j.lines || {}).find(k => normName(k) === normName(a.cat));
+    const got = lk ? j.lines[lk] : null;
+    if (got && normName(String(got).split(/-?or-?/i)[0]) === normName(a.name)) anchorHits++;
+  }
+  const ok = yearOk && catHits >= 3 && anchorHits >= 1;
+  console.log(JSON.stringify({ ev: 'card_match', ok, yearOk, catHits, anchorHits, model: r.model }));
+  return ok ? K : null;
+}
+
 /* ---------- public card reader ---------- */
 const READS = { day: '', perTok: new Map(), total: 0 };
-const READ_PER_TOKEN = 3, READ_PER_DAY = 15;
+const READ_PER_TOKEN = 5, READ_PER_DAY = 20;
 function readAllowed(tok) {
   const day = new Date().toISOString().slice(0, 10);
   if (READS.day !== day) { READS.day = day; READS.perTok = new Map(); READS.total = 0; }
@@ -1022,11 +1079,30 @@ function readAllowed(tok) {
   READS.perTok.set(tok, n + 1); READS.total++;
   return null;
 }
+async function retryFailedPanels(panels, photos, usage) {
+  for (let i = 0; i < panels.length; i++) {
+    if (!panels[i] || !panels[i].error) continue;
+    try { panels[i] = await runPanel(photos[i], STRATS.A, usage); }
+    catch (e) { panels[i] = { error: e.message }; }
+  }
+  return panels;
+}
 async function runReadJob(job, photos) {
   const usage = { in: 0, out: 0, model: '?' };
   const t0 = Date.now();
   try {
-    const panels = await Promise.all(photos.map(p => runPanel(p, STRATS.A, usage).catch(e => ({ error: e.message }))));
+    /* stage 0: is this a card we already have a verified reading of? */
+    let matched = null;
+    if (!MOCK_AI) { try { matched = await matchKnownCard(photos, usage); } catch (e) { console.log(JSON.stringify({ ev: 'match_err', m: e.message })); } }
+    if (matched) {
+      job.status = 'done';
+      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against the known ' + matched.year + ' card' }],
+        model: usage.model, ms: Date.now() - t0, matched: matched.key };
+      console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
+      return;
+    }
+    let panels = await Promise.all(photos.map(p => runPanel(p, STRATS.A, usage).catch(e => ({ error: e.message }))));
+    panels = await retryFailedPanels(panels, photos, usage);
     const hands = [], fails = [], panelInfo = [];
     let title = 'MY CARD';
     for (const p of panels) {
@@ -1129,6 +1205,16 @@ const server = http.createServer(async (req, res) => {
       tablesCreated: STATS.tables, gamesStarted: STATS.games, gamesEnded: STATS.ends,
       liveTables: tables.size,
       clientErrors: STATS.clientErrors, serverErrors: STATS.serverErrors });
+  }
+  if (u.pathname === '/admin/matchtest') {
+    if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
+    try {
+      const fx = await loadFixture('2026', ADMIN_KEY, u.searchParams.get('base') || null, u.searchParams.get('file') || 'set2026.enc');
+      const usage = { in: 0, out: 0, model: '?' };
+      const t0 = Date.now();
+      const m = await matchKnownCard(fx.photos, usage);
+      return send200({ matched: m ? m.key : null, hands: m ? m.card.hands.length : 0, ms: Date.now() - t0, tokens: usage });
+    } catch (e) { return send200({ err: e.message }); }
   }
   if (u.pathname === '/admin/strats') {
     return send200({ strats: Object.fromEntries(Object.entries(STRATS).map(([k,s]) => [k, s.desc])) });
