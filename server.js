@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r8';
+const LAB_VERSION = 'r9';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -762,6 +762,8 @@ GROUP SYNTAX: each group is "<count>:<tiles>" where count 1-6 is how many tiles.
 - "da" = the dragon MATCHING suit a (likewise "db","dc").
 - "xa" = a dragon NOT matching suit a (opposite dragon).
 - "dd" = any one dragon (same dragon throughout the alternative).
+- "d1","d2","d3" = DISTINCT dragons, filled in every possible assignment. A single "4:d1" kong = a kong of any one dragon. Two dragon groups "d1","d2" = any two DIFFERENT dragons. Three D groups (e.g. DDD DDD DDDD) = "3:d1","3:d2","4:d3" so every arrangement of the three dragons is allowed.
+- "w1","w2","w3","w4" = DISTINCT winds, every possible assignment (a kong of any one wind = "4:w1").
 - Variable number: "na" = number n in suit a; "n1a" = n+1 in suit a, up to "n6a". Set n's range with "n" field: "1-5", "odd", "even", "1,5", "1-9".
 - "ma" = a second independent number m (never equal to n), range via "m".
 - "pa" = a chosen number p, range via "p" (e.g. "2,4,6,8" for "kong 2, 4, 6 or 8").
@@ -772,6 +774,10 @@ Each alt: {"g":["3:2a","3:0","4:2b","4:6b"],"n":"1-5"} (n/m/p only when used). G
 - "name" must be the printed tile groups of the FIRST arrangement ONLY. If the line contains "- or -", NEVER include "- or -" or the repeated groups in "name" - the alternate arrangements go in "alts" instead.
 - When structure depends on a chosen number in a way p cannot express (e.g. "pair any odd, singles of the remaining odds"), write one alt per choice with literal numbers.
 - "These Nos. Only" means literal numbers; "Any ... Consec." means n variables.
+- Within ONE printed group, repeated identical tiles are ONE entry: "2026" in suit a = "2:2a","1:0","1:6a" - NEVER "1:2a","1:0","1:2a","1:6a".
+- DRAGON RULES: use "da" (matching dragon) ONLY when the annotation literally says Matching. "Any Dragon" = "d1". Standalone printed D groups with no annotation tying them to a suit = "d1"/"d2"/"d3" (distinct, free assignment) - never hardcode DR/DG/DW for them, and never restrict a dragon kong to fewer choices than the card allows.
+- A printed group of a specific wind (NNNN) is that wind - but "Any Wind" in the annotation = "w1".
+- NEVER invent suit arrangements the annotation does not state (e.g. do not split numbers across 2 suits unless the card says 2 or 3 suits).
 
 EXAMPLES:
 "222 000 2222 6666 (Any 2 Suits) X25" in 2026 -> {"name":"222 000 2222 6666","cat":"2026","pts":25,"c":false,"note":"Any 2 suits","alts":[{"g":["3:2a","3:0","4:2b","4:6b"]}]}
@@ -808,13 +814,15 @@ function labExpand(cc) {
     let failReason = '';
     for (const alt of (h.alts || [])) {
       const toks = []; const suitVars = new Set();
-      let useN=false, useM=false, useP=false, useDD=false, xRef=null, maxOff=0, bad=false;
+      let useN=false, useM=false, useP=false, useDD=false, useDP=false, useWP=false, xRef=null, maxOff=0, bad=false;
       for (const t of (alt.g || [])) {
         const mm = /^([1-6]):(.+)$/.exec(String(t).replace(/\s+/g,''));
         if (!mm) { bad=true; failReason='could not parse group "'+t+'"'; break; }
         const k = +mm[1], sp = mm[2]; let r;
         if (/^(F|N|E|W|S|0|DR|DG|DW)$/.test(sp)) {}
         else if (sp === 'dd') useDD = true;
+        else if (/^d[123]$/.test(sp)) useDP = true;
+        else if (/^w[1-4]$/.test(sp)) useWP = true;
         else if (r = /^d([abc])$/.exec(sp)) suitVars.add(r[1]);
         else if (r = /^x([abc])$/.exec(sp)) { suitVars.add(r[1]); xRef = r[1]; }
         else if (r = /^([1-9])([abc])$/.exec(sp)) suitVars.add(r[2]);
@@ -831,13 +839,16 @@ function labExpand(cc) {
       const mV = useM ? labParseNums(String(alt.m||h.m||'1-9'), 0) : [0];
       const pV = useP ? labParseNums(String(alt.p||h.p||'1-9'), 0) : [0];
       const dV = useDD ? DRAGS : [null];
+      const permsOf = a => a.length<=1 ? [a] : a.flatMap((x,i)=>permsOf(a.slice(0,i).concat(a.slice(i+1))).map(rest=>[x].concat(rest)));
+      const dPerms = useDP ? permsOf(DRAGS) : [null];
+      const wPerms = useWP ? permsOf(['WN','WE','WW','WS']) : [null];
       const sv = [...suitVars];
       for (const asg of labSuitAssigns(sv.length)) {
         const smap = {}; sv.forEach((v,i)=>smap[v]=asg[i]);
         const xV = xRef ? DRAGS.filter(d=>d!==DRAGON[smap[xRef]]) : [null];
         for (const n of nV) for (const m of mV) {
           if (useN && useM && m === n) continue;
-          for (const p of pV) for (const dd of dV) for (const xx of xV) {
+          for (const p of pV) for (const dd of dV) for (const xx of xV) for (const dpm of dPerms) for (const wpm of wPerms) {
             const v = []; let good = true;
             for (const { k, sp } of toks) {
               let tk = null, r;
@@ -848,6 +859,8 @@ function labExpand(cc) {
               else if (sp==='DG') tk='GG';
               else if (sp==='DW') tk='G0';
               else if (sp==='dd') tk=dd;
+              else if (r=/^d([123])$/.exec(sp)) tk=dpm[+r[1]-1];
+              else if (r=/^w([1-4])$/.exec(sp)) tk=wpm[+r[1]-1];
               else if (r=/^d([abc])$/.exec(sp)) tk=DRAGON[smap[r[1]]];
               else if (r=/^x([abc])$/.exec(sp)) tk=xx;
               else if (r=/^([1-9])([abc])$/.exec(sp)) tk=smap[r[2]]+r[1];
@@ -922,7 +935,13 @@ async function runPanel(b64, S, usage) {
   return { lines, result: best };
 }
 const normName = s => String(s||'').replace(/[^0-9A-Z]/gi,'').toUpperCase();
-const canonV = v => v.map(g => g[0] + ':' + g[1]).sort().join('|');
+/* gameplay-equivalent canonical form: groups of 3+ (joker-eligible) kept as-is,
+   smaller groups pooled into a tile multiset — so "2:2a" vs "1:2a","1:2a" score equal */
+const canonV = v => {
+  const big = [], small = {};
+  for (const [tk, k] of v) { if (k >= 3) big.push(tk + ':' + k); else small[tk] = (small[tk] || 0) + k; }
+  return big.sort().join('|') + '#' + Object.keys(small).sort().map(t => t + ':' + small[t]).join('|');
+};
 const handSig = h => h.variants.map(canonV).sort().join('~');
 function scoreCard(got, golden) {
   const gBySig = new Map(), gByName = new Map();
