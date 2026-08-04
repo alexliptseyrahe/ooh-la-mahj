@@ -640,13 +640,31 @@ async function decryptBundle(txt, code) {
   return JSON.parse(new TextDecoder().decode(pt));
 }
 let FIXCACHE = {};
-async function loadFixture(set, code) {
-  if (FIXCACHE[set]) return FIXCACHE[set];
-  const r = await fetch(SITE_BASE + '/fixtures/set-' + set + '.enc');
-  if (!r.ok) throw new Error('fixture fetch ' + r.status);
-  const fx = await decryptBundle(await r.text(), code);
-  FIXCACHE[set] = fx;
-  return fx;
+async function loadFixture(set, code, base, file) {
+  const fname = file || ('set-' + set + '.enc');
+  const urls = [];
+  for (const b of [base, SITE_BASE, 'https://raw.githubusercontent.com/alexliptseyrahe/ooh-la-mahj/main/ooh-la-mahj'.replace('/ooh-la-mahj$',''), 'https://alexliptseyrahe.github.io/ooh-la-mahj', 'https://raw.githubusercontent.com/alexliptseyrahe/ooh-la-mahj/main']) {
+    if (b && !urls.includes(b + '/fixtures/' + fname)) urls.push(b + '/fixtures/' + fname);
+  }
+  const names = [fname, fname.replace('set-', 'set'), fname.replace(/^set(\d)/, 'set-$1')];
+  const tries = [];
+  for (const u of urls) for (const n of names) {
+    const t = u.replace(fname, n);
+    if (!tries.includes(t)) tries.push(t);
+  }
+  const ck = tries[0];
+  if (FIXCACHE[ck]) return FIXCACHE[ck];
+  let lastErr = 'no url worked';
+  for (const t of tries) {
+    try {
+      const r = await fetch(t);
+      if (!r.ok) { lastErr = 'fetch ' + r.status + ' at ' + t; continue; }
+      const fx = await decryptBundle(await r.text(), code);
+      FIXCACHE[ck] = fx;
+      return fx;
+    } catch (e) { lastErr = e.message + ' at ' + t; }
+  }
+  throw new Error('fixture: ' + lastErr);
 }
 
 /* ---- AI calls ---- */
@@ -901,12 +919,12 @@ function scoreCard(got, golden) {
 /* ---- eval jobs ---- */
 const JOBS = new Map();
 let JOBSEQ = 0;
-async function runEval(job, stratKey, set, code) {
+async function runEval(job, stratKey, set, code, base, file) {
   const S = STRATS[stratKey];
   const usage = { in: 0, out: 0, model: '?' };
   const t0 = Date.now();
   try {
-    const fx = await loadFixture(set, code);
+    const fx = await loadFixture(set, code, base, file);
     const panels = await Promise.all(fx.photos.map(p => runPanel(p, S, usage).catch(e => ({ error: e.message }))));
     const hands = [], fails = [], panelInfo = [];
     for (const p of panels) {
@@ -937,7 +955,8 @@ const server = http.createServer(async (req, res) => {
     const id = 'j' + (++JOBSEQ);
     const job = { status: 'running', started: Date.now() };
     JOBS.set(id, job);
-    runEval(job, strat, u.searchParams.get('set') || '2026', ADMIN_KEY);
+    runEval(job, strat, u.searchParams.get('set') || '2026', ADMIN_KEY,
+      u.searchParams.get('base') || null, u.searchParams.get('file') || null);
     return send200({ job: id, strat, note: 'poll /admin/job?k=...&id=' + id });
   }
   if (u.pathname === '/admin/job') {
