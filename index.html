@@ -380,7 +380,7 @@ details.altimp summary{font-size:11px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <div class="est">EST. 2026</div>
   <div class="tbtns">
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
-    <button class="abtn gold" id="btnfriends">PLAY WITH FRIENDS</button>
+    <button class="abtn gold big" id="btnfriends">PLAY WITH FRIENDS</button>
     <button class="abtn ghost" id="btncard2">VIEW THE CARD</button>
     <button class="abtn ghost" id="btnhow">HOUSE RULES</button>
   </div>
@@ -2019,7 +2019,7 @@ $('btnmenu').onclick=()=>{
   const top=MP.active
     ?`<button class="abtn" id="mleavet">LEAVE TABLE</button>`
     :`<button class="abtn" id="mnewg">NEW GAME</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">BACK TO TITLE</button>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">EXIT GAME</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
