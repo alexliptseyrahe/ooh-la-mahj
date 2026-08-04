@@ -1958,6 +1958,17 @@ function openFriends(errMsg){
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
+function beacon(path){
+  if(!OLM_SERVER)return;
+  try{fetch(OLM_SERVER.replace(/^wss/,'https').replace(/^ws:/,'http:')+path).catch(()=>{})}catch(e){}
+}
+beacon('/b?e=load&t='+encodeURIComponent(mpToken()));
+window.addEventListener('error',e=>{
+  beacon('/e?m='+encodeURIComponent(String(e.message||'script error').slice(0,180)));
+});
+window.addEventListener('unhandledrejection',e=>{
+  beacon('/e?m='+encodeURIComponent(('promise: '+String(e.reason&&e.reason.message||e.reason||'?')).slice(0,180)));
+});
 function openJoinInvite(code,host){
   const box=$('modalin');
   const safeHost=(host||'').replace(/[<>&"]/g,'').slice(0,14);

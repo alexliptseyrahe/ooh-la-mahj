@@ -175,6 +175,10 @@ function botClaimCheck(T, p, t) {
 
 const BOT_MS = +process.env.BOT_MS || 1000;
 const CALLB_MS = +process.env.CALLB_MS || 1200;
+/* ================= STATS ================= */
+const STATS = { boot: Date.now(), loads: 0, uniq: new Set(), tables: 0, games: 0,
+  ends: { win: 0, wall: 0 }, clientErrors: [], serverErrors: [] };
+function statErr(list, msg) { list.push({ t: new Date().toISOString(), m: String(msg).slice(0, 200) }); if (list.length > 30) list.shift(); }
 /* ================= TABLES ================= */
 const BOTNAMES = ['Evelyn', 'Dinah', 'Bitsy', 'Norma'];
 const tables = new Map();   // code -> table
@@ -208,6 +212,8 @@ function makeTable(hostP, cardJson, config) {
   T.seats[0].token = hostP.token;
   T.seats[0].connected = true;
   tables.set(code, T);
+  STATS.tables++;
+  console.log(JSON.stringify({ ev: 'table_created', code, at: new Date().toISOString() }));
   return T;
 }
 function seatOf(T, token) { return T.seats.findIndex(s => s && s.token === token); }
@@ -274,6 +280,8 @@ function startGame(T) {
   T.seats[T.dealer].rack.push(T.wall.pop());
   T.discards = [];
   T.phase = 'charleston'; T.chStep = 0; T.callWin = null; T.seq++;
+  STATS.games++;
+  console.log(JSON.stringify({ ev: 'game_started', code: T.code, humans: humanSeats(T).length, at: new Date().toISOString() }));
   clearTimers(T);
   broadcast(T, eventMsg('start'));
   armCharleston(T);
@@ -450,6 +458,7 @@ function finalTiles(p) {
 const RESULTS = [];
 function pushResult(r) { RESULTS.push(r); if (RESULTS.length > 50) RESULTS.shift(); }
 function endWin(T, i, win) {
+  STATS.ends.win++;
   pushResult({ r: 'win', hand: win.hand.name, seat: i, kind: T.seats[i].kind });
   T.phase = 'ended'; T.seq++; clearTimers(T);
   const tiles = finalTiles(T.seats[i]);
@@ -458,6 +467,7 @@ function endWin(T, i, win) {
     hand: win.hand.name, cat: win.hand.cat, pts: win.hand.pts * (jokerless ? 2 : 1), jokerless, tiles });
 }
 function endWallGame(T) {
+  STATS.ends.wall++;
   pushResult({ r: 'wall' });
   T.phase = 'ended'; T.seq++; clearTimers(T);
   broadcast(T, { type: 'end', result: 'wall' });
@@ -626,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r6';
+const LAB_VERSION = 'r7';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -978,6 +988,27 @@ const server = http.createServer(async (req, res) => {
     if (!job) return send200({ err: 'no such job' });
     return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000), result: job.result || null });
   }
+  if (u.pathname === '/b') {
+    STATS.loads++;
+    const t = String(u.searchParams.get('t') || '').slice(0, 64);
+    if (t && STATS.uniq.size < 50000) STATS.uniq.add(t);
+    return send200({ ok: 1 });
+  }
+  if (u.pathname === '/e') {
+    statErr(STATS.clientErrors, u.searchParams.get('m') || 'unknown');
+    console.log(JSON.stringify({ ev: 'client_error', m: String(u.searchParams.get('m') || '').slice(0, 200), at: new Date().toISOString() }));
+    return send200({ ok: 1 });
+  }
+  if (u.pathname === '/admin/stats') {
+    if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
+    const up = Math.round((Date.now() - STATS.boot) / 60000);
+    return send200({ v: LAB_VERSION, upMinutes: up,
+      note: 'counters reset when the server restarts/redeploys; full history is in the Render Logs tab',
+      appLoads: STATS.loads, uniquePlayers: STATS.uniq.size,
+      tablesCreated: STATS.tables, gamesStarted: STATS.games, gamesEnded: STATS.ends,
+      liveTables: tables.size,
+      clientErrors: STATS.clientErrors, serverErrors: STATS.serverErrors });
+  }
   if (u.pathname === '/admin/strats') {
     return send200({ strats: Object.fromEntries(Object.entries(STRATS).map(([k,s]) => [k, s.desc])) });
   }
@@ -996,7 +1027,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', data => {
     let m;
     try { m = JSON.parse(String(data).slice(0, 200000)); } catch (e) { return; }
-    try { handleMsg(p, m); } catch (e) { console.error('handleMsg', e); }
+    try { handleMsg(p, m); } catch (e) { console.error('handleMsg', e); statErr(STATS.serverErrors, (m && m.type) + ': ' + e.message); }
   });
   ws.on('close', () => { if (p.ws === ws) { p.ws = null; onDisconnect(p); } });
 });
