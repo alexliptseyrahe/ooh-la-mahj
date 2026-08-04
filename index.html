@@ -973,6 +973,7 @@ function newGame(){
   SEQ++;
   killClones();
   _tid=0;
+  sfx('shuffle');
   const wall=shuffle(makeDeck());
   const players=[{name:'You',isBot:false,hand:[],exp:[]}]
     .concat(BOTNAMES.map(n=>({name:n,isBot:true,hand:[],exp:[]})));
@@ -1058,6 +1059,7 @@ function playerDraw(){
   const t=G.wall.pop();
   G.players[0].hand.push(t);
   G.step='discard';
+  sfx('draw');
   setStatus(`You draw <b>${nameOf(t)}</b>`);
   renderAll();
   playerDiscardPhase();
@@ -1090,6 +1092,7 @@ function doJokerSwap(){
   const idx=sw.e.tiles.indexOf(sw.j);
   sw.e.tiles[idx]=sw.real;
   me.hand.push(sw.j);
+  sfx('joker');
   setStatus(`You swap <b>${nameOf(sw.real)}</b> for a <b>Joker</b>`);
   renderAll();
   playerDiscardPhase();
@@ -1099,6 +1102,7 @@ function discardSelected(){
   if(MP.active){
     mpSend({type:'discard',id:[...G.sel][0]});
     G.sel.clear();
+    sfx('place');
     renderRack();renderActions();
     return;
   }
@@ -1107,6 +1111,7 @@ function discardSelected(){
   me.hand=me.hand.filter(x=>x!==t);
   G.sel.clear();
   G.discards.push({t,by:0});
+  sfx('place');
   setStatus(`You discard <b>${nameOf(t)}</b>`);
   renderAll();
   afterDiscard(0,t);
@@ -1165,6 +1170,7 @@ function botClaims(by,t){
       p.hand=p.hand.filter(x=>!used.includes(x));
       p.exp.push({tiles:[t,...used],rep:key(t)});
       G.turn=j;G.step='discard';
+      sfx('call');
       setStatus(`<b>${p.name}</b> calls <b>${nameOf(t)}</b>!`);
       renderAll();
       later(1200,()=>botDiscard(p,j));
@@ -1221,11 +1227,71 @@ function botDiscard(p,j){
   const t=cand[Math.floor(Math.random()*cand.length)];
   p.hand=p.hand.filter(x=>x!==t);
   G.discards.push({t,by:j});
+  sfx('placebot');
   setStatus(`<b>${p.name}</b> discards <b>${nameOf(t)}</b>`);
   renderAll();
   later(600,()=>afterDiscard(j,t));
 }
 
+/* ---------- sound & haptics ---------- */
+let SND=true;try{SND=localStorage.getItem('olmSnd')!=='0'}catch(e){}
+let AC=null;
+function ac(){
+  if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
+  if(AC.state==='suspended')AC.resume().catch(()=>{});
+  return AC;
+}
+function olmHaptic(kind){
+  try{
+    const H=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics;
+    if(H){
+      if(kind==='win')H.notification({type:'SUCCESS'});
+      else if(kind==='call')H.impact({style:'MEDIUM'});
+      else H.impact({style:'LIGHT'});
+      return;
+    }
+    if(navigator.vibrate){
+      if(kind==='win')navigator.vibrate([25,40,25,40,60]);
+      else if(kind==='call')navigator.vibrate(18);
+      else navigator.vibrate(6);
+    }
+  }catch(e){}
+}
+function sfx(kind){
+  if(kind==='tap'||kind==='place'||kind==='call'||kind==='win'||kind==='joker')olmHaptic(kind);
+  if(!SND)return;
+  const a=ac();if(!a)return;
+  const t=a.currentTime;
+  const tone=(f,st,d,v,ty)=>{
+    const o=a.createOscillator(),g=a.createGain();
+    o.type=ty||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0,t+st);
+    g.gain.linearRampToValueAtTime(v,t+st+.006);
+    g.gain.exponentialRampToValueAtTime(.0001,t+st+d);
+    o.connect(g);g.connect(a.destination);
+    o.start(t+st);o.stop(t+st+d+.03);
+  };
+  const click=(st,v,fc,dur)=>{
+    dur=dur||.03;
+    const b=a.createBuffer(1,Math.max(1,a.sampleRate*dur),a.sampleRate);
+    const dt=b.getChannelData(0);
+    for(let i=0;i<dt.length;i++)dt[i]=(Math.random()*2-1)*Math.pow(1-i/dt.length,2.4);
+    const s=a.createBufferSource();s.buffer=b;
+    const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=fc;f.Q.value=1.3;
+    const g=a.createGain();g.gain.value=v;
+    s.connect(f);f.connect(g);g.connect(a.destination);
+    s.start(t+st);
+  };
+  if(kind==='tap'){click(0,.4,2200);tone(1850,.001,.04,.035)}
+  else if(kind==='place'){click(0,.55,1150);tone(230,.002,.06,.045,'triangle')}
+  else if(kind==='placebot'){click(0,.28,1050);tone(210,.002,.05,.02,'triangle')}
+  else if(kind==='draw'){click(0,.22,2900)}
+  else if(kind==='shuffle'){for(let i=0;i<6;i++)click(i*.032+Math.random()*.012,.2,1300+Math.random()*1000)}
+  else if(kind==='call'){click(0,.5,950);click(.1,.5,950)}
+  else if(kind==='win'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>{tone(f,i*.095,.5,.1);tone(f*2,i*.095,.25,.02)})}
+  else if(kind==='lose'){tone(392,.0,.22,.05,'triangle');tone(311,.16,.3,.05,'triangle')}
+  else if(kind==='joker'){tone(659,.0,.09,.055);tone(880,.09,.14,.055)}
+}
 /* ---------- endings ---------- */
 /* post-game debrief: what could have been */
 let DBSEQ=0;
@@ -1320,6 +1386,7 @@ function declareWin(i,win){
   const jokerless=!final.some(t=>t.s==='J');
   const pts=win.hand.pts*(jokerless?2:1);
   const mine=i===0;
+  sfx(mine?'win':'lose');
   renderAll();
   const box=$('modalin');
   box.innerHTML='';
@@ -1353,6 +1420,7 @@ function closeModal(){$('modal').classList.remove('open')}
 /* ---------- call bar ---------- */
 let callTimer=null;
 function openCallBar(t,opts,onPass){
+  sfx('call');
   const bar=$('callbar');
   $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`;
   const bb=$('callbtns');bb.innerHTML='';
@@ -1529,10 +1597,12 @@ function tapTile(t){
     if(t.s==='J'){setStatus('Jokers may never be passed, darling');return}
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else if(G.sel.size<3)G.sel.add(t.id);
+    sfx('tap');
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else{G.sel.clear();G.sel.add(t.id)}
+    sfx('tap');
     renderRack();renderActions();
   }
 }
@@ -1890,11 +1960,11 @@ function mpOnMsg(m){
       break;
     }
     case 'event':{
-      if(m.kind==='discard'&&MP.view)stFlash(`<b>${seatName(m.seat)}</b> discards`);
-      if(m.kind==='charleston')showMsg('PASS '+['RIGHT','ACROSS','LEFT'][m.step]);
-      if(m.kind==='start')showMsg('THE CHARLESTON');
-      if(m.kind==='gameon')showMsg('GAME ON');
-      if(m.kind==='call')stFlash(`<b>${seatName(m.seat)}</b> calls!`);
+      if(m.kind==='discard'&&MP.view){stFlash(`<b>${seatName(m.seat)}</b> discards`);if(MP.view.you&&m.seat!==MP.view.you.seat)sfx('placebot')}
+      if(m.kind==='charleston'){showMsg('PASS '+['RIGHT','ACROSS','LEFT'][m.step]);sfx('shuffle')}
+      if(m.kind==='start'){showMsg('THE CHARLESTON');sfx('shuffle')}
+      if(m.kind==='gameon'){showMsg('GAME ON');sfx('shuffle')}
+      if(m.kind==='call'){stFlash(`<b>${seatName(m.seat)}</b> calls!`);sfx('call')}
       if(m.kind==='botsub')stFlash(`<b>${seatName(m.seat)}</b> lost connection — a bot fills in`);
       if(m.kind==='rejoin')stFlash(`<b>${seatName(m.seat)}</b> is back`);
       if(m.kind==='takeover'){stFlash(`<b>${m.name}</b> joins the table!`);showMsg(m.name.toUpperCase()+' JOINS')}
@@ -1952,6 +2022,7 @@ function mpRenderGame(v){
   }
 }
 function mpShowCallBar(m){
+  sfx('call');
   const bar=$('callbar');
   $('callq').innerHTML=`${nameOf(m.tile)} was discarded — call it?`;
   const bb=$('callbtns');bb.innerHTML='';
@@ -1972,6 +2043,7 @@ function mpShowCallBar(m){
 }
 function mpShowEnd(m){
   closeCall();
+  sfx(m.result==='wall'?'lose':(MP.view&&m.seat===MP.view.you.seat?'win':'lose'));
   const box=$('modalin');
   if(m.result==='wall'){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
@@ -2162,9 +2234,16 @@ $('btnmenu').onclick=()=>{
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mclose">KEEP PLAYING</button>
   </div>`;
+  box.querySelector('#msound').onclick=()=>{
+    SND=!SND;
+    try{localStorage.setItem('olmSnd',SND?'1':'0')}catch(e){}
+    box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
+    if(SND)sfx('tap');
+  };
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
   const ng=box.querySelector('#mnewg');
