@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r7';
+const LAB_VERSION = 'r8';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -769,6 +769,7 @@ GROUP SYNTAX: each group is "<count>:<tiles>" where count 1-6 is how many tiles.
 HAND ENTRY: {"name":"<the line text>","cat":"<section>","pts":<number>,"c":<true if C else false>,"note":"<annotation>","alts":[{...}]}
 Each alt: {"g":["3:2a","3:0","4:2b","4:6b"],"n":"1-5"} (n/m/p only when used). Group counts in an alt MUST total 14.
 - "- or -" versions and "Any 1 or 2 Suits" style annotations need one alt per arrangement.
+- "name" must be the printed tile groups of the FIRST arrangement ONLY. If the line contains "- or -", NEVER include "- or -" or the repeated groups in "name" - the alternate arrangements go in "alts" instead.
 - When structure depends on a chosen number in a way p cannot express (e.g. "pair any odd, singles of the remaining odds"), write one alt per choice with literal numbers.
 - "These Nos. Only" means literal numbers; "Any ... Consec." means n variables.
 
@@ -866,7 +867,8 @@ function labExpand(cc) {
     }
     if (!variants.length) { fails.push({ name: String(h.name||'Hand'), reason: failReason || 'no valid arrangements' }); continue; }
     hands.push({ name: String(h.name||'Hand'), cat: String(h.cat||'CARD'), pts: +h.pts||25,
-      concealed: !!h.c, note: String(h.note||''), disp: [[String(h.name||'Hand'),'cN']], variants });
+      concealed: !!h.c, note: String(h.note||''), disp: [[String(h.name||'Hand'),'cN']], variants,
+      src: { alts: h.alts, n: h.n, m: h.m, p: h.p } });
   }
   return { title: String(cc.title||'MY CARD'), hands, fails };
 }
@@ -932,8 +934,14 @@ function scoreCard(got, golden) {
     const sig = handSig(h);
     if (gBySig.has(sig) && !matchedGolden.has(gBySig.get(sig))) { exact++; matchedGolden.add(gBySig.get(sig)); continue; }
     const gn = gByName.get(normName(h.name));
-    if (gn && !matchedGolden.has(gn)) { nameOnly++; matchedGolden.add(gn); nameOnlyList.push({ got: h.name, gotV: h.variants.length, wantV: gn.variants.length }); continue; }
-    extra++; extraList.push(h.name);
+    if (gn && !matchedGolden.has(gn)) { nameOnly++; matchedGolden.add(gn);
+      const gotSet = new Set(h.variants.map(canonV)), wantSet = new Set(gn.variants.map(canonV));
+      nameOnlyList.push({ got: h.name, gotV: h.variants.length, wantV: gn.variants.length,
+        dsl: h.src || null,
+        onlyGot: [...gotSet].filter(x => !wantSet.has(x)).slice(0, 3),
+        onlyWant: [...wantSet].filter(x => !gotSet.has(x)).slice(0, 3) });
+      continue; }
+    extra++; extraList.push({ name: h.name, dsl: h.src || null });
   }
   const missing = golden.hands.filter(h => !matchedGolden.has(h)).map(h => h.name);
   return { goldenHands: golden.hands.length, exact, nameOnly, missing, extra, nameOnlyList: nameOnlyList.slice(0,8), extraList: extraList.slice(0,8) };
