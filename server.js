@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r9';
+const LAB_VERSION = 'r10';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -992,11 +992,84 @@ async function runEval(job, stratKey, set, code, base, file) {
   }
 }
 
+/* ---------- public card reader ---------- */
+const READS = { day: '', perTok: new Map(), total: 0 };
+const READ_PER_TOKEN = 3, READ_PER_DAY = 15;
+function readAllowed(tok) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (READS.day !== day) { READS.day = day; READS.perTok = new Map(); READS.total = 0; }
+  if (READS.total >= READ_PER_DAY) return 'The reader has reached its daily limit — try again tomorrow';
+  const n = READS.perTok.get(tok) || 0;
+  if (n >= READ_PER_TOKEN) return 'You have used your ' + READ_PER_TOKEN + ' card reads for today — try again tomorrow';
+  READS.perTok.set(tok, n + 1); READS.total++;
+  return null;
+}
+async function runReadJob(job, photos) {
+  const usage = { in: 0, out: 0, model: '?' };
+  const t0 = Date.now();
+  try {
+    const panels = await Promise.all(photos.map(p => runPanel(p, STRATS.A, usage).catch(e => ({ error: e.message }))));
+    const hands = [], fails = [], panelInfo = [];
+    let title = 'MY CARD';
+    for (const p of panels) {
+      if (p.error) { panelInfo.push({ error: p.error }); fails.push({ name: 'one whole panel', reason: p.error }); continue; }
+      panelInfo.push({ linesRead: p.lines.length, handsOut: p.result.hands.length });
+      if (p.result.title && p.result.title !== 'MY CARD') title = p.result.title;
+      for (const h of p.result.hands) hands.push({ name: h.name, cat: h.cat, pts: h.pts, concealed: h.concealed, note: h.note, disp: h.disp, variants: h.variants });
+      fails.push(...p.result.fails.map(f => ({ name: f.name, reason: f.reason })));
+    }
+    if (!hands.length) throw new Error(fails.length ? 'No hands could be read: ' + (fails[0].reason || '') : 'No hands could be read from the photos');
+    job.status = 'done';
+    job.result = { card: { title, hands }, flags: fails, panels: panelInfo, model: usage.model, ms: Date.now() - t0 };
+    console.log(JSON.stringify({ ev: 'card_read', hands: hands.length, flags: fails.length, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
+  } catch (e) {
+    job.status = 'error';
+    job.result = { error: e.message, ms: Date.now() - t0 };
+    statErr(STATS.serverErrors, 'card_read: ' + e.message);
+  }
+}
+function readBody(req, cap) {
+  return new Promise((res, rej) => {
+    let size = 0; const chunks = [];
+    req.on('data', c => { size += c.length; if (size > cap) { rej(new Error('too large')); req.destroy(); return; } chunks.push(c); });
+    req.on('end', () => res(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', rej);
+  });
+}
+
 /* ---------- server ---------- */
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const send200 = o => { res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(o)); };
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS',
+      'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' });
+    return res.end();
+  }
+  if (u.pathname === '/api/read' && req.method === 'POST') {
+    if (!OLM_API_KEY && !MOCK_AI) return send200({ err: 'The card reader is not configured on the server' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 20 * 1024 * 1024)); }
+    catch (e) { return send200({ err: e.message === 'too large' ? 'Photos too large — retake at normal quality' : 'Bad request' }); }
+    const photos = Array.isArray(body.photos) ? body.photos.filter(p => typeof p === 'string' && p.length > 2000 && p.length < 8 * 1024 * 1024) : [];
+    if (!photos.length || photos.length > 3) return send200({ err: 'Send 1 to 3 panel photos' });
+    const tok = String(body.token || 'anon').slice(0, 64);
+    const lim = readAllowed(tok);
+    if (lim) return send200({ err: lim });
+    const id = 'r' + (++JOBSEQ);
+    const job = { status: 'running', started: Date.now() };
+    JOBS.set(id, job);
+    runReadJob(job, photos);
+    return send200({ job: id });
+  }
+  if (u.pathname === '/api/readjob') {
+    const id = String(u.searchParams.get('id') || '');
+    if (!/^r\d+$/.test(id)) return send200({ err: 'bad id' });
+    const job = JOBS.get(id);
+    if (!job) return send200({ err: 'no such job' });
+    return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000), result: job.result || null });
+  }
   if (u.pathname === '/admin/eval') {
     if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
     if (!OLM_API_KEY && !MOCK_AI) return send200({ err: 'OLM_API_KEY env var is not set on the server' });
