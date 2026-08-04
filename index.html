@@ -299,6 +299,8 @@ details.altimp summary{font-size:11px;letter-spacing:.08em;color:#8A7F5F;cursor:
 #modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
 #modalin .msub{font-size:13px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
 #modalin .mtiles{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+.debrief{border-top:1px solid #E4DAC0;margin-top:16px;padding-top:13px}
+.dbhead{font-family:var(--sans);font-size:10px;letter-spacing:.3em;color:#A8893C;font-weight:600}
 #modalin .mpts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--coral-dk);margin:6px 0 16px}
 #modalin .mbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 #modalin .rules{text-align:left;font-size:13px;line-height:1.65;color:#3E4E45}
@@ -1225,6 +1227,85 @@ function botDiscard(p,j){
 }
 
 /* ---------- endings ---------- */
+/* post-game debrief: what could have been */
+let DBSEQ=0;
+function tileFromKey(tk){
+  const id='db'+(++DBSEQ);
+  if(tk==='F')return{s:'F',id};
+  if(tk[0]==='W'||tk[0]==='G')return{s:tk[0],n:tk[1],id};
+  return{s:tk[0],n:+tk.slice(1),id};
+}
+function ordinalTxt(n){return n+(n===1?'st':n===2?'nd':n===3?'rd':'th')}
+function buildDebrief(){
+  try{
+    const me=G&&G.players&&G.players[0];
+    if(!me||!me.hand||!me.hand.length)return null;
+    const fits=topFits(me);
+    if(!fits.length)return null;
+    const {c}=countsOf(me.hand);
+    const jk=me.hand.filter(t=>t.s==='J').length;
+    const items=fits.slice(0,2).map(bf=>{
+      const missing=[];
+      for(const [tk,k] of bf.rem){
+        const have=Math.min(c[tk]||0,k);
+        for(let x=0;x<k-have;x++)missing.push(tk);
+      }
+      return {name:bf.hand.name,cat:bf.hand.cat,pts:bf.hand.pts,
+        away:Math.max(0,14-bf.score),desc:describeVariant(bf.variant),
+        missing:missing.slice(0,8),missAll:missing};
+    });
+    let hurt=null;
+    const needSet={};
+    for(const tk of items[0].missAll)needSet[tk]=(needSet[tk]||0)+1;
+    let nth=0;
+    for(const d of (G.discards||[])){
+      if(d.by!==0)continue;
+      nth++;
+      const tk=key(d.t);
+      if(needSet[tk]){hurt={tile:d.t,nth};break}
+    }
+    return {items,hurt,jk};
+  }catch(e){return null}
+}
+function debriefDOM(){
+  const d=buildDebrief();
+  if(!d)return null;
+  const top=d.items[0];
+  const el=document.createElement('div');
+  el.className='debrief';
+  el.innerHTML=`<div class="dbhead">WHAT COULD HAVE BEEN</div>
+    <div class="msub" style="margin:6px 0 2px">You were closest to <b>“${top.name}”</b> · ${top.cat} · ${top.pts} pts — <b>${top.away===0?'you had it!':top.away+' tile'+(top.away>1?'s':'')+' away'}</b></div>
+    <div class="msub" style="font-size:11px;color:#A08F63">${top.desc}</div>`;
+  if(top.missing.length){
+    const row=document.createElement('div');
+    row.className='mtiles';row.style.margin='9px 0 2px';
+    for(const tk of top.missing)row.appendChild(tileDOM(tileFromKey(tk),'t-sm'));
+    el.appendChild(row);
+    const cap=document.createElement('div');
+    cap.className='msub';cap.style.cssText='font-size:11px;margin-top:2px;color:#A08F63';
+    cap.textContent='the tiles it still wanted'+(d.jk>0?' — your joker'+(d.jk>1?'s':'')+' could cover any of them in a group of 3+':'');
+    el.appendChild(cap);
+  }
+  if(d.hurt){
+    const p=document.createElement('div');
+    p.className='msub';p.style.cssText='font-size:12px;margin-top:9px';
+    p.innerHTML=`Sharpest sting: your ${ordinalTxt(d.hurt.nth)} discard was <b>${nameOf(d.hurt.tile)}</b> — the very tile this hand wanted back.`;
+    el.appendChild(p);
+  }
+  if(d.items[1]){
+    const p=document.createElement('div');
+    p.className='msub';p.style.cssText='font-size:11px;color:#A08F63;margin-top:8px';
+    p.innerHTML=`Also within reach: “${d.items[1].name}” (${d.items[1].cat}) — ${d.items[1].away} away`;
+    el.appendChild(p);
+  }
+  return el;
+}
+function addDebrief(box){
+  const db=debriefDOM();
+  if(!db)return;
+  const btns=box.querySelector('.mbtns');
+  if(btns)box.insertBefore(db,btns);else box.appendChild(db);
+}
 function declareWin(i,win){
   G.phase='over';SEQ++;
   const p=G.players[i];
@@ -1245,6 +1326,7 @@ function declareWin(i,win){
      <button class="abtn ghost" id="mcard" style="color:var(--deep);border-color:#B9AD8B">THE CARD</button></div>`);
   const mt=box.querySelector('#mtiles');
   for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
+  if(!mine)addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
   box.querySelector('#mcard').onclick=()=>{closeModal();openSheet()};
   $('modal').classList.add('open');
@@ -1255,6 +1337,7 @@ function wallGame(){
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
     <div class="msub">The wall is spent and no one made their hand.<br>The ladies order another round of spritzes.</div>
     <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button></div>`;
+  addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
   $('modal').classList.add('open');
 }
@@ -1864,6 +1947,7 @@ function mpShowEnd(m){
       <div class="msub">The wall is spent — nobody made their hand.</div>
       <div class="mbtns" style="margin-top:16px">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':''}
       <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+    addDebrief(box);
   }else{
     const mine=MP.view&&m.seat===MP.view.you.seat;
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div>
@@ -1875,6 +1959,7 @@ function mpShowEnd(m){
       <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
     const mt=box.querySelector('#mtiles');
     for(const t of m.tiles)mt.appendChild(tileDOM(t,'t-md'));
+    if(!mine)addDebrief(box);
   }
   const rem=box.querySelector('#mrem');
   if(rem)rem.onclick=()=>{closeModal();mpSend({type:'rematch'})};

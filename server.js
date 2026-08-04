@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r11';
+const LAB_VERSION = 'r12';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -781,7 +781,8 @@ Each alt: {"g":["3:2a","3:0","4:2b","4:6b"],"n":"1-5"} (n/m/p only when used). G
 
 EXAMPLES:
 "222 000 2222 6666 (Any 2 Suits) X25" in 2026 -> {"name":"222 000 2222 6666","cat":"2026","pts":25,"c":false,"note":"Any 2 suits","alts":[{"g":["3:2a","3:0","4:2b","4:6b"]}]}
-"FFF 1111 234 5555 (Any 1 or 2 Suits, Any 5 Consec. Nos.) X25" -> {"name":"FFF 1111 234 5555","cat":"CONSECUTIVE RUN","pts":25,"c":false,"note":"Any 1 or 2 suits, any 5 consecutive","alts":[{"n":"1-5","g":["3:F","4:na","1:n1a","1:n2a","1:n3a","4:n4a"]},{"n":"1-5","g":["3:F","4:na","1:n1b","1:n2b","1:n3b","4:n4b"]}]}
+"FFF 1111 234 5555 (Any 1 or 2 Suits, Any 5 Consec. Nos.) X25" where the 2-suit version prints 1111 and 5555 in one color and 234 in another -> {"name":"FFF 1111 234 5555","cat":"CONSECUTIVE RUN","pts":25,"c":false,"note":"Any 1 or 2 suits, any 5 consecutive","alts":[{"n":"1-5","g":["3:F","4:na","1:n1a","1:n2a","1:n3a","4:n4a"]},{"n":"1-5","g":["3:F","4:na","1:n1b","1:n2b","1:n3b","4:n4a"]}]}
+FOLLOW THE PRINTED COLORS EXACTLY for which groups share a suit - never assume, the colors are the ground truth.
 "11111 44444 DDDD (Any 2 Nos. in Any 1 Suit w Opp. Dragon) X40" -> {"name":"11111 44444 DDDD","cat":"QUINTS","pts":40,"c":false,"note":"Any 2 numbers, 1 suit, opposite dragon","alts":[{"n":"1-9","m":"1-9","g":["5:na","5:ma","4:xa"]}]}
 "NN EE WW SS 1D 1D 1D (Any 3 Suits, Any Like No. w Matching Dragon) C50" -> {"name":"NN EE WW SS 1D 1D 1D","cat":"SINGLES AND PAIRS","pts":50,"c":true,"note":"Any like number with matching dragons","alts":[{"n":"1-9","g":["2:N","2:E","2:W","2:S","1:na","1:da","1:nb","1:db","1:nc","1:dc"]}]}
 
