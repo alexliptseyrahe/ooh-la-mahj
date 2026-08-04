@@ -684,21 +684,33 @@ async function labPickModel(prefer) {
   if (!LAB_MODEL) LAB_MODEL = 'claude-sonnet-4-5';
   return LAB_MODEL;
 }
+let THINK_MODE = 'adaptive';   // adaptive -> enabled -> none, auto-negotiated
 async function labCallAI(content, opts) {
   opts = opts || {};
   if (MOCK_AI) return mockAI(content);
   const model = await labPickModel(opts.model);
-  const body = { model, max_tokens: opts.think ? 24000 : 16000, messages: [{ role: 'user', content }] };
-  if (opts.think) body.thinking = { type: 'enabled', budget_tokens: 8000 };
-  else body.temperature = 0;
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify(body) });
-  const j = await r.json();
-  if (!r.ok) throw new Error('AI ' + r.status + ': ' + ((j.error && j.error.message) || '').slice(0, 200));
-  const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text || '').join('').trim();
-  return { text, usage: j.usage || {}, model };
+  const modes = [THINK_MODE].concat(['adaptive','enabled','none'].filter(m => m !== THINK_MODE));
+  let lastErr = null;
+  for (const mode of (opts.think === false ? ['none'] : modes)) {
+    const body = { model, max_tokens: 24000, messages: [{ role: 'user', content }] };
+    if (mode === 'adaptive') { body.thinking = { type: 'adaptive' }; body.output_config = { effort: opts.effort || 'high' }; }
+    else if (mode === 'enabled') { body.thinking = { type: 'enabled', budget_tokens: 8000 }; }
+    else { body.temperature = 0; body.max_tokens = 16000; }
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify(body) });
+    const j = await r.json();
+    if (r.ok) {
+      THINK_MODE = mode;
+      const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text || '').join('').trim();
+      return { text, usage: j.usage || {}, model };
+    }
+    const msg = ((j.error && j.error.message) || '').slice(0, 250);
+    lastErr = 'AI ' + r.status + ': ' + msg;
+    if (!(r.status === 400 && /thinking|output_config|effort|budget/i.test(msg))) break;
+  }
+  throw new Error(lastErr || 'AI call failed');
 }
 function mockAI(content) {
   const t = content[0].text;

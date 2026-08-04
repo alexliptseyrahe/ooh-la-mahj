@@ -1497,24 +1497,22 @@ function openImport(backToSheet){
     </div>
   </div>`:'';
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
-  <div class="msub">Play with the hands from your own card for the year.<br>Your card stays private on this device.</div>
   ${photoUI}
   <div class="photozone">
-    <div class="pz1">Enter the club code</div>
-    <div class="pz2">Got the code from whoever shared this game with you?<br>Type it in and your card for the year is set.</div>
+    <div class="pz1">Enter your club code</div>
     <input type="text" id="codein" autocapitalize="characters" autocomplete="off" placeholder="CLUB CODE"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans)">
+      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
     <div class="imperr" id="codeerr"></div>
     <button class="abtn" id="codego">UNLOCK MY CARD</button>
   </div>
-  <details class="altimp">
-    <summary>Have a card file instead? Load it here</summary>
+  ${backToSheet?`<details class="altimp">
+    <summary>Load a card file (advanced)</summary>
     <input type="file" id="impfile" accept=".json,application/json">
     <textarea id="imparea" placeholder="…or paste the card data here"></textarea>
     <div class="mbtns"><button class="abtn" id="impsave" style="font-size:11px;padding:9px 16px">SAVE CARD FILE</button></div>
-  </details>
+  </details>`:''}
   <div class="imperr" id="imperr"></div>
-  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="impcancel">${backToSheet?'CANCEL':'LATER — USE THE CLUB CARD'}</button></div>`;
+  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
   box.querySelector('#codego').onclick=async()=>{
     const code=box.querySelector('#codein').value;
     if(!code.trim()){box.querySelector('#codeerr').textContent='Type the code first';return}
@@ -1555,19 +1553,21 @@ function openImport(backToSheet){
       convertPhotos(got,backToSheet);
     };
   }
-  box.querySelector('#impfile').addEventListener('change',e=>{
-    const f=e.target.files[0];if(!f)return;
-    const r=new FileReader();
-    r.onload=()=>{box.querySelector('#imparea').value=r.result};
-    r.readAsText(f);
-  });
-  box.querySelector('#impsave').onclick=()=>{
-    const err=saveCustomCard(box.querySelector('#imparea').value.trim());
-    if(err){box.querySelector('#imperr').textContent=err;return}
-    closeModal();
-    if(backToSheet)openSheet();
-    showMsg('CARD IMPORTED');
-  };
+  if(box.querySelector('#impfile')){
+    box.querySelector('#impfile').addEventListener('change',e=>{
+      const f=e.target.files[0];if(!f)return;
+      const r=new FileReader();
+      r.onload=()=>{box.querySelector('#imparea').value=r.result};
+      r.readAsText(f);
+    });
+    box.querySelector('#impsave').onclick=()=>{
+      const err=saveCustomCard(box.querySelector('#imparea').value.trim());
+      if(err){box.querySelector('#imperr').textContent=err;return}
+      closeModal();
+      if(backToSheet)openSheet();
+      showMsg('CARD IMPORTED');
+    };
+  }
   box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   $('modal').classList.add('open');
 }
@@ -1655,9 +1655,7 @@ $('ccimport').onclick=()=>{
 function showWelcome(){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">WELCOME TO</div><h2>Ooh La Mahj</h2>
-  <div class="msub">American mah jongg with three worthy opponents.<br><br>
-  If you were given a <b>club code</b>, enter it and this year's card — hands, values, and hints — is set in seconds.
-  Or jump straight in with the built-in Club Card and enter your code anytime under CARD → IMPORT.</div>
+  <div class="msub">American mah jongg, beautifully.<br>Have a club code? It sets up this year's card.</div>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
     <button class="abtn" id="wmine">ENTER CLUB CODE</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="wclub">PLAY THE CLUB CARD</button>
@@ -1882,8 +1880,8 @@ function renderLobby(v){
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
-    const url=location.origin+location.pathname;
-    const text=`Mahj? Join my Ooh La Mahj table:\n1. Open ${url}\n2. Tap PLAY WITH FRIENDS → JOIN\n3. Enter code ${v.code}`;
+    const url=location.origin+location.pathname+'?join='+v.code;
+    const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
     if(navigator.share){navigator.share({text}).catch(()=>{})}
     else{
       (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
@@ -1960,6 +1958,37 @@ function openFriends(errMsg){
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
+function openJoinInvite(code){
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">YOU'RE INVITED</div><h2 style="letter-spacing:.3em">${code}</h2>
+    <div class="msub">Type your name and take your seat.</div>
+    <div class="imperr" id="jerr"></div>
+    <input type="text" id="jname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
+      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
+    <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:10px">
+      <button class="abtn" id="jgo">JOIN THE TABLE</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="jno">NOT NOW</button>
+    </div>`;
+  const go=()=>{
+    const n=box.querySelector('#jname').value.trim().slice(0,14);
+    if(!n){box.querySelector('#jerr').textContent='Type your name first';return}
+    MP.name=n;try{localStorage.setItem('olmName',n)}catch(e){}
+    MP.intended=true;
+    box.querySelector('#jgo').textContent='JOINING…';
+    mpConnect(()=>mpSend({type:'join',code}));
+  };
+  box.querySelector('#jgo').onclick=go;
+  box.querySelector('#jname').addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+  box.querySelector('#jno').onclick=closeModal;
+  $('modal').classList.add('open');
+}
+(function(){
+  const jm=/[?&]join=([A-Za-z]{4})/.exec(location.search);
+  if(jm&&OLM_SERVER){
+    try{localStorage.setItem('olmSeen','1')}catch(e){}
+    setTimeout(()=>{closeModal();openJoinInvite(jm[1].toUpperCase())},60);
+  }
+})();
 
 function goTitle(){
   SEQ++;
