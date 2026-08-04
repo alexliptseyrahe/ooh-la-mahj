@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r14';
+const LAB_VERSION = 'r15';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -1139,6 +1139,10 @@ function readBody(req, cap) {
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const send200 = o => { res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(o)); };
+  if (u.pathname === '/robots.txt') {
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    return res.end('User-agent: *\nAllow: /\n');
+  }
   if (req.method === 'OPTIONS') {
     res.writeHead(204, { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS',
       'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' });
