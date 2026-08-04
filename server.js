@@ -626,6 +626,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
+const LAB_VERSION = 'r6';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -969,7 +970,7 @@ const server = http.createServer(async (req, res) => {
     JOBS.set(id, job);
     runEval(job, strat, u.searchParams.get('set') || '2026', ADMIN_KEY,
       u.searchParams.get('base') || null, u.searchParams.get('file') || null);
-    return send200({ job: id, strat, note: 'poll /admin/job?k=...&id=' + id });
+    return send200({ job: id, strat, v: LAB_VERSION, note: 'poll /admin/job?k=...&id=' + id });
   }
   if (u.pathname === '/admin/job') {
     if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
@@ -980,7 +981,7 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/admin/strats') {
     return send200({ strats: Object.fromEntries(Object.entries(STRATS).map(([k,s]) => [k, s.desc])) });
   }
-  send200({ ok: true, app: 'ooh-la-mahj', tables: tables.size, results: (typeof RESULTS !== 'undefined' ? RESULTS : []) });
+  send200({ ok: true, app: 'ooh-la-mahj', v: LAB_VERSION, tables: tables.size, results: (typeof RESULTS !== 'undefined' ? RESULTS : []) });
 });
 
 const wss = new WebSocketServer({ server });

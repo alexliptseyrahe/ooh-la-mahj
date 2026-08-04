@@ -1880,7 +1880,7 @@ function renderLobby(v){
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
-    const url=location.origin+location.pathname+'?join='+v.code;
+    const url=location.origin+location.pathname+'?join='+v.code+'&h='+encodeURIComponent(hostName);
     const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
     if(navigator.share){navigator.share({text}).catch(()=>{})}
     else{
@@ -1958,9 +1958,11 @@ function openFriends(errMsg){
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
-function openJoinInvite(code){
+function openJoinInvite(code,host){
   const box=$('modalin');
-  box.innerHTML=`<div class="mtop">YOU'RE INVITED</div><h2 style="letter-spacing:.3em">${code}</h2>
+  const safeHost=(host||'').replace(/[<>&"]/g,'').slice(0,14);
+  box.innerHTML=`<div class="mtop">YOU'RE INVITED</div>
+    <h2 style="font-size:26px">${safeHost?safeHost+"'s table":"A friend's table"}</h2>
     <div class="msub">Type your name and take your seat.</div>
     <div class="imperr" id="jerr"></div>
     <input type="text" id="jname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
@@ -1985,8 +1987,10 @@ function openJoinInvite(code){
 (function(){
   const jm=/[?&]join=([A-Za-z]{4})/.exec(location.search);
   if(jm&&OLM_SERVER){
+    const hm=/[?&]h=([^&]+)/.exec(location.search);
+    const host=hm?decodeURIComponent(hm[1]):'';
     try{localStorage.setItem('olmSeen','1')}catch(e){}
-    setTimeout(()=>{closeModal();openJoinInvite(jm[1].toUpperCase())},60);
+    setTimeout(()=>{closeModal();openJoinInvite(jm[1].toUpperCase(),host)},60);
   }
 })();
 
