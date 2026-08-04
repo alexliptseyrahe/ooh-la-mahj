@@ -636,7 +636,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r15';
+const LAB_VERSION = 'r16';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -696,6 +696,7 @@ async function labPickModel(prefer) {
   return LAB_MODEL;
 }
 let THINK_MODE = 'adaptive';   // adaptive -> enabled -> none, auto-negotiated
+let NO_TEMP = false;           // some newer models reject the temperature parameter
 async function labCallAI(content, opts) {
   opts = opts || {};
   if (MOCK_AI) return mockAI(content);
@@ -706,7 +707,7 @@ async function labCallAI(content, opts) {
     const body = { model, max_tokens: 24000, messages: [{ role: 'user', content }] };
     if (mode === 'adaptive') { body.thinking = { type: 'adaptive' }; body.output_config = { effort: opts.effort || 'high' }; }
     else if (mode === 'enabled') { body.thinking = { type: 'enabled', budget_tokens: 8000 }; }
-    else { body.temperature = 0; body.max_tokens = 16000; }
+    else { if (!NO_TEMP) body.temperature = 0; body.max_tokens = 16000; }
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -719,6 +720,7 @@ async function labCallAI(content, opts) {
     }
     const msg = ((j.error && j.error.message) || '').slice(0, 250);
     lastErr = 'AI ' + r.status + ': ' + msg;
+    if (r.status === 400 && /temperature/i.test(msg) && !NO_TEMP) { NO_TEMP = true; return labCallAI(content, opts); }
     if (!(r.status === 400 && /thinking|output_config|effort|budget/i.test(msg))) break;
   }
   throw new Error(lastErr || 'AI call failed');
