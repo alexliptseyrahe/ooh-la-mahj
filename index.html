@@ -312,6 +312,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 }
 #callbar.open{display:flex}
 #callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale)}
+.calladv{font-family:var(--sans);font-size:12.5px;letter-spacing:.05em;color:var(--gold);margin-top:5px}
 #callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 
 /* ---------- modal ---------- */
@@ -1498,7 +1499,7 @@ let callTimer=null;
 function openCallBar(t,opts,onPass){
   sfx('call');
   const bar=$('callbar');
-  $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`;
+  $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`+callAdvice(t);
   const bb=$('callbtns');bb.innerHTML='';
   for(const o of opts){
     const b=document.createElement('button');
@@ -1515,6 +1516,25 @@ function openCallBar(t,opts,onPass){
   callTimer=setTimeout(()=>{closeCall();onPass()},6500);
 }
 function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open')}
+/* hint-aware call advice — only speaks when the player has chosen hints */
+function callAdvice(t){
+  try{
+    if(!HINTON)return '';
+    const me=G.players[0];
+    const tk=key(t);
+    const fits=topFits(me);
+    if(!fits.length)return '';
+    for(const bf of fits){
+      const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
+      if(!grp)continue;
+      if(bf.hand.concealed)
+        return `<div class="calladv">✋ “${bf.hand.name}” must stay concealed — calling forfeits it</div>`;
+      const away=Math.max(0,14-bf.score);
+      return `<div class="calladv">✨ fits “${bf.hand.name}” — you're ${away} away and this advances it</div>`;
+    }
+    return `<div class="calladv">your closest hands don't need it</div>`;
+  }catch(e){return ''}
+}
 
 /* ---------- rendering ---------- */
 function setStatus(html){$('statusline').innerHTML=html}
@@ -2110,7 +2130,7 @@ function mpRenderGame(v){
 function mpShowCallBar(m){
   sfx('call');
   const bar=$('callbar');
-  $('callq').innerHTML=`${nameOf(m.tile)} was discarded — call it?`;
+  $('callq').innerHTML=`${nameOf(m.tile)} was discarded — call it?`+callAdvice(m.tile);
   const bb=$('callbtns');bb.innerHTML='';
   const mkb=(label,choice,cls)=>{
     const b=document.createElement('button');
