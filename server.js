@@ -1204,7 +1204,7 @@ async function runReadJob(job, photos) {
     if (!matched && !fullReadAllowed()) throw new Error('The deep reader has reached its daily limit — try again tomorrow (known cards still match instantly)');
     if (matched) {
       job.status = 'done'; job.stage = 'done';
-      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against the known ' + matched.year + ' card' }],
+      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against your ' + matched.year + ' card' }],
         model: usage.model, ms: Date.now() - t0, matched: matched.key };
       STATS.reads++; STATS.matched++; dayRec().reads++;
       console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
@@ -1228,7 +1228,7 @@ async function runReadJob(job, photos) {
           need, extra: sc.extra, ms: Date.now() - t0 });
         if (served) {
           job.status = 'done'; job.stage = 'done';
-          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'photos read in full and verified line-by-line against the known ' + KC.year + ' card' }],
+          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'photos read in full and verified line-by-line against your ' + KC.year + ' card' }],
             model: usage.model, ms: Date.now() - t0, matched: KC.key };
           STATS.reads++; STATS.matched++; dayRec().reads++;
           console.log(JSON.stringify({ ev: 'card_read', matched: KC.key + ' (mid-tier)', ms: Date.now() - t0, tin: usage.in, tout: usage.out }));

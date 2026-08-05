@@ -2009,7 +2009,7 @@ function renderReadSheet(){
   RSKEY=(st||'')+'|'+(BGREAD.stage||'');
   const flag='<span id="rsflag" style="display:none"></span>';
   if(st==='matched'){
-    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">That's the 2026 card</h2>
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">That's your 2026 card</h2>
       <div class="msub">Your photos check out — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands are':'your card is'} ready.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsplay">PLAY WITH MY CARD</button></div>`;
     box.querySelector('#rsplay').onclick=()=>{BGREAD.state=null;readPillSync();closeModal();showMsg('CARD READY')};
@@ -2037,7 +2037,7 @@ function renderReadSheet(){
     return;
   }
   box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Checking your photos…</h2>
-    <div class="spin"></div><div class="msub">Matching them against the 2026 card.</div>`;
+    <div class="spin"></div><div class="msub">Matching them against your 2026 card.</div>`;
 }
 function openReadSheet(){renderReadSheet();$('modal').classList.add('open')}
 function readSheetTick(){
