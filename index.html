@@ -1183,6 +1183,7 @@ function botClaims(by,t){
     const p=G.players[j];
     const bf=bestFit(p);
     if(!bf)continue;
+    if(bf.hand.concealed)continue; /* never expose into a concealed-only hand */
     const grp=bf.rem.find(([tk,k])=>tk===key(t)&&k>=3);
     if(!grp)continue;
     const {c,jk}=countsOf(p.hand);
@@ -1190,7 +1191,7 @@ function botClaims(by,t){
     if(copies<2)continue;
     const k=grp[1],need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
     if(jNeed>jk)continue;
-    if(Math.random()<0.8){
+    if(Math.random()<[0.7,0.9,1][BOTLVL]){
       G.discards.pop();
       const used=[];
       for(const x of p.hand){if(key(x)===key(t)&&used.length<realUse)used.push(x)}
@@ -1248,12 +1249,56 @@ function botAct(){
     botDiscard(p,j);
   }
 }
+/* bot difficulty: 0 breezy, 1 club player (default), 2 shark */
+let BOTLVL=1;try{BOTLVL=Math.min(2,Math.max(0,parseInt(localStorage.getItem('olmBots'))||1))}catch(e){}
+const BOTLVL_NAMES=['BREEZY','CLUB PLAYER','SHARK'];
+function visibleCounts(){
+  const v={};
+  for(const d of G.discards){const k=key(d.t);v[k]=(v[k]||0)+1}
+  for(const p of G.players)for(const e of p.exp)for(const t of e.tiles){if(t.s!=='J'){const k=key(t);v[k]=(v[k]||0)+1}}
+  return v;
+}
+/* score = danger×D − optionValue; discard the LOWEST scorer.
+   Uses only table-visible information — no peeking at hidden racks. */
+function botScoreDiscard(p,j,cand){
+  const D=[0.25,1,2][BOTLVL];
+  const vis=visibleCounts();
+  const fits=topFits(p);
+  const alt1=fits[1]?keepIdsFor(p,fits[1].rem):new Set();
+  const alt2=fits[2]?keepIdsFor(p,fits[2].rem):new Set();
+  const late=G.wall.length<15?2:G.wall.length<30?1.5:1;
+  let best=null,bestScore=Infinity;
+  for(const t of cand){
+    const tk=key(t);
+    const mine=p.hand.filter(x=>key(x)===tk).length;
+    const outstanding=Math.max(0,(t.s==='F'?8:4)-(vis[tk]||0)-mine);
+    const liveMult=outstanding<=0?0.05:outstanding===1?0.45:1;
+    let danger=0.4;
+    for(let q=0;q<4;q++){
+      if(q===j)continue;
+      for(const e of G.players[q].exp){
+        const rs=e.rep[0],rn=parseInt(e.rep.slice(1));
+        if(t.s==='F'){if(rs==='F')danger+=0.8;continue}
+        if(t.s==='W'||t.s==='G'){if(rs==='W'||rs==='G')danger+=0.5;continue}
+        if(rs===t.s&&!isNaN(rn)&&Math.abs(rn-t.n)<=2)danger+=1.2;
+        else if(!isNaN(rn)&&rn===t.n&&'CBD'.includes(rs))danger+=0.8;
+      }
+    }
+    danger*=liveMult*late;
+    let opt=0;
+    if(alt1.has(t.id))opt+=0.8;
+    if(alt2.has(t.id))opt+=0.4;
+    const s=D*danger-opt+Math.random()*0.15;
+    if(s<bestScore){bestScore=s;best=t}
+  }
+  return best||cand[0];
+}
 function botDiscard(p,j){
   const bf=bestFit(p),keep=bf?keepIdsFor(p,bf.rem):new Set();
   let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
   if(!cand.length)cand=p.hand.filter(t=>t.s!=='J');
   if(!cand.length)cand=[...p.hand];
-  const t=cand[Math.floor(Math.random()*cand.length)];
+  const t=botScoreDiscard(p,j,cand);
   p.hand=p.hand.filter(x=>x!==t);
   G.discards.push({t,by:j});
   sfx('placebot');
@@ -1946,6 +1991,16 @@ $('btnplay').onclick=newGame;
 
 /* ================= MULTIPLAYER ================= */
 let OLM_SERVER='wss://ooh-la-mahj.onrender.com';
+/* prefer the custom domain once it exists; fall back silently until then */
+(function(){
+  try{
+    const ctl=('AbortSignal' in window&&AbortSignal.timeout)?{signal:AbortSignal.timeout(5000)}:{};
+    fetch('https://api.oohlamahj.com/?probe='+Date.now(),ctl)
+      .then(r=>r.ok?r.json():null)
+      .then(j=>{if(j&&j.ok)OLM_SERVER='wss://api.oohlamahj.com'})
+      .catch(()=>{});
+  }catch(e){}
+})();
 const MP={ws:null,active:false,view:null,token:null,name:'',retry:0,intended:false};
 function mpToken(){
   if(MP.token)return MP.token;
@@ -2119,7 +2174,7 @@ function renderLobby(v){
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
-    const url=location.origin+location.pathname+'?join='+v.code+'&h='+encodeURIComponent(hostName);
+    const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
     const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
     if(navigator.share){navigator.share({text}).catch(()=>{})}
     else{
@@ -2234,15 +2289,27 @@ function openJoinInvite(code,host){
   box.querySelector('#jno').onclick=closeModal;
   $('modal').classList.add('open');
 }
-(function(){
-  const jm=/[?&]join=([A-Za-z]{4})/.exec(location.search);
-  if(jm&&OLM_SERVER){
-    const hm=/[?&]h=([^&]+)/.exec(location.search);
-    const host=hm?decodeURIComponent(hm[1]):'';
-    try{localStorage.setItem('olmSeen','1')}catch(e){}
-    setTimeout(()=>{closeModal();openJoinInvite(jm[1].toUpperCase(),host)},60);
-  }
-})();
+/* invite links must always point at the real site — inside the iOS wrapper
+   location.origin is capacitor://localhost, which nobody can open */
+const OLM_SITE='https://oohlamahj.com/';
+function siteURL(){
+  return /^https?:$/.test(location.protocol)?(location.origin+location.pathname):OLM_SITE;
+}
+function handleJoinURL(str){
+  const jm=/[?&]join=([A-Za-z]{4})/.exec(str||'');
+  if(!jm||!OLM_SERVER)return false;
+  const hm=/[?&]h=([^&]+)/.exec(str);
+  const host=hm?decodeURIComponent(hm[1]):'';
+  try{localStorage.setItem('olmSeen','1')}catch(e){}
+  setTimeout(()=>{closeModal();openJoinInvite(jm[1].toUpperCase(),host)},60);
+  return true;
+}
+handleJoinURL(location.search);
+/* native deep links (harmless on the web) */
+try{
+  const CapApp=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+  if(CapApp&&CapApp.addListener)CapApp.addListener('appUrlOpen',d=>{if(d&&d.url)handleJoinURL(d.url)});
+}catch(e){}
 
 function goTitle(){
   SEQ++;
@@ -2264,6 +2331,7 @@ $('btnmenu').onclick=()=>{
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     <button class="abtn gold" id="mclose">RETURN TO GAME</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mbots">BOTS: ${BOTLVL_NAMES[BOTLVL]}</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
     ${bottom}
   </div>`;
@@ -2272,6 +2340,11 @@ $('btnmenu').onclick=()=>{
     try{localStorage.setItem('olmSnd',SND?'1':'0')}catch(e){}
     box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
     if(SND)sfx('tap');
+  };
+  box.querySelector('#mbots').onclick=()=>{
+    BOTLVL=(BOTLVL+1)%3;
+    try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
+    box.querySelector('#mbots').textContent='BOTS: '+BOTLVL_NAMES[BOTLVL];
   };
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};

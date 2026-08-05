@@ -143,12 +143,63 @@ function topFitsCount(T, p) {
   }
   return n;
 }
+function topFits3(T, p) {
+  const { c, jk } = countsOf(p.rack); const hasExp = p.exp.length > 0; const ec = expCount(p);
+  const list = [];
+  for (const h of T.hands) {
+    if (h.concealed && (hasExp || jk > 0)) continue;
+    let best = null;
+    for (const v of h.variants) {
+      const rem = lockGroups(p, v);
+      if (!rem) continue;
+      const s = ec + scoreVariant(c, jk, rem);
+      if (!best || s > best.score) best = { hand: h, rem, score: s };
+    }
+    if (best) list.push(best);
+  }
+  list.sort((a, b) => b.score - a.score);
+  return list.slice(0, 3);
+}
+const BOT_D = +process.env.BOT_D || 1;
+/* scored discard: danger×D − optionValue, lowest wins. Table-visible info only. */
 function botDiscardChoice(T, p) {
   const bf = bestFit(T, p); const keep = bf ? keepIdsFor(p, bf.rem) : new Set();
   let cand = p.rack.filter(t => t.s !== 'J' && !keep.has(t.id));
   if (!cand.length) cand = p.rack.filter(t => t.s !== 'J');
   if (!cand.length) cand = p.rack.slice();
-  return cand[Math.floor(Math.random() * cand.length)];
+  const vis = {};
+  for (const d of T.discards) { const k2 = key(d.t); vis[k2] = (vis[k2] || 0) + 1; }
+  for (const s of T.seats) { if (!s) continue; for (const e of s.exp) for (const t of e.tiles) { if (t.s !== 'J') { const k2 = key(t); vis[k2] = (vis[k2] || 0) + 1; } } }
+  const fits = topFits3(T, p);
+  const alt1 = fits[1] ? keepIdsFor(p, fits[1].rem) : new Set();
+  const alt2 = fits[2] ? keepIdsFor(p, fits[2].rem) : new Set();
+  const late = T.wall.length < 15 ? 2 : T.wall.length < 30 ? 1.5 : 1;
+  const myIdx = T.seats.indexOf(p);
+  let best = null, bestScore = Infinity;
+  for (const t of cand) {
+    const tk = key(t);
+    const mine = p.rack.filter(x => key(x) === tk).length;
+    const outstanding = Math.max(0, (t.s === 'F' ? 8 : 4) - (vis[tk] || 0) - mine);
+    const liveMult = outstanding <= 0 ? 0.05 : outstanding === 1 ? 0.45 : 1;
+    let danger = 0.4;
+    T.seats.forEach((s, q) => {
+      if (!s || q === myIdx) return;
+      for (const e of s.exp) {
+        const rs = e.rep[0], rn = parseInt(e.rep.slice(1));
+        if (t.s === 'F') { if (rs === 'F') danger += 0.8; continue; }
+        if (t.s === 'W' || t.s === 'G') { if (rs === 'W' || rs === 'G') danger += 0.5; continue; }
+        if (rs === t.s && !isNaN(rn) && Math.abs(rn - t.n) <= 2) danger += 1.2;
+        else if (!isNaN(rn) && rn === t.n && 'CBD'.includes(rs)) danger += 0.8;
+      }
+    });
+    danger *= liveMult * late;
+    let opt = 0;
+    if (alt1.has(t.id)) opt += 0.8;
+    if (alt2.has(t.id)) opt += 0.4;
+    const sc = BOT_D * danger - opt + Math.random() * 0.15;
+    if (sc < bestScore) { bestScore = sc; best = t; }
+  }
+  return best || cand[0];
 }
 function botPassTiles(T, p) {
   const bf = bestFit(T, p); const keep = bf ? keepIdsFor(p, bf.rem) : new Set();
@@ -162,6 +213,7 @@ function botClaimCheck(T, p, t) {
   if (win) return { kind: 'mahjong', win };
   const bf = bestFit(T, p);
   if (!bf) return null;
+  if (bf.hand.concealed) return null; /* never expose into a concealed-only hand */
   const grp = bf.rem.find(([tk, k]) => tk === key(t) && k >= 3);
   if (!grp) return null;
   const { c, jk } = countsOf(p.rack);
@@ -169,7 +221,7 @@ function botClaimCheck(T, p, t) {
   if (copies < 2) return null;
   const k = grp[1], need = k - 1, realUse = Math.min(copies, need), jNeed = need - realUse;
   if (jNeed > jk) return null;
-  if (Math.random() >= 0.8) return null;
+  if (Math.random() >= 0.95) return null;
   return { kind: 'expose', k };
 }
 
@@ -636,7 +688,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r16';
+const LAB_VERSION = 'r17';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
