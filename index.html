@@ -101,29 +101,6 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 .t-xs .m svg{width:6px;height:6px}
 .t-xs .m .zi{font-size:5.5px}
 .t-xs .lbl{font-size:3.5px}
-/* tablets & desktop: centered table, generous tiles */
-@media (min-width:700px){
-  #hdr,#opps{max-width:920px;margin-left:auto;margin-right:auto;width:100%}
-  #board{max-width:920px;margin-left:auto;margin-right:auto;width:calc(100% - 20px)}
-  #me{max-width:1120px;margin:0 auto;width:100%}
-  .t-lg{width:min(6.2vw,68px)}
-  .t-lg .n{font-size:clamp(22px,3.4vw,33px)}
-  .t-lg .m svg{width:clamp(14px,2.1vw,21px);height:clamp(14px,2.1vw,21px)}
-  .t-lg .m .zi{font-size:clamp(13px,1.9vw,18px)}
-  .t-lg .lbl{font-size:9px}
-  .t-md{width:42px}
-  .t-md .n{font-size:21px}
-  .t-md .m svg{width:13px;height:13px}
-  .t-md .m .zi{font-size:11px}
-  .t-sm{width:36px}
-  .t-sm .n{font-size:18px}
-  .t-sm .m svg{width:11px;height:11px}
-  .t-sm .m .zi{font-size:10px}
-  .t-xs{width:26px}
-  .t-xs .n{font-size:13px}
-  #discards{gap:6px;padding:10px 14px 14px}
-  #tablemsg span{font-size:26px}
-  #statusline{font-size:13px}
 }
 
 .tile.joker{background:linear-gradient(165deg,#125441,#0D4232);border-color:#0A2E24;color:var(--gold-pale)}
@@ -201,6 +178,29 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 .abtn.big{font-size:15px;padding:13px 30px}
 .abtn:disabled{opacity:.4;pointer-events:none}
 #statusline{text-align:center;font-size:14px;letter-spacing:.1em;color:rgba(251,247,236,.8);min-height:16px;padding-top:2px}
+/* tablets & desktop: centered table, generous tiles */
+@media (min-width:700px){
+  #hdr,#opps{max-width:920px;margin-left:auto;margin-right:auto;width:100%}
+  #board{max-width:920px;margin-left:auto;margin-right:auto;width:calc(100% - 20px)}
+  #me{max-width:1120px;margin:0 auto;width:100%}
+  .t-lg{width:min(6.2vw,68px)}
+  .t-lg .n{font-size:clamp(22px,3.4vw,33px)}
+  .t-lg .m svg{width:clamp(14px,2.1vw,21px);height:clamp(14px,2.1vw,21px)}
+  .t-lg .m .zi{font-size:clamp(13px,1.9vw,18px)}
+  .t-lg .lbl{font-size:9px}
+  .t-md{width:42px}
+  .t-md .n{font-size:21px}
+  .t-md .m svg{width:13px;height:13px}
+  .t-md .m .zi{font-size:11px}
+  .t-sm{width:36px}
+  .t-sm .n{font-size:18px}
+  .t-sm .m svg{width:11px;height:11px}
+  .t-sm .m .zi{font-size:10px}
+  .t-xs{width:26px}
+  .t-xs .n{font-size:13px}
+  #discards{gap:6px;padding:10px 14px 14px}
+  #tablemsg span{font-size:26px}
+  #statusline{font-size:13px}
 #statusline b{color:var(--gold)}
 
 /* ---------- title screen ---------- */
@@ -1415,7 +1415,7 @@ function debriefDOM(){
   const el=document.createElement('div');
   el.className='debrief';
   const pct=Math.round((14-top.away)/14*100);
-  el.innerHTML=`<div class="dbhead">CLOSEST HAND</div>
+  el.innerHTML=`<div class="dbhead">YOUR CLOSEST HAND</div>
     <div class="chand" style="margin:9px 0 0;text-align:left">
       <div class="chtop"><span class="chname">${top.name}</span>
         <span class="chpts">${top.pts} PTS · ${top.conc?'C':'X'}</span></div>
@@ -1469,16 +1469,16 @@ function declareWin(i,win){
   box.insertAdjacentHTML('beforeend',
     `<div class="mtop">OOH LA MAHJ</div>
      <h2>${mine?'MAH JONGG!':p.name+' wins'}</h2>
-     <div class="msub">“${win.hand.name}” · ${win.hand.cat}${jokerless?' · jokerless ×2':''}</div>
+     <div class="msub"><b>${win.hand.cat}</b><br>${win.hand.name}${jokerless?' · jokerless ×2':''}</div>
      <div class="mtiles" id="mtiles"></div>
      <div class="mpts">${pts} points</div>
      <div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
-     <button class="abtn ghost" id="mcard" style="color:var(--deep);border-color:#B9AD8B">THE CARD</button></div>`);
+     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`);
   const mt=box.querySelector('#mtiles');
   for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
   if(!mine)addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
-  box.querySelector('#mcard').onclick=()=>{closeModal();openSheet()};
+  box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
 function wallGame(){
@@ -1487,9 +1487,11 @@ function wallGame(){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
     <div class="msub">The wall is spent and no one made their hand.<br>The ladies order another round of spritzes.</div>
-    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button></div>`;
+    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button>
+    <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`;
   addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
+  box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
 function closeModal(){$('modal').classList.remove('open')}
@@ -2161,7 +2163,7 @@ function mpShowEnd(m){
     const mine=MP.view&&m.seat===MP.view.you.seat;
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div>
       <h2>${mine?'MAH JONGG!':m.name+' wins'}</h2>
-      <div class="msub">“${m.hand}” · ${m.cat}${m.jokerless?' · jokerless ×2':''}</div>
+      <div class="msub"><b>${m.cat}</b><br>${m.hand}${m.jokerless?' · jokerless ×2':''}</div>
       <div class="mtiles" id="mtiles"></div>
       <div class="mpts">${m.pts} points</div>
       <div class="mbtns">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':'<div class="msub">waiting for the host to re-deal…</div>'}
