@@ -275,7 +275,7 @@ function makeTable(hostP, cardJson, config) {
   }
   const T = {
     code, hands, cardMeta,
-    config: Object.assign({ pace: 'relaxed' }, config || {}),
+    config: { pace: (config && config.pace) === 'timed' ? 'timed' : 'relaxed', hints: !(config && config.hints === false) },
     phase: 'lobby', chStep: 0, wall: [], discards: [],
     dealer: 0, turn: 0, step: 'discard',
     seats: [newSeat('human', hostP.name), null, null, null],
@@ -708,7 +708,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r18';
+const LAB_VERSION = 'r21';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -974,6 +974,7 @@ const STRATS = {
   A: { desc: 'top model, two-stage, verify pass, thinking', verify: true, think: true, model: null },
   B: { desc: 'top model, two-stage, NO verify, thinking', verify: false, think: true, model: null },
   C: { desc: 'sonnet, two-stage, verify pass, thinking', verify: true, think: true, model: 'claude-sonnet-4-5' },
+  M: { desc: 'middle tier: single pass, no consensus (verified against known card instead)', verify: false, think: true, model: null, noCons: true },
 };
 async function runPanel(b64, S, usage) {
   const track = r => { usage.in += (r.usage.input_tokens||0); usage.out += (r.usage.output_tokens||0); usage.model = r.model; return r.text; };
@@ -1009,7 +1010,7 @@ async function runPanel(b64, S, usage) {
   }
   /* consensus pass: convert a second time, independently; any hand whose
      patterns differ between the two readings gets flagged uncertain */
-  if (best && best.hands.length) {
+  if (best && best.hands.length && !S.noCons) {
     try {
       const p2 = LAB_STAGE_B_HEAD + '\n\nINPUT LINES (' + lines.length + ' hands - output exactly ' + lines.length + ' entries):\n' + JSON.stringify(lines);
       const cc2 = labParseLoose(track(await labCallAI([{ type:'text', text: p2 }], { think: S.think, model: S.model })), false);
@@ -1117,14 +1118,14 @@ async function loadKnownCards() {
 /* Genuine ownership check: a fast model inspects the actual photos; the server
    verifies year + section headers + anchor hand lines against the stored card.
    Pass -> the verified card is served in seconds. Fail -> full read pipeline. */
-async function matchKnownCard(photos, usage) {
-  const known = await loadKnownCards();
-  if (!known.length) return null;
-  const K = known[0];
-  const prompt = `These photos show panel(s) of a printed scoring card for American mah jongg, photographed by its owner. Report ONLY JSON, no commentary:
-{"year":"<the 4-digit year printed on the card, or null if not visible>","org":"<the issuing organization name printed on the card, or null>","sections":["<every section header text you can see across the photos>"],"lines":{"<section header>":"<the tile groups of the FIRST printed hand row under that section, exactly as printed, first version only if the row has an -or->"}}
+const MATCHLOG = [];  /* last two dozen match/verify attempts, with the reason each one passed or failed */
+function matchNote(e) { MATCHLOG.push(e); if (MATCHLOG.length > 24) MATCHLOG.shift(); console.log(JSON.stringify(Object.assign({ ev: 'card_match' }, e))); }
+async function matchAttempt(K, photos, usage, model, tryN) {
+  const t0 = Date.now();
+  const prompt = `These photos are supposed to show panel(s) of a printed scoring card for American mah jongg, photographed by its owner. Report ONLY JSON, no commentary:
+{"isCard":<true ONLY if the photos clearly show a printed mah jongg scoring card with rows of hands; false for anything else>,"year":"<the 4-digit year printed on the card, or null if not visible>","org":"<the issuing organization name printed on the card, or null>","sections":["<every section header text you can see across the photos>"],"lines":{"<section header>":"<the tile groups of the FIRST printed hand row under that section, exactly as printed, first version only if the row has an -or->"}}
 Fill "lines" for whichever of these sections are visible: ${JSON.stringify(K.anchors.map(a => a.cat))}.`;
-  const r = await labCallAI([{ type: 'text', text: prompt }].concat(photos.map(IMG)), { think: false, model: await labPickFast() });
+  const r = await labCallAI([{ type: 'text', text: prompt }].concat(photos.map(IMG)), { think: false, model });
   usage.in += (r.usage.input_tokens || 0); usage.out += (r.usage.output_tokens || 0); usage.model = r.model;
   const j = labParseLoose(r.text, false);
   const yearOk = String(j.year || '').includes(K.year);
@@ -1136,9 +1137,35 @@ Fill "lines" for whichever of these sections are visible: ${JSON.stringify(K.anc
     const got = lk ? j.lines[lk] : null;
     if (got && normName(String(got).split(/-?or-?/i)[0]) === normName(a.name)) anchorHits++;
   }
-  const ok = yearOk && catHits >= 3 && anchorHits >= 1;
-  console.log(JSON.stringify({ ev: 'card_match', ok, yearOk, catHits, anchorHits, model: r.model }));
-  return ok ? K : null;
+  /* verification stays real: right year, plus solid section-header + anchor-line evidence */
+  const ok = yearOk && ((catHits >= 3 && anchorHits >= 1) || (catHits >= 2 && anchorHits >= 2));
+  const isCard = j.isCard !== false;
+  matchNote({ t: new Date().toISOString(), tier: 'fast', tryN, ok, isCard, yearOk, year: j.year || null,
+    catHits, anchorHits, model: r.model, ms: Date.now() - t0 });
+  return { ok, isCard };
+}
+async function matchKnownCard(photos, usage) {
+  const known = await loadKnownCards();
+  if (!known.length) return null;
+  const K = known[0];
+  let a;
+  try { a = await matchAttempt(K, photos, usage, await labPickFast(), 1); }
+  catch (e) { matchNote({ t: new Date().toISOString(), tier: 'fast', tryN: 1, ok: false, err: e.message }); a = { ok: false, isCard: true }; }
+  if (!a.ok && a.isCard) {
+    /* one more look with the top model before giving up on the instant path */
+    try { const b = await matchAttempt(K, photos, usage, null, 2); if (b.ok) a = b; else a.isCard = b.isCard; }
+    catch (e) { matchNote({ t: new Date().toISOString(), tier: 'fast', tryN: 2, ok: false, err: e.message }); }
+  }
+  return { K: a.ok ? K : null, isCard: a.isCard };
+}
+/* expensive deep reads get their own tight daily budget */
+const FULLS = { day: '', n: 0 };
+const FULL_PER_DAY = +process.env.FULL_PER_DAY || 5;
+function fullReadAllowed() {
+  const d = new Date().toISOString().slice(0, 10);
+  if (FULLS.day !== d) { FULLS.day = d; FULLS.n = 0; }
+  if (FULLS.n >= FULL_PER_DAY) return false;
+  FULLS.n++; return true;
 }
 
 /* ---------- public card reader ---------- */
@@ -1164,19 +1191,54 @@ async function retryFailedPanels(panels, photos, usage) {
 async function runReadJob(job, photos) {
   const usage = { in: 0, out: 0, model: '?' };
   const t0 = Date.now();
+  job.stage = 'checking'; job.done = 0; job.of = photos.length;
   try {
-    /* stage 0: is this a card we already have a verified reading of? */
-    let matched = null;
-    if (!MOCK_AI) { try { matched = await matchKnownCard(photos, usage); } catch (e) { console.log(JSON.stringify({ ev: 'match_err', m: e.message })); } }
+    /* stage 0: is this a card we already have a verified reading of? (~8s) */
+    let matched = null, isCard = true;
+    if (!MOCK_AI) {
+      try { const m = await matchKnownCard(photos, usage); matched = m.K; isCard = m.isCard; }
+      catch (e) { console.log(JSON.stringify({ ev: 'match_err', m: e.message })); }
+    }
+    if (!matched && !isCard) throw new Error("These photos don't look like a mah jongg scoring card — retake with the card flat, filling the frame");
+    if (!matched && !fullReadAllowed()) throw new Error('The deep reader has reached its daily limit — try again tomorrow (known cards still match instantly)');
     if (matched) {
-      job.status = 'done';
+      job.status = 'done'; job.stage = 'done';
       job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against the known ' + matched.year + ' card' }],
         model: usage.model, ms: Date.now() - t0, matched: matched.key };
       STATS.reads++; STATS.matched++; dayRec().reads++;
       console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
       return;
     }
-    let panels = await Promise.all(photos.map(p => runPanel(p, STRATS.A, usage).catch(e => ({ error: e.message }))));
+    /* stage 1: middle tier (~1 min) — one full read of the photos, then a line-by-line
+       comparison against the known card. Agreement is the strongest verification we
+       have; if it agrees, serve the stored card. Disagreement -> the careful read. */
+    const KC = MOCK_AI ? null : (await loadKnownCards())[0] || null;
+    if (KC) {
+      job.stage = 'reading'; job.done = 0;
+      const mp = await Promise.all(photos.map(p =>
+        runPanel(p, STRATS.M, usage).catch(e => ({ error: e.message })).then(r => { job.done++; return r; })));
+      const mh = [];
+      for (const p of mp) if (!p.error && p.result) mh.push(...p.result.hands);
+      if (mh.length) {
+        const sc = scoreCard(mh, KC.card);
+        const need = Math.floor(KC.card.hands.length * 0.87);
+        const served = sc.exact >= need && sc.extra <= 4;
+        matchNote({ t: new Date().toISOString(), tier: 'mid', ok: served, exact: sc.exact, of: KC.card.hands.length,
+          need, extra: sc.extra, ms: Date.now() - t0 });
+        if (served) {
+          job.status = 'done'; job.stage = 'done';
+          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'photos read in full and verified line-by-line against the known ' + KC.year + ' card' }],
+            model: usage.model, ms: Date.now() - t0, matched: KC.key };
+          STATS.reads++; STATS.matched++; dayRec().reads++;
+          console.log(JSON.stringify({ ev: 'card_read', matched: KC.key + ' (mid-tier)', ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
+          return;
+        }
+      }
+    }
+    /* stage 2: the careful read — verify pass, retries, consensus */
+    job.stage = 'deep'; job.done = 0;
+    let panels = await Promise.all(photos.map(p =>
+      runPanel(p, STRATS.A, usage).catch(e => ({ error: e.message })).then(r => { job.done++; return r; })));
     panels = await retryFailedPanels(panels, photos, usage);
     const hands = [], fails = [], panelInfo = [];
     let title = 'MY CARD';
@@ -1191,12 +1253,12 @@ async function runReadJob(job, photos) {
       fails.push(...p.result.fails.map(f => ({ name: f.name, reason: f.reason })));
     }
     if (!hands.length) throw new Error(fails.length ? 'No hands could be read: ' + (fails[0].reason || '') : 'No hands could be read from the photos');
-    job.status = 'done';
+    job.status = 'done'; job.stage = 'done';
     job.result = { card: { title, hands }, flags: fails, panels: panelInfo, model: usage.model, ms: Date.now() - t0 };
     STATS.reads++; dayRec().reads++;
     console.log(JSON.stringify({ ev: 'card_read', hands: hands.length, flags: fails.length, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
   } catch (e) {
-    job.status = 'error';
+    job.status = 'error'; job.stage = 'done';
     job.result = { error: e.message, ms: Date.now() - t0 };
     statErr(STATS.serverErrors, 'card_read: ' + e.message);
   }
@@ -1245,7 +1307,8 @@ const server = http.createServer(async (req, res) => {
     if (!/^r\d+$/.test(id)) return send200({ err: 'bad id' });
     const job = JOBS.get(id);
     if (!job) return send200({ err: 'no such job' });
-    return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000), result: job.result || null });
+    return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000),
+      stage: job.stage || null, done: job.done || 0, of: job.of || 0, result: job.result || null });
   }
   if (u.pathname === '/admin/eval') {
     if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
@@ -1336,7 +1399,15 @@ ${tile('CARD READS', STATS.reads, STATS.matched + ' instant-matched')}
 <div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin-bottom:6px">GAMES — LAST ${rows.length} DAYS</div>
 <div style="display:flex;align-items:flex-end;gap:5px;background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:14px 14px 8px;height:96px">${rows.map(r => bar(r.games, Math.max(1, ...rows.map(x => x.games)), '#0C3B2E')).join('')}</div>
 <div style="display:flex;gap:5px;padding:4px 14px 18px">${rows.map(r => `<div style="flex:1;font-size:8px;color:#8A7F5F;text-align:center;min-width:14px">${r.d}</div>`).join('')}</div>
-<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin:6px 0">RECENT ERRORS</div>
+<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin:18px 0 6px">CARD MATCH ATTEMPTS — WHY EACH ONE PASSED OR FAILED</div>
+<div style="background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:12px 16px">${
+  MATCHLOG.slice(-12).reverse().map(m => `<div style="font-size:11px;padding:3px 0;color:${m.ok ? '#2E6B4F' : '#8A4A3A'}">
+    ${String(m.t || '').slice(5, 16)} · ${m.tier === 'mid' ? 'CAREFUL-VERIFY' : 'FAST'}${m.tryN ? ' try ' + m.tryN : ''} · ${m.ok ? 'PASS' : 'fail'}
+    ${m.err ? '· error: ' + m.err : m.tier === 'mid' ? `· ${m.exact}/${m.of} lines matched (need ${m.need}) · ${m.extra} unrecognized` :
+    `· year ${m.yearOk ? 'ok' : 'MISS (' + (m.year || 'not seen') + ')'} · ${m.catHits} sections · ${m.anchorHits} anchor lines · ${m.isCard === false ? 'NOT A CARD · ' : ''}${m.model || ''}`}
+    · ${Math.round((m.ms || 0) / 1000)}s</div>`).join('') ||
+  '<div style="font-size:12px;color:#8A7F5F">no photo uploads since last deploy</div>'}</div>
+<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin:18px 0 6px">RECENT ERRORS</div>
 <div style="background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:12px 16px">${errRows}</div>
 </div></body></html>`;
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -1349,7 +1420,7 @@ ${tile('CARD READS', STATS.reads, STATS.matched + ' instant-matched')}
       const usage = { in: 0, out: 0, model: '?' };
       const t0 = Date.now();
       const m = await matchKnownCard(fx.photos, usage);
-      return send200({ matched: m ? m.key : null, hands: m ? m.card.hands.length : 0, ms: Date.now() - t0, tokens: usage });
+      return send200({ matched: m.K ? m.K.key : null, isCard: m.isCard, hands: m.K ? m.K.card.hands.length : 0, ms: Date.now() - t0, tokens: usage });
     } catch (e) { return send200({ err: e.message }); }
   }
   if (u.pathname === '/admin/strats') {
