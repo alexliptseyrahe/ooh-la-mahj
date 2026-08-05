@@ -173,7 +173,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
   box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
 }
 .abtn:active{transform:translateY(1px)}
-.abtn.gold{background:linear-gradient(160deg,#A8893C,#8A6F2F);color:#FBF7EC}
+.abtn.gold{background:#93794A;color:#FBF7EC;box-shadow:0 3px 8px rgba(0,0,0,.28)}
 .abtn.ghost{background:none;border:1px solid rgba(251,247,236,.45);box-shadow:none;color:var(--ivory);font-weight:500}
 .abtn.big{font-size:15px;padding:13px 30px}
 .abtn:disabled{opacity:.4;pointer-events:none}
@@ -316,6 +316,19 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 }
 #callbar.open{display:flex}
 #callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale);text-align:center}
+.lcode{letter-spacing:.32em;margin-left:.32em;font-size:38px}
+.lobbycard{background:#F1EFE9;border-radius:13px;padding:10px 14px;font-size:12.5px;color:#4A5A50;margin:8px 0 2px}
+.lobbycard b{color:var(--deep)}
+.seatrow{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.seat{width:64px}
+.sav{width:52px;height:52px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.03em}
+.sav.you{background:var(--deep);color:#E8D9AE}
+.sav.friend{background:var(--gold);color:#241C08}
+.sav.bot{background:#E4E1D8;color:#8A8579}
+.sav.open{background:#F1EFE9;color:#B4AE9F;font-size:24px;font-weight:400}
+.snm{font-size:10px;color:#6B6248;text-align:center;line-height:1.25}
+.snm i{color:#A8A296;font-style:normal;font-size:9px}
 .hostcard{background:#F1EFE9;border-radius:16px;padding:12px;width:100%;box-sizing:border-box}
 .chiprow{display:flex;gap:8px;margin-top:10px}
 .chip{flex:1;padding:10px 0;border-radius:19px;font-size:11px;letter-spacing:.08em;font-weight:600;
@@ -2270,16 +2283,22 @@ function renderLobby(v){
     return `<div><b>${s.name}</b>${s.isYou?' (you)':''}${s.connected?'':' · reconnecting…'}</div>`;
   }).join('');
   const cardLine=isHost
-    ?`This table plays <b>your</b> card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(set when you created the table — everyone at the table plays it)</span>`
-    :`Everyone plays ${hostName}'s card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(the host's card rules the table — nothing for you to set up)</span>`;
-  box.innerHTML=`<div class="mtop">TABLE CODE — SHARE IT WITH YOUR FOURSOME</div>
-    <h2 style="letter-spacing:.3em">${v.code}</h2>
-    <div class="mbtns" style="margin:4px 0 10px"><button class="abtn gold" id="lshare" style="font-size:11px;padding:9px 18px">SHARE INVITE</button></div>
-    <div class="msub">${cardLine}</div>
-    ${v.config&&v.config.hints===false?'<div class="msub" style="font-size:11px;color:#A08F63">House rules: hints are off at this table</div>':''}
-    <div class="revlist" style="max-height:120px">${seats}</div>
-    ${isHost?'<div class="msub" style="font-size:11px">Start whenever you like — friends who join later simply take over a bot\'s seat.</div>':''}
-    <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
+    ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
+    :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`;
+  const seatDots=v.seats.map((sx,i)=>{
+    if(!sx)return `<div class="seat"><div class="sav open">+</div><div class="snm">open</div></div>`;
+    const ini=(sx.name||'?').trim().slice(0,2).toUpperCase();
+    const cls=sx.isYou?'you':(sx.kind==='bot'?'bot':'friend');
+    const nm=sx.isYou?`${sx.name}<br><i>you</i>`:sx.name+(sx.connected===false?'<br><i>reconnecting…</i>':'');
+    return `<div class="seat"><div class="sav ${cls}">${ini}</div><div class="snm">${nm}</div></div>`;
+  }).join('');
+  const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'');
+  box.innerHTML=`<div class="mtop">YOUR TABLE — CODE</div>
+    <h2 class="lcode">${v.code}</h2>
+    <div class="mbtns" style="margin:14px 0 0"><button class="abtn gold" id="lshare">SHARE INVITE</button></div>
+    <div class="seatrow" style="margin:22px 0 18px">${seatDots}</div>
+    <div class="lobbycard" style="margin:0 0 6px">${info}</div>
+    <div class="mbtns" style="margin-top:14px">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
     const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
