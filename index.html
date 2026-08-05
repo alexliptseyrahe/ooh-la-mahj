@@ -316,6 +316,11 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 }
 #callbar.open{display:flex}
 #callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale);text-align:center}
+.hostcard{background:#F1EFE9;border-radius:16px;padding:12px;width:100%;box-sizing:border-box}
+.chiprow{display:flex;gap:8px;margin-top:10px}
+.chip{flex:1;padding:10px 0;border-radius:19px;font-size:11px;letter-spacing:.08em;font-weight:600;
+  background:#fff;border:1px solid #EAE7E0;color:#6B6248;transition:background .15s,color .15s}
+.chip.on{background:var(--deep);border-color:var(--deep);color:#E8D9AE}
 .bopt{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;
   background:#fff;border:1px solid #EAE7E0;border-radius:13px;padding:10px 12px;margin-bottom:7px;text-align:left}
 .bopt .bnm{display:block;font-size:12.5px;font-weight:700;color:var(--deep);letter-spacing:.06em}
@@ -2315,19 +2320,29 @@ function openFriends(errMsg){
       <div class="imperr">${errMsg||''}</div>
       ${nameField}
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
-        <button class="abtn" id="fcreate">HOST A NEW TABLE</button>
-        <button class="mini on" id="fhints" style="align-self:center">HINTS: ALLOWED</button>
+        <div class="hostcard">
+          <button class="abtn" id="fcreate" style="width:100%;box-sizing:border-box">HOST A NEW TABLE</button>
+          <div class="chiprow">
+            <button class="chip on" id="fhintyes">✓ HINTS ALLOWED</button>
+            <button class="chip" id="fhintno">NO HINTS</button>
+          </div>
+        </div>
+        <div class="orpill" style="width:100%"><span>OR</span></div>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
         <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fcancel">CANCEL</button>
       </div>`;
     errMsg='';
     let allowHints=true;
-    box.querySelector('#fhints').onclick=()=>{
-      allowHints=!allowHints;
-      const b=box.querySelector('#fhints');
-      b.textContent='HINTS: '+(allowHints?'ALLOWED':'OFF');
-      b.classList.toggle('on',allowHints);
+    const setHints=v=>{
+      allowHints=v;
+      box.querySelector('#fhintyes').classList.toggle('on',v);
+      box.querySelector('#fhintyes').textContent=v?'\u2713 HINTS ALLOWED':'HINTS ALLOWED';
+      box.querySelector('#fhintno').classList.toggle('on',!v);
+      box.querySelector('#fhintno').textContent=v?'NO HINTS':'\u2713 NO HINTS';
+      sfx('tap');
     };
+    box.querySelector('#fhintyes').onclick=()=>setHints(true);
+    box.querySelector('#fhintno').onclick=()=>setHints(false);
     box.querySelector('#fcreate').onclick=()=>{
       if(!getName())return;
       MP.intended=true;
