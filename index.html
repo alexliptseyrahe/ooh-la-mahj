@@ -1538,7 +1538,24 @@ function wallGame(){
   box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
-function closeModal(){$('modal').classList.remove('open');$('modal').classList.remove('kb')}
+function closeModal(){
+  $('modal').classList.remove('open');$('modal').classList.remove('kb');
+  $('modalin').style.animation='';  /* re-arm the entrance for the next open */
+}
+$('modalin').addEventListener('animationend',()=>{$('modalin').style.animation='none';$('modalin').style.transform=''});
+/* iOS double-tap-zoom hard stop: cancel the second tap's zoom, keep its click */
+let LASTTAP=0;
+document.addEventListener('touchend',e=>{
+  const now=Date.now();
+  const quick=now-LASTTAP<350;
+  LASTTAP=now;
+  if(!quick)return;
+  if(e.target&&e.target.closest&&e.target.closest('input,textarea,select'))return;
+  if(!e.cancelable)return;
+  e.preventDefault();
+  const btn=e.target&&e.target.closest?e.target.closest('button,a,[onclick]'):null;
+  if(btn)btn.click(); /* re-deliver the click the preventDefault swallowed */
+},{passive:false});
 /* keyboard vs bottom sheet: while an input is focused, pin the sheet to the top */
 function typingField(el){
   if(!el)return false;
@@ -1591,10 +1608,10 @@ document.addEventListener('focusout',()=>setTimeout(kbSync,120));
     mi.style.transition='transform .26s cubic-bezier(.3,.9,.4,1)';
     if(dy>90){
       mi.style.transform='translateY(115%)';
-      setTimeout(()=>{softClose();mi.style.transform='';mi.style.transition='';mi.style.animation=''},210);
+      setTimeout(()=>{softClose();mi.style.transform='';mi.style.transition=''},210);
     }else{
       mi.style.transform='translateY(0)';
-      setTimeout(()=>{mi.style.transform='';mi.style.transition='';mi.style.animation=''},280);
+      setTimeout(()=>{mi.style.transform='';mi.style.transition=''},280);
     }
   };
   mi.addEventListener('touchend',finish);
@@ -2179,6 +2196,18 @@ function mpOnMsg(m){
   }
 }
 function seatName(i){return MP.view&&MP.view.seats[i]?MP.view.seats[i].name:'Seat '+(i+1)}
+function shareInvite(btn){
+  if(!MP.view||!MP.view.code)return;
+  const hostName=MP.view.seats&&MP.view.seats[0]?MP.view.seats[0].name:'your host';
+  const url=siteURL()+'?join='+MP.view.code+'&h='+encodeURIComponent(hostName);
+  const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
+  if(navigator.share){navigator.share({text}).catch(()=>{})}
+  else{
+    (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
+      ()=>{if(btn)btn.textContent='COPIED ✓'},
+      ()=>{prompt('Copy this invite:',text)});
+  }
+}
 function hintsAllowed(){return !MP.active||!MP.view||!MP.view.config||MP.view.config.hints!==false}
 function stFlash(h){setStatus(h);MP.stHold=Date.now()}
 /* fake-G so the existing renderers draw server views */
@@ -2301,16 +2330,7 @@ function renderLobby(v){
     <div class="mbtns" style="margin-top:14px">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
   box.querySelectorAll('.sav.open').forEach(el=>{el.style.cursor='pointer';el.onclick=()=>box.querySelector('#lshare').click()});
-  box.querySelector('#lshare').onclick=()=>{
-    const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
-    const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
-    if(navigator.share){navigator.share({text}).catch(()=>{})}
-    else{
-      (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
-        ()=>{box.querySelector('#lshare').textContent='COPIED ✓'},
-        ()=>{prompt('Copy this invite:',text)});
-    }
-  };
+  box.querySelector('#lshare').onclick=()=>shareInvite(box.querySelector('#lshare'));
   const st=box.querySelector('#lstart');
   if(st)st.onclick=()=>mpSend({type:'start'});
   box.querySelector('#lleave').onclick=()=>mpSend({type:'leave'});
@@ -2470,7 +2490,8 @@ function goTitle(){
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
   const top=MP.active
-    ?`<button class="abtn gold" id="mleavet">LEAVE TABLE</button>`
+    ?`<button class="abtn gold" id="mshare">SHARE INVITE — SEAT A FRIEND</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleavet">LEAVE TABLE</button>`
     :`<button class="abtn gold" id="mtitle">EXIT GAME</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
@@ -2499,6 +2520,8 @@ $('btnmenu').onclick=()=>{
       sfx('tap');
     };
   });
+  const ms=box.querySelector('#mshare');
+  if(ms)ms.onclick=()=>shareInvite(ms);
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
   const bt=box.querySelector('#mtitle');
@@ -2510,8 +2533,29 @@ $('btnmenu').onclick=()=>{
 $('btnsort').onclick=()=>{
   if(!G||G.phase==='over')return;
   killClones();
-  G.players[0].hand=sortHand(G.players[0].hand);
-  if(MP.active)MP.orderIds=G.players[0].hand.map(x=>x.id);
+  const me=G.players[0];
+  let arranged=null;
+  if(HINTON&&hintsAllowed()){
+    /* hint showing → arrange the rack in the target hand's own shape:
+       keepers left in pattern order, jokers staged, discardables right */
+    const fits=topFits(me);
+    if(fits.length){
+      const bf=fits[Math.min(HINTIDX,fits.length-1)];
+      const keep=keepIdsFor(me,bf.rem);
+      const used=new Set(),out=[];
+      for(const [tk]of bf.rem){
+        for(const t of me.hand){
+          if(used.has(t.id)||!keep.has(t.id))continue;
+          if(key(t)===tk){used.add(t.id);out.push(t)}
+        }
+      }
+      for(const t of me.hand){if(t.s==='J'&&keep.has(t.id)&&!used.has(t.id)){used.add(t.id);out.push(t)}}
+      const rest=sortHand(me.hand.filter(t=>!used.has(t.id)));
+      arranged=out.concat(rest);
+    }
+  }
+  me.hand=arranged||sortHand(me.hand);
+  if(MP.active)MP.orderIds=me.hand.map(x=>x.id);
   renderRack();
 };
 function describeVariant(v){
