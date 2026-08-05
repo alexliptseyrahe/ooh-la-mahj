@@ -229,7 +229,27 @@ const BOT_MS = +process.env.BOT_MS || 1000;
 const CALLB_MS = +process.env.CALLB_MS || 1200;
 /* ================= STATS ================= */
 const STATS = { boot: Date.now(), loads: 0, uniq: new Set(), tables: 0, games: 0,
-  ends: { win: 0, wall: 0 }, clientErrors: [], serverErrors: [] };
+  ends: { win: 0, wall: 0 }, reads: 0, matched: 0,
+  solo: { games: 0, mywin: 0, botwin: 0, wall: 0 },
+  clientErrors: [], serverErrors: [] };
+const TOKENS = new Map();   /* token -> {loads, days:Set} for human/robot split */
+const DAYS = new Map();     /* 'YYYY-MM-DD' -> daily bucket, ~30 days kept */
+function dayRec() {
+  const d = new Date().toISOString().slice(0, 10);
+  let r = DAYS.get(d);
+  if (!r) {
+    r = { loads: 0, uniq: new Set(), tables: 0, games: 0, wins: 0, walls: 0, solo: 0, reads: 0 };
+    DAYS.set(d, r);
+    if (DAYS.size > 31) DAYS.delete([...DAYS.keys()].sort()[0]);
+  }
+  return r;
+}
+function noteToken(t) {
+  if (!t) return;
+  let r = TOKENS.get(t);
+  if (!r) { if (TOKENS.size >= 50000) return; r = { loads: 0, days: new Set() }; TOKENS.set(t, r); }
+  r.loads++; r.days.add(new Date().toISOString().slice(0, 10));
+}
 function statErr(list, msg) { list.push({ t: new Date().toISOString(), m: String(msg).slice(0, 200) }); if (list.length > 30) list.shift(); }
 /* ================= TABLES ================= */
 const BOTNAMES = ['Evelyn', 'Dinah', 'Bitsy', 'Norma'];
@@ -264,7 +284,7 @@ function makeTable(hostP, cardJson, config) {
   T.seats[0].token = hostP.token;
   T.seats[0].connected = true;
   tables.set(code, T);
-  STATS.tables++;
+  STATS.tables++; dayRec().tables++;
   console.log(JSON.stringify({ ev: 'table_created', code, at: new Date().toISOString() }));
   return T;
 }
@@ -332,7 +352,7 @@ function startGame(T) {
   T.seats[T.dealer].rack.push(T.wall.pop());
   T.discards = [];
   T.phase = 'charleston'; T.chStep = 0; T.callWin = null; T.seq++;
-  STATS.games++;
+  STATS.games++; dayRec().games++;
   console.log(JSON.stringify({ ev: 'game_started', code: T.code, humans: humanSeats(T).length, at: new Date().toISOString() }));
   clearTimers(T);
   broadcast(T, eventMsg('start'));
@@ -510,7 +530,7 @@ function finalTiles(p) {
 const RESULTS = [];
 function pushResult(r) { RESULTS.push(r); if (RESULTS.length > 50) RESULTS.shift(); }
 function endWin(T, i, win) {
-  STATS.ends.win++;
+  STATS.ends.win++; dayRec().wins++;
   pushResult({ r: 'win', hand: win.hand.name, seat: i, kind: T.seats[i].kind });
   T.phase = 'ended'; T.seq++; clearTimers(T);
   const tiles = finalTiles(T.seats[i]);
@@ -519,7 +539,7 @@ function endWin(T, i, win) {
     hand: win.hand.name, cat: win.hand.cat, pts: win.hand.pts * (jokerless ? 2 : 1), jokerless, tiles });
 }
 function endWallGame(T) {
-  STATS.ends.wall++;
+  STATS.ends.wall++; dayRec().walls++;
   pushResult({ r: 'wall' });
   T.phase = 'ended'; T.seq++; clearTimers(T);
   broadcast(T, { type: 'end', result: 'wall' });
@@ -688,7 +708,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r17';
+const LAB_VERSION = 'r18';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -1152,6 +1172,7 @@ async function runReadJob(job, photos) {
       job.status = 'done';
       job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against the known ' + matched.year + ' card' }],
         model: usage.model, ms: Date.now() - t0, matched: matched.key };
+      STATS.reads++; STATS.matched++; dayRec().reads++;
       console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
       return;
     }
@@ -1172,6 +1193,7 @@ async function runReadJob(job, photos) {
     if (!hands.length) throw new Error(fails.length ? 'No hands could be read: ' + (fails[0].reason || '') : 'No hands could be read from the photos');
     job.status = 'done';
     job.result = { card: { title, hands }, flags: fails, panels: panelInfo, model: usage.model, ms: Date.now() - t0 };
+    STATS.reads++; dayRec().reads++;
     console.log(JSON.stringify({ ev: 'card_read', hands: hands.length, flags: fails.length, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
   } catch (e) {
     job.status = 'error';
@@ -1244,9 +1266,22 @@ const server = http.createServer(async (req, res) => {
     return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000), result: job.result || null });
   }
   if (u.pathname === '/b') {
-    STATS.loads++;
+    const ev = String(u.searchParams.get('e') || 'load');
     const t = String(u.searchParams.get('t') || '').slice(0, 64);
-    if (t && STATS.uniq.size < 50000) STATS.uniq.add(t);
+    if (ev === 'solo') {
+      const r = String(u.searchParams.get('r') || '');
+      STATS.solo.games++; dayRec().solo++;
+      if (r === 'win') STATS.solo.mywin++;
+      else if (r === 'botwin') STATS.solo.botwin++;
+      else if (r === 'wall') STATS.solo.wall++;
+      return send200({ ok: 1 });
+    }
+    STATS.loads++; dayRec().loads++;
+    if (t) {
+      if (STATS.uniq.size < 50000) STATS.uniq.add(t);
+      dayRec().uniq.add(t);
+      noteToken(t);
+    }
     return send200({ ok: 1 });
   }
   if (u.pathname === '/e') {
@@ -1263,6 +1298,49 @@ const server = http.createServer(async (req, res) => {
       tablesCreated: STATS.tables, gamesStarted: STATS.games, gamesEnded: STATS.ends,
       liveTables: tables.size,
       clientErrors: STATS.clientErrors, serverErrors: STATS.serverErrors });
+  }
+  if (u.pathname === '/admin/dash') {
+    if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
+    let returners = 0, oneTimers = 0;
+    for (const r of TOKENS.values()) { if (r.days.size >= 2 || r.loads >= 3) returners++; else oneTimers++; }
+    const days = [...DAYS.keys()].sort().slice(-14);
+    const rows = days.map(d => { const r = DAYS.get(d); return { d: d.slice(5), loads: r.loads, uniq: r.uniq.size, games: r.games + r.solo, reads: r.reads, tables: r.tables, wins: r.wins, walls: r.walls }; });
+    const mx = Math.max(1, ...rows.map(r => r.loads));
+    const bar = (v, m, color) => `<div style="height:${Math.max(2, Math.round(v / m * 64))}px;background:${color};border-radius:3px 3px 0 0;min-width:14px;flex:1" title="${v}"></div>`;
+    const up = Math.round((Date.now() - STATS.boot) / 60000);
+    const tile = (label, val, sub) => `<div style="background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:14px 16px;min-width:120px;flex:1">
+      <div style="font-size:10px;letter-spacing:.22em;color:#A8893C">${label}</div>
+      <div style="font-family:Georgia,serif;font-size:30px;color:#0C3B2E;margin-top:2px">${val}</div>
+      ${sub ? `<div style="font-size:11px;color:#8A7F5F">${sub}</div>` : ''}</div>`;
+    const errRows = STATS.clientErrors.slice(-6).concat(STATS.serverErrors.slice(-6)).map(e => `<div style="font-size:11px;color:#8A4A3A;padding:2px 0">${e.t.slice(5, 16)} — ${e.m}</div>`).join('') || '<div style="font-size:12px;color:#8A7F5F">none — quiet as a fan parlour</div>';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ooh La Mahj — Dashboard</title></head>
+<body style="margin:0;background:#F7F2E4;font-family:-apple-system,'Avenir Next',sans-serif;color:#26332C">
+<div style="max-width:760px;margin:0 auto;padding:28px 18px 60px">
+<div style="font-size:11px;letter-spacing:.3em;color:#A8893C;text-align:center">OOH LA MAHJ</div>
+<h1 style="font-family:Georgia,serif;color:#0C3B2E;text-align:center;font-weight:600;margin:6px 0 4px">Dashboard</h1>
+<div style="text-align:center;font-size:11px;color:#8A7F5F;margin-bottom:22px">server ${LAB_VERSION} · up ${up} min · history since last deploy (up to 14 days shown)</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+${tile('APP OPENS', STATS.loads, STATS.uniq.size + ' devices')}
+${tile('LIKELY HUMANS', returners, oneTimers + ' seen once (mostly robots)')}
+${tile('GAMES PLAYED', STATS.games + STATS.solo.games, STATS.games + ' friend · ' + STATS.solo.games + ' solo')}
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+${tile('SOLO RESULTS', STATS.solo.mywin + 'W', STATS.solo.botwin + ' bot wins · ' + STATS.solo.wall + ' walls')}
+${tile('TABLES', STATS.tables, tables.size + ' live now')}
+${tile('CARD READS', STATS.reads, STATS.matched + ' instant-matched')}
+</div>
+<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin-bottom:6px">APP OPENS — LAST ${rows.length} DAYS</div>
+<div style="display:flex;align-items:flex-end;gap:5px;background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:14px 14px 8px;height:96px">${rows.map(r => bar(r.loads, mx, '#C9A24B')).join('')}</div>
+<div style="display:flex;gap:5px;padding:4px 14px 18px">${rows.map(r => `<div style="flex:1;font-size:8px;color:#8A7F5F;text-align:center;min-width:14px">${r.d}</div>`).join('')}</div>
+<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin-bottom:6px">GAMES — LAST ${rows.length} DAYS</div>
+<div style="display:flex;align-items:flex-end;gap:5px;background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:14px 14px 8px;height:96px">${rows.map(r => bar(r.games, Math.max(1, ...rows.map(x => x.games)), '#0C3B2E')).join('')}</div>
+<div style="display:flex;gap:5px;padding:4px 14px 18px">${rows.map(r => `<div style="flex:1;font-size:8px;color:#8A7F5F;text-align:center;min-width:14px">${r.d}</div>`).join('')}</div>
+<div style="font-size:10px;letter-spacing:.22em;color:#A8893C;margin:6px 0">RECENT ERRORS</div>
+<div style="background:#fff;border:1px solid #E6DCC0;border-radius:14px;padding:12px 16px">${errRows}</div>
+</div></body></html>`;
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(html);
   }
   if (u.pathname === '/admin/matchtest') {
     if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
