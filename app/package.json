@@ -1,0 +1,23 @@
+{
+  "name": "ooh-la-mahj",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ooh La Mahj — American mah jongg, beautifully",
+  "scripts": {
+    "fonts": "bash scripts/localize-fonts.sh",
+    "ios": "npx cap sync ios && npx cap open ios",
+    "sync": "npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.0.0"
+  }
+}

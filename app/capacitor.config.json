@@ -1,0 +1,21 @@
+{
+  "appId": "com.oohlamahj.app",
+  "appName": "Ooh La Mahj",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "capacitor"
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0C3B2E",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "backgroundColor": "#0C3B2E",
+      "showSpinner": false,
+      "launchAutoHide": true
+    }
+  }
+}
