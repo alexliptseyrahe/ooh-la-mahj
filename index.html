@@ -1528,16 +1528,16 @@ function typingField(el){
   if(el.tagName!=='INPUT')return false;
   return !/^(file|checkbox|radio|button|submit|range)$/.test(el.type||'text');
 }
-document.addEventListener('focusin',e=>{
-  if(typingField(e.target)&&e.target.closest('#modalin'))
-    $('modal').classList.add('kb');
-});
-document.addEventListener('focusout',()=>{
-  setTimeout(()=>{
-    const a=document.activeElement;
-    if(!a||!/^(INPUT|TEXTAREA)$/.test(a.tagName))$('modal').classList.remove('kb');
-  },80);
-});
+function kbSync(){
+  const vv=window.visualViewport;
+  const keyboardUp=vv?vv.height<window.innerHeight*0.78:false;
+  const a=document.activeElement;
+  const typing=typingField(a)&&a.closest&&a.closest('#modalin');
+  $('modal').classList.toggle('kb',!!(keyboardUp&&typing));
+}
+if(window.visualViewport)window.visualViewport.addEventListener('resize',kbSync);
+document.addEventListener('focusin',()=>{setTimeout(kbSync,120);setTimeout(kbSync,400)});
+document.addEventListener('focusout',()=>setTimeout(kbSync,120));
 /* swipe-down to dismiss the sheet — only where dismissing is safe */
 (function(){
   const mi=$('modalin');
