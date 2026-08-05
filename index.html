@@ -453,7 +453,7 @@ const $=id=>document.getElementById(id);
 
 /* extra CSS for center-art tiles */
 document.head.insertAdjacentHTML('beforeend',`<style>
-body{touch-action:manipulation}
+*{touch-action:manipulation}
 .tile .lbl{color:#8A7F5F}
 .t-lg .m.art svg{width:27px;height:27px}
 .t-md .m.art svg{width:17px;height:17px}
@@ -1522,8 +1522,14 @@ function wallGame(){
 }
 function closeModal(){$('modal').classList.remove('open');$('modal').classList.remove('kb')}
 /* keyboard vs bottom sheet: while an input is focused, pin the sheet to the top */
+function typingField(el){
+  if(!el)return false;
+  if(el.tagName==='TEXTAREA')return true;
+  if(el.tagName!=='INPUT')return false;
+  return !/^(file|checkbox|radio|button|submit|range)$/.test(el.type||'text');
+}
 document.addEventListener('focusin',e=>{
-  if(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName)&&e.target.closest('#modalin'))
+  if(typingField(e.target)&&e.target.closest('#modalin'))
     $('modal').classList.add('kb');
 });
 document.addEventListener('focusout',()=>{
