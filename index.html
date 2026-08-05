@@ -1502,6 +1502,41 @@ function wallGame(){
   $('modal').classList.add('open');
 }
 function closeModal(){$('modal').classList.remove('open')}
+/* swipe-down to dismiss the sheet — only where dismissing is safe */
+(function(){
+  const mi=$('modalin');
+  let sy=0,dy=0,drag=false;
+  const softClose=()=>{
+    const b=mi.querySelector('#mclose')||mi.querySelector('#impcancel')||mi.querySelector('#wclub');
+    if(b)b.click();else closeModal();
+  };
+  const dismissible=()=>!MP.active&&!mi.querySelector('#revsave')&&!mi.querySelector('#convmsg');
+  mi.addEventListener('touchstart',e=>{
+    if(!dismissible()||mi.scrollTop>4)return;
+    sy=e.touches[0].clientY;dy=0;drag=true;
+    mi.style.animation='none';mi.style.transition='none';
+  },{passive:true});
+  mi.addEventListener('touchmove',e=>{
+    if(!drag)return;
+    dy=e.touches[0].clientY-sy;
+    if(dy<=0||mi.scrollTop>0){mi.style.transform='';return}
+    e.preventDefault();
+    mi.style.transform='translateY('+dy+'px)';
+  },{passive:false});
+  const finish=()=>{
+    if(!drag)return;drag=false;
+    mi.style.transition='transform .26s cubic-bezier(.3,.9,.4,1)';
+    if(dy>90){
+      mi.style.transform='translateY(115%)';
+      setTimeout(()=>{softClose();mi.style.transform='';mi.style.transition='';mi.style.animation=''},210);
+    }else{
+      mi.style.transform='translateY(0)';
+      setTimeout(()=>{mi.style.transform='';mi.style.transition='';mi.style.animation=''},280);
+    }
+  };
+  mi.addEventListener('touchend',finish);
+  mi.addEventListener('touchcancel',finish);
+})();
 
 /* ---------- call bar ---------- */
 let callTimer=null;
