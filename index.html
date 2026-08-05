@@ -331,6 +331,9 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 @keyframes sheetup{to{transform:translateY(0)}}
 #modalin::before{content:'';display:block;width:38px;height:4.5px;border-radius:3px;background:#DFDBD1;margin:0 auto 13px}
 @media (prefers-reduced-motion:reduce){#modalin{animation:none;transform:none}}
+#modal.kb{align-items:flex-start}
+#modal.kb #modalin{border-radius:0 0 24px 24px;animation:none;transform:none;max-height:62dvh;padding-top:16px}
+#modal.kb #modalin::before{display:none}
 #modalin .mtop{font-size:10px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
 #modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
 #modalin .msub{font-size:14px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
@@ -1501,7 +1504,18 @@ function wallGame(){
   box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
-function closeModal(){$('modal').classList.remove('open')}
+function closeModal(){$('modal').classList.remove('open');$('modal').classList.remove('kb')}
+/* keyboard vs bottom sheet: while an input is focused, pin the sheet to the top */
+document.addEventListener('focusin',e=>{
+  if(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName)&&e.target.closest('#modalin'))
+    $('modal').classList.add('kb');
+});
+document.addEventListener('focusout',()=>{
+  setTimeout(()=>{
+    const a=document.activeElement;
+    if(!a||!/^(INPUT|TEXTAREA)$/.test(a.tagName))$('modal').classList.remove('kb');
+  },80);
+});
 /* swipe-down to dismiss the sheet — only where dismissing is safe */
 (function(){
   const mi=$('modalin');
@@ -1512,6 +1526,7 @@ function closeModal(){$('modal').classList.remove('open')}
   };
   const dismissible=()=>!MP.active&&!mi.querySelector('#revsave')&&!mi.querySelector('#convmsg');
   mi.addEventListener('touchstart',e=>{
+    if(e.target.closest&&e.target.closest('input,textarea,select,button,details'))return;
     if(!dismissible()||mi.scrollTop>4)return;
     sy=e.touches[0].clientY;dy=0;drag=true;
     mi.style.animation='none';mi.style.transition='none';
