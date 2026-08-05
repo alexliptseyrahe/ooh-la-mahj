@@ -1572,7 +1572,7 @@ document.addEventListener('focusout',()=>setTimeout(kbSync,120));
     const b=mi.querySelector('#mclose')||mi.querySelector('#impcancel')||mi.querySelector('#wclub');
     if(b)b.click();else closeModal();
   };
-  const dismissible=()=>!MP.active&&!mi.querySelector('#revsave')&&!mi.querySelector('#convmsg');
+  const dismissible=()=>!MP.active&&!MP.intended&&!MP.view&&!mi.querySelector('#revsave')&&!mi.querySelector('#convmsg');
   mi.addEventListener('touchstart',e=>{
     if(e.target.closest&&e.target.closest('input,textarea,select,button,details'))return;
     if(!dismissible()||mi.scrollTop>4)return;
@@ -2300,6 +2300,7 @@ function renderLobby(v){
     <div class="lobbycard" style="margin:0 0 6px">${info}</div>
     <div class="mbtns" style="margin-top:14px">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
+  box.querySelectorAll('.sav.open').forEach(el=>{el.style.cursor='pointer';el.onclick=()=>box.querySelector('#lshare').click()});
   box.querySelector('#lshare').onclick=()=>{
     const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
     const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
