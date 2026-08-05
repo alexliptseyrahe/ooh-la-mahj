@@ -1535,7 +1535,15 @@ function kbSync(){
   const typing=typingField(a)&&a.closest&&a.closest('#modalin');
   $('modal').classList.toggle('kb',!!(keyboardUp&&typing));
 }
-if(window.visualViewport)window.visualViewport.addEventListener('resize',kbSync);
+function pinPage(){
+  if($('modal').classList.contains('open')&&(window.scrollY||document.documentElement.scrollTop))
+    window.scrollTo(0,0);
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{kbSync();pinPage()});
+  window.visualViewport.addEventListener('scroll',pinPage);
+}
+window.addEventListener('scroll',pinPage);
 document.addEventListener('focusin',()=>{setTimeout(kbSync,120);setTimeout(kbSync,400)});
 document.addEventListener('focusout',()=>setTimeout(kbSync,120));
 /* swipe-down to dismiss the sheet — only where dismissing is safe */
@@ -1896,7 +1904,7 @@ function openImport(backToSheet,focus){
   }
   box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   $('modal').classList.add('open');
-  if(focus==='code')setTimeout(()=>{const c=box.querySelector('#codein');if(c)c.focus()},450);
+  if(focus==='code'&&!('ontouchstart' in window))setTimeout(()=>{const c=box.querySelector('#codein');if(c)c.focus()},450);
   if(focus==='photo'){
     const pin=box.querySelector('#pin0');
     if(pin)pin.click(); /* same tap → straight into the photo picker */
