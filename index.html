@@ -268,11 +268,14 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #imparea{width:100%;height:90px;border:1px solid #CFC9BC;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FCFBF9;color:var(--ink)}
 #impfile{font-size:12px;margin:2px 0 6px;max-width:100%}
 .imperr{color:var(--red);font-size:13px;min-height:16px;margin-bottom:6px}
-.photozone{border:2px dashed #CFC9BC;border-radius:14px;padding:18px 12px;text-align:center;margin:12px 0;background:#FCFBF9}
+.photozone{border:none;border-radius:16px;padding:16px 12px;text-align:center;margin:10px 0;background:#F1EFE9}
+.orpill{display:flex;align-items:center;gap:10px;margin:4px 0}
+.orpill::before,.orpill::after{content:'';flex:1;height:1px;background:#E4E1D8}
+.orpill span{font-size:10px;letter-spacing:.26em;color:#A8A296}
 .photozone .pz1{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--deep)}
 .photozone .pz2{font-size:13px;color:#8A7F5F;margin:6px 0 12px;line-height:1.5}
 .pslots{display:flex;gap:8px;justify-content:center;margin-top:6px}
-.pslot{width:88px;height:66px;border:1.5px dashed #CFC9BC;border-radius:10px;background:#FFFDF4;
+.pslot{width:88px;height:66px;border:none;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(40,50,44,.1);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;overflow:hidden;position:relative;padding:0}
 .pslot span{font-size:10.5px;letter-spacing:.14em;color:#8A7F5F;font-weight:600}
 .pslot b{font-size:17px;color:var(--coral-dk);line-height:1}
@@ -313,6 +316,14 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 }
 #callbar.open{display:flex}
 #callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale);text-align:center}
+.bopt{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;
+  background:#fff;border:1px solid #EAE7E0;border-radius:13px;padding:10px 12px;margin-bottom:7px;text-align:left}
+.bopt .bnm{display:block;font-size:12.5px;font-weight:700;color:var(--deep);letter-spacing:.06em}
+.bopt .bds{display:block;font-size:10.5px;color:#8A7F5F;margin-top:1px}
+.bopt .bck{width:19px;height:19px;border-radius:50%;border:1.5px solid #D9D5CB;flex:none;margin-left:10px;position:relative}
+.bopt.on{border-color:var(--gold)}
+.bopt.on .bck{background:var(--deep);border-color:var(--deep)}
+.bopt.on .bck::after{content:'✓';color:#E8C97E;font-size:12px;position:absolute;left:4.5px;top:1px}
 .calladv{font-family:var(--sans);font-size:13px;letter-spacing:.04em;color:var(--gold);margin-top:8px;line-height:1.45;text-align:center;padding:0 4px}
 #callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 
@@ -1267,6 +1278,7 @@ function botAct(){
 /* bot difficulty: 0 breezy, 1 club player (default), 2 shark */
 let BOTLVL=1;try{BOTLVL=Math.min(2,Math.max(0,parseInt(localStorage.getItem('olmBots'))||1))}catch(e){}
 const BOTLVL_NAMES=['BREEZY','CLUB PLAYER','SHARK'];
+const BOT_DESCS=['forgiving table, generous discards','plays a solid game, misses a little','defends, never misses a call'];
 function visibleCounts(){
   const v={};
   for(const d of G.discards){const k=key(d.t);v[k]=(v[k]||0)+1}
@@ -1582,7 +1594,7 @@ function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open
 /* hint-aware call advice — only speaks when the player has chosen hints */
 function callAdvice(t){
   try{
-    if(!HINTON)return '';
+    if(!HINTON||!hintsAllowed())return '';
     const me=G.players[0];
     const tk=key(t);
     const fits=topFits(me);
@@ -1676,7 +1688,7 @@ function renderRack(){
   const box=$('rack');box.innerHTML='';
   const me=G.players[0];
   let hintKeep=null;
-  if(HINTON&&(G.phase==='charleston'||G.phase==='play')){
+  if(HINTON&&hintsAllowed()&&(G.phase==='charleston'||G.phase==='play')){
     const fits=topFits(me);
     if(fits.length){
       if(HINTIDX>=fits.length)HINTIDX=0;
@@ -1802,12 +1814,14 @@ function openImport(backToSheet){
   const box=$('modalin');
   const reading=readInProgress();
   const photoUI=aiReady()?(reading?`
+  <div class="orpill"><span>OR</span></div>
   <div class="photozone">
-    <div class="pz1">…or photograph your card</div>
+    <div class="pz1">Photograph your card</div>
     <div class="pz2">Your photos are being read now — about ${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))} more minute${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))>1?'s':''}.<br>Play on — your card will appear the moment it's ready.</div>
   </div>`:`
+  <div class="orpill"><span>OR</span></div>
   <div class="photozone">
-    <div class="pz1">…or photograph your card</div>
+    <div class="pz1">Photograph your card</div>
     ${READERR?`<div class="imperr" style="display:block">${READERR}</div>`:''}
     <div class="pz2">Add one photo of each panel of this year's card.<br>Good light, card flat, whole panel in frame.<br>You can keep playing while it reads.</div>
     <div class="pslots">
@@ -2125,6 +2139,7 @@ function mpOnMsg(m){
   }
 }
 function seatName(i){return MP.view&&MP.view.seats[i]?MP.view.seats[i].name:'Seat '+(i+1)}
+function hintsAllowed(){return !MP.active||!MP.view||!MP.view.config||MP.view.config.hints!==false}
 function stFlash(h){setStatus(h);MP.stHold=Date.now()}
 /* fake-G so the existing renderers draw server views */
 function mpRenderGame(v){
@@ -2234,6 +2249,7 @@ function renderLobby(v){
     <h2 style="letter-spacing:.3em">${v.code}</h2>
     <div class="mbtns" style="margin:4px 0 10px"><button class="abtn gold" id="lshare" style="font-size:11px;padding:9px 18px">SHARE INVITE</button></div>
     <div class="msub">${cardLine}</div>
+    ${v.config&&v.config.hints===false?'<div class="msub" style="font-size:11px;color:#A08F63">House rules: hints are off at this table</div>':''}
     <div class="revlist" style="max-height:120px">${seats}</div>
     ${isHost?'<div class="msub" style="font-size:11px">Start whenever you like — friends who join later simply take over a bot\'s seat.</div>':''}
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
@@ -2278,16 +2294,24 @@ function openFriends(errMsg){
       ${nameField}
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
         <button class="abtn" id="fcreate">HOST A NEW TABLE</button>
+        <button class="mini on" id="fhints" style="align-self:center">HINTS: ALLOWED</button>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
         <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fcancel">CANCEL</button>
       </div>`;
     errMsg='';
+    let allowHints=true;
+    box.querySelector('#fhints').onclick=()=>{
+      allowHints=!allowHints;
+      const b=box.querySelector('#fhints');
+      b.textContent='HINTS: '+(allowHints?'ALLOWED':'OFF');
+      b.classList.toggle('on',allowHints);
+    };
     box.querySelector('#fcreate').onclick=()=>{
       if(!getName())return;
       MP.intended=true;
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed'}}));
+      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
     box.querySelector('#fcancel').onclick=closeModal;
@@ -2395,7 +2419,12 @@ $('btnmenu').onclick=()=>{
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mbots">BOTS: ${BOTLVL_NAMES[BOTLVL]}</button>
+    ${MP.active?'':`<div style="width:100%;max-width:280px;text-align:left">
+      <div style="font-size:10px;letter-spacing:.24em;color:#A8A296;margin:4px 0 6px;text-align:center">THE BOTS</div>
+      ${[0,1,2].map(i=>`<button class="bopt${i===BOTLVL?' on':''}" data-lvl="${i}">
+        <span class="btxt"><span class="bnm">${BOTLVL_NAMES[i]}</span><span class="bds">${BOT_DESCS[i]}</span></span>
+        <span class="bck"></span></button>`).join('')}
+    </div>`}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mrules">HOUSE RULES</button>
     ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mtitle">EXIT GAME</button>`}
     <button class="abtn" id="mclose">RETURN TO GAME</button>
@@ -2406,11 +2435,14 @@ $('btnmenu').onclick=()=>{
     box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
     if(SND)sfx('tap');
   };
-  box.querySelector('#mbots').onclick=()=>{
-    BOTLVL=(BOTLVL+1)%3;
-    try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
-    box.querySelector('#mbots').textContent='BOTS: '+BOTLVL_NAMES[BOTLVL];
-  };
+  box.querySelectorAll('.bopt').forEach(b=>{
+    b.onclick=()=>{
+      BOTLVL=+b.dataset.lvl;
+      try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
+      box.querySelectorAll('.bopt').forEach(x=>x.classList.toggle('on',+x.dataset.lvl===BOTLVL));
+      sfx('tap');
+    };
+  });
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
   const ng=box.querySelector('#mnewg');
@@ -2456,6 +2488,7 @@ function describeVariant(v){
 }
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
+  if(!hintsAllowed()){setStatus('The host has turned hints off for this table');return}
   const fits=topFits(G.players[0]);
   if(!fits.length){
     HINTON=false;$('btnhint').classList.remove('on');
