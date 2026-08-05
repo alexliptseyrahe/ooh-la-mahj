@@ -227,6 +227,7 @@ function botClaimCheck(T, p, t) {
 
 const BOT_MS = +process.env.BOT_MS || 1000;
 const CALLB_MS = +process.env.CALLB_MS || 1200;
+const CALL_MS = +process.env.CALL_MS || 12000;  /* human call window — generous; the popup shows a draining bar */
 /* ================= STATS ================= */
 const STATS = { boot: Date.now(), loads: 0, uniq: new Set(), tables: 0, games: 0,
   ends: { win: 0, wall: 0 }, reads: 0, matched: 0,
@@ -447,8 +448,8 @@ function openCallWindow(T, by, t) {
   }
   const anyBotsCouldClaim = T.seats.some((s, i) => i !== by && seatDriver(T, i) === 'bot');
   if (!Object.keys(eligible).length && !anyBotsCouldClaim) return advanceFrom(T, by);
-  T.callWin = { by, tile: t, deadline: Date.now() + (Object.keys(eligible).length ? 8000 : CALLB_MS), responses: {}, eligible };
-  for (const iStr in eligible) send(T.seats[+iStr].token, { type: 'callwin', tile: pubTile(t), options: eligible[iStr], ms: 8000 });
+  T.callWin = { by, tile: t, deadline: Date.now() + (Object.keys(eligible).length ? CALL_MS : CALLB_MS), responses: {}, eligible };
+  for (const iStr in eligible) send(T.seats[+iStr].token, { type: 'callwin', tile: pubTile(t), options: eligible[iStr], ms: CALL_MS });
   later(T, 'call', T.callWin.deadline - Date.now(), () => resolveCallWindow(T));
 }
 function respondCall(T, seat, choice) {

@@ -355,6 +355,9 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 .bopt.on .bck::after{content:'✓';color:#E8C97E;font-size:12px;position:absolute;left:4.5px;top:1px}
 .calladv{font-family:var(--sans);font-size:13px;letter-spacing:.04em;color:var(--gold);margin-top:8px;line-height:1.45;text-align:center;padding:0 4px}
 #callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#calltick{display:none;height:3px;border-radius:2px;background:rgba(232,217,174,.16);overflow:hidden;width:82%;margin-top:2px}
+#calltick.on{display:block}
+#calltick i{display:block;height:100%;width:100%;background:var(--gold);border-radius:2px}
 
 /* ---------- modal ---------- */
 #modal{
@@ -429,6 +432,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 <div id="callbar">
   <div class="cq" id="callq"></div>
   <div class="cbtns" id="callbtns"></div>
+  <div id="calltick"><i></i></div>
 </div>
 
 <div id="sheet">
@@ -1649,9 +1653,10 @@ function openCallBar(t,opts,onPass){
   bb.appendChild(pass);
   bar.classList.add('open');
   clearTimeout(callTimer);
-  callTimer=setTimeout(()=>{closeCall();onPass()},6500);
+  /* solo: no countdown — it's your table, the bots will wait as long as you like */
+  $('calltick').classList.remove('on');
 }
-function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open')}
+function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open');$('calltick').classList.remove('on')}
 /* hint-aware call advice — only speaks when the player has chosen hints */
 function callAdvice(t){
   try{
@@ -2397,7 +2402,14 @@ function mpShowCallBar(m){
   mkb('PASS','pass','ghost');
   bar.classList.add('open');
   clearTimeout(callTimer);
-  callTimer=setTimeout(()=>{mpSend({type:'call',choice:'pass'});closeCall()},m.ms||8000);
+  const ms=m.ms||12000;
+  /* friends are waiting, so a deadline exists — but make it visible: a thin draining bar */
+  const tk=$('calltick'),ti=tk.querySelector('i');
+  tk.classList.add('on');
+  ti.style.transition='none';ti.style.width='100%';
+  void ti.offsetWidth;
+  ti.style.transition='width '+ms+'ms linear';ti.style.width='0%';
+  callTimer=setTimeout(()=>{mpSend({type:'call',choice:'pass'});closeCall()},ms);
 }
 function mpShowEnd(m){
   closeCall();
