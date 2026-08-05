@@ -1,0 +1,60 @@
+workflows:
+  ios-testflight:
+    name: Ooh La Mahj — iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: OLM_ASC_KEY
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: com.oohlamahj.app
+    triggering:
+      events: []
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd app
+          npm install
+      - name: Localize fonts (offline-ready bundle)
+        script: |
+          cd app
+          bash scripts/localize-fonts.sh || echo "font localization skipped — app falls back to system fonts"
+      - name: Create iOS project
+        script: |
+          cd app
+          npx cap add ios
+          npx cap sync ios
+      - name: Generate icons and splash screens
+        script: |
+          cd app
+          npx @capacitor/assets generate --iconBackgroundColor '#0C3B2E' --splashBackgroundColor '#0C3B2E' --ios
+      - name: Add camera permission text
+        script: |
+          cd app/ios/App/App
+          plutil -replace NSCameraUsageDescription -string "Ooh La Mahj uses the camera so you can photograph your mah jongg card and play with your own hands." Info.plist
+          plutil -replace NSPhotoLibraryUsageDescription -string "Ooh La Mahj can read photos of your mah jongg card from your library so you can play with your own hands." Info.plist
+      - name: Set build number
+        script: |
+          cd app/ios/App
+          agvtool new-version -all $PROJECT_BUILD_NUMBER
+      - name: Signing — fetch or create certificates & profiles
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
+          cd app
+          xcode-project use-profiles
+      - name: Build the app
+        script: |
+          cd app
+          xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+    artifacts:
+      - app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
