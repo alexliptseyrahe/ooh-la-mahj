@@ -282,6 +282,16 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 .pslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pslot.filled{border-style:solid;border-color:var(--grn)}
 .pslot.filled::after{content:'✓';position:absolute;top:2px;right:5px;color:#fff;font-size:12px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.pslot.next{box-shadow:0 0 0 2.5px var(--coral)}
+.pslot.next span{color:var(--coral-dk)}
+/* trifold card diagram — fills in as photos arrive */
+.fold{display:flex;justify-content:center;gap:2px;margin:6px 0 10px}
+.fseg{width:30px;height:42px;border-radius:4px;border:1.5px solid var(--gold);background:#fff;position:relative}
+.fseg::before{content:'';position:absolute;inset:6px 5px;background:repeating-linear-gradient(#EAE7E0 0 2px,transparent 2px 7px)}
+.fseg.done{background:var(--deep);border-color:var(--deep)}
+.fseg.done::before{content:'✓';background:none;color:#E8C97E;font-size:14px;inset:0;display:flex;align-items:center;justify-content:center}
+.fseg.next{border-color:var(--coral);box-shadow:0 0 0 3px rgba(226,114,91,.3)}
+.abtn.off{background:#EAE7E0;color:#A8A296;box-shadow:none}
 details.altimp{margin-top:12px;text-align:left}
 details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:pointer}
 .spin{width:34px;height:34px;border:3px solid #E7E3DA;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
@@ -1886,40 +1896,41 @@ function openImport(backToSheet,focus){
   if(maybeOfferPendingCard(true))return;
   const box=$('modalin');
   const reading=readInProgress();
-  const photoUI=aiReady()?(reading?`
-  <div class="orpill"><span>OR</span></div>
+  const photoZone=aiReady()?(reading?`
   <div class="photozone">
     <div class="pz1">Photograph your card</div>
     <div class="pz2">Your photos are being read now.<br>Play on — your card will appear the moment it's ready.</div>
     <div class="mbtns" style="margin-top:10px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4;font-size:11px;padding:8px 14px" id="pzprog">SEE PROGRESS</button></div>
   </div>`:`
-  <div class="orpill"><span>OR</span></div>
   <div class="photozone">
     <div class="pz1">Photograph your card</div>
     ${READERR?`<div class="imperr" style="display:block">${READERR}</div>`:''}
-    <div class="pz2">Add one photo of each panel of this year's card.<br>Good light, card flat, whole panel in frame.<br>You can keep playing while it reads.</div>
+    <div class="pz2" id="pzsub" style="margin-bottom:6px">One photo per section of the fold</div>
+    <div class="fold"><div class="fseg" id="fs0"></div><div class="fseg" id="fs1"></div><div class="fseg" id="fs2"></div></div>
     <div class="pslots">
-      <button class="pslot" id="slot0"><b>+</b><span>PANEL 1</span></button>
-      <button class="pslot" id="slot1"><b>+</b><span>PANEL 2</span></button>
-      <button class="pslot" id="slot2"><b>+</b><span>PANEL 3</span></button>
+      <button class="pslot" id="slot0"><b>+</b><span>LEFT</span></button>
+      <button class="pslot" id="slot1"><b>+</b><span>MIDDLE</span></button>
+      <button class="pslot" id="slot2"><b>+</b><span>RIGHT</span></button>
     </div>
     <input type="file" id="pin0" accept="image/*" style="display:none">
     <input type="file" id="pin1" accept="image/*" style="display:none">
     <input type="file" id="pin2" accept="image/*" style="display:none">
-    <div class="mbtns" id="convertrow" style="display:none;margin-top:14px">
-      <button class="abtn gold" id="convertgo">READ MY CARD</button>
-    </div>
+    <div class="mbtns" style="margin-top:12px"><button class="abtn off" id="convertgo">READ MY CARD</button></div>
+    <div class="pz2" style="margin:8px 0 0;font-size:11px">Good light, card flat, one full section per photo.</div>
   </div>`):'';
-  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
-  <div class="photozone">
+  const codeZone=`<div class="photozone">
     <div class="pz1">Enter your club code</div>
     <input type="text" id="codein" autocapitalize="characters" autocomplete="off" placeholder="CLUB CODE"
       style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
     <div class="imperr" id="codeerr"></div>
     <button class="abtn" id="codego">UNLOCK MY CARD</button>
-  </div>
-  ${photoUI}
-  
+  </div>`;
+  /* order follows intent: photo-first arrivals see photos on top, club code below */
+  const zones=(focus==='photo'&&photoZone)
+    ?photoZone+`<div class="orpill"><span>HAVE A CLUB CODE?</span></div>`+codeZone
+    :codeZone+(photoZone?`<div class="orpill"><span>OR</span></div>`+photoZone:'');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
+  ${zones}
   <div class="imperr" id="imperr"></div>
   <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE OOH LA CARD'}</button></div>`;
   const pz=box.querySelector('#pzprog');if(pz)pz.onclick=()=>renderReadSheet();
@@ -1942,6 +1953,22 @@ function openImport(backToSheet,focus){
   box.querySelector('#codein').addEventListener('keydown',e=>{if(e.key==='Enter')box.querySelector('#codego').click()});
   let photos=[null,null,null];
   if(aiReady()&&!reading){
+    const SECS=['left','middle','right'];
+    const sync=()=>{
+      const n=photos.filter(Boolean).length;
+      let nextI=-1;for(let i=0;i<3;i++)if(!photos[i]){nextI=i;break}
+      for(let i=0;i<3;i++){
+        const fs=box.querySelector('#fs'+i),sl=box.querySelector('#slot'+i);
+        if(fs){fs.classList.toggle('done',!!photos[i]);fs.classList.toggle('next',i===nextI)}
+        if(sl)sl.classList.toggle('next',i===nextI);
+      }
+      const sub=box.querySelector('#pzsub');
+      if(sub)sub.textContent=n===0?'One photo per section of the fold':
+        n===3?'All three sections in — ready to read':
+        (n===1?'One down':'Two down')+' — now the '+SECS[nextI]+' section';
+      const go=box.querySelector('#convertgo');
+      if(go){go.classList.toggle('off',n===0);go.textContent=n===0||n===3?'READ MY CARD':'READ MY CARD · '+n+' OF 3'}
+    };
     for(let i=0;i<3;i++){
       const slot=box.querySelector('#slot'+i),pin=box.querySelector('#pin'+i);
       slot.onclick=()=>pin.click();
@@ -1953,13 +1980,14 @@ function openImport(backToSheet,focus){
         const im=document.createElement('img');
         im.src=URL.createObjectURL(f);
         slot.appendChild(im);
-        box.querySelector('#convertrow').style.display=photos.some(Boolean)?'flex':'none';
+        sync();
       });
     }
+    sync();
     box.querySelector('#convertgo').onclick=()=>{
       const got=photos.filter(Boolean);
       if(!got.length)return;
-      if(got.length<3&&!confirm('Only '+got.length+' of 3 panels added — read the card anyway?'))return;
+      if(got.length<3&&!confirm('Only '+got.length+' of 3 sections added — read the card anyway?'))return;
       convertPhotos(got,backToSheet);
     };
   }
