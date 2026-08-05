@@ -355,9 +355,9 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   background:var(--paper);color:var(--ink);border-radius:26px 26px 0 0;
   padding:11px 22px calc(env(safe-area-inset-bottom,10px) + 18px);max-width:520px;width:100%;
   text-align:center;box-shadow:0 -14px 44px rgba(0,0,0,.4);max-height:88dvh;overflow-y:auto;
-  transform:translateY(100%);animation:sheetup .42s cubic-bezier(.22,1.12,.36,1) forwards;
+  animation:sheetup .42s cubic-bezier(.22,1.12,.36,1);
 }
-@keyframes sheetup{to{transform:translateY(0)}}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 #modalin::before{content:'';display:block;width:38px;height:4.5px;border-radius:3px;background:#DFDBD1;margin:0 auto 13px}
 @media (prefers-reduced-motion:reduce){#modalin{animation:none;transform:none}}
 #modal.kb{align-items:flex-start}
@@ -1542,7 +1542,7 @@ function closeModal(){
   $('modal').classList.remove('open');$('modal').classList.remove('kb');
   $('modalin').style.animation='';  /* re-arm the entrance for the next open */
 }
-$('modalin').addEventListener('animationend',()=>{$('modalin').style.animation='none';$('modalin').style.transform=''});
+$('modalin').addEventListener('animationend',()=>{$('modalin').style.animation='none'});
 /* iOS double-tap-zoom hard stop: cancel the second tap's zoom, keep its click */
 let LASTTAP=0;
 document.addEventListener('touchend',e=>{
@@ -1661,7 +1661,12 @@ function callAdvice(t){
 }
 
 /* ---------- rendering ---------- */
-function setStatus(html){$('statusline').innerHTML=html}
+let HINTBASE='',STREVERT=null;
+function setStatus(html){
+  $('statusline').innerHTML=html;
+  clearTimeout(STREVERT);
+  if(HINTBASE&&html!==HINTBASE)STREVERT=setTimeout(()=>{$('statusline').innerHTML=HINTBASE},2200);
+}
 let msgTimer=null;
 function showMsg(txt){
   $('tablemsgtxt').textContent=txt;
@@ -1742,8 +1747,10 @@ function renderRack(){
     if(fits.length){
       if(HINTIDX>=fits.length)HINTIDX=0;
       hintKeep=keepIdsFor(me,fits[HINTIDX].rem);
-    }
-  }
+      const bf=fits[HINTIDX];
+      HINTBASE=`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`;
+    }else HINTBASE='';
+  }else HINTBASE='';
   for(const t of me.hand){
     const td=tileDOM(t,'t-lg');
     if(G.sel.has(t.id))td.classList.add('sel');
