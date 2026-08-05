@@ -2428,7 +2428,7 @@ $('btnmenu').onclick=()=>{
   const box=$('modalin');
   const top=MP.active
     ?`<button class="abtn gold" id="mleavet">LEAVE TABLE</button>`
-    :`<button class="abtn gold" id="mnewg">NEW GAME</button>`;
+    :`<button class="abtn gold" id="mtitle">EXIT GAME</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
@@ -2440,7 +2440,6 @@ $('btnmenu').onclick=()=>{
         <span class="bck"></span></button>`).join('')}
     </div>`}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mrules">HOUSE RULES</button>
-    ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mtitle">EXIT GAME</button>`}
     <button class="abtn" id="mclose">RETURN TO GAME</button>
   </div>`;
   box.querySelector('#msound').onclick=()=>{
@@ -2459,8 +2458,6 @@ $('btnmenu').onclick=()=>{
   });
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
-  const ng=box.querySelector('#mnewg');
-  if(ng)ng.onclick=()=>{closeModal();newGame()};
   const bt=box.querySelector('#mtitle');
   if(bt)bt.onclick=goTitle;
   box.querySelector('#mrules').onclick=()=>{closeModal();$('btnhow').click()};
