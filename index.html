@@ -32,6 +32,7 @@
   --red:#B23A2F;
   --grn:#1B6B4C;
   --blu:#2C5F82;
+  --paper:#FAF9F5;
   --tile-face:#FFFDF4;
   --tile-face2:#F5EEDB;
   --tile-edge:#E0D6B8;
@@ -172,7 +173,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
   box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
 }
 .abtn:active{transform:translateY(1px)}
-.abtn.gold{background:linear-gradient(160deg,var(--gold),var(--gold-dk));color:#241C08}
+.abtn.gold{background:linear-gradient(160deg,#A8893C,#8A6F2F);color:#FBF7EC}
 .abtn.ghost{background:none;border:1px solid rgba(251,247,236,.45);box-shadow:none;color:var(--ivory);font-weight:500}
 .abtn.big{font-size:15px;padding:13px 30px}
 .abtn:disabled{opacity:.4;pointer-events:none}
@@ -248,30 +249,30 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 }
 #sheet.open{display:flex}
 #sheetin{
-  background:var(--ivory);color:var(--ink);border-radius:20px 20px 0 0;
+  background:var(--paper);color:var(--ink);border-radius:20px 20px 0 0;
   max-height:82dvh;display:flex;flex-direction:column;
   box-shadow:0 -8px 30px rgba(0,0,0,.4);
 }
-#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CBBF9E;margin:10px auto 4px}
+#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CFC9BC;margin:10px auto 4px}
 #sheetin h3{
   font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
   padding:4px 0 2px;
 }
-#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E2D8BC}
+#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
 #cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
-.cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CBBF9E;border-radius:13px;padding:5px 13px;background:#fff}
+.cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CFC9BC;border-radius:13px;padding:5px 13px;background:#fff}
 .cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
 .cbtn.imp{color:var(--coral-dk);border-color:var(--coral)}
 .cbtn:disabled{opacity:.35}
-#imparea{width:100%;height:90px;border:1px solid #CBBF9E;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FDFBF4;color:var(--ink)}
+#imparea{width:100%;height:90px;border:1px solid #CFC9BC;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FCFBF9;color:var(--ink)}
 #impfile{font-size:12px;margin:2px 0 6px;max-width:100%}
 .imperr{color:var(--red);font-size:13px;min-height:16px;margin-bottom:6px}
-.photozone{border:2px dashed #CBBF9E;border-radius:14px;padding:18px 12px;text-align:center;margin:12px 0;background:#FDFBF4}
+.photozone{border:2px dashed #CFC9BC;border-radius:14px;padding:18px 12px;text-align:center;margin:12px 0;background:#FCFBF9}
 .photozone .pz1{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--deep)}
 .photozone .pz2{font-size:13px;color:#8A7F5F;margin:6px 0 12px;line-height:1.5}
 .pslots{display:flex;gap:8px;justify-content:center;margin-top:6px}
-.pslot{width:88px;height:66px;border:1.5px dashed #CBBF9E;border-radius:10px;background:#FFFDF4;
+.pslot{width:88px;height:66px;border:1.5px dashed #CFC9BC;border-radius:10px;background:#FFFDF4;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;overflow:hidden;position:relative;padding:0}
 .pslot span{font-size:10.5px;letter-spacing:.14em;color:#8A7F5F;font-weight:600}
 .pslot b{font-size:17px;color:var(--coral-dk);line-height:1}
@@ -280,14 +281,14 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 .pslot.filled::after{content:'✓';position:absolute;top:2px;right:5px;color:#fff;font-size:12px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 details.altimp{margin-top:12px;text-align:left}
 details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:pointer}
-.spin{width:34px;height:34px;border:3px solid #E2D8BC;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
+.spin{width:34px;height:34px;border:3px solid #E7E3DA;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E2D8BC;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
+.revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E7E3DA;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
 .revlist b{color:var(--deep)}
 .revcat{font-size:10.5px;letter-spacing:.2em;color:var(--gold-dk);margin-top:6px}
 .ccat{font-size:10.5px;font-weight:600;letter-spacing:.26em;color:var(--gold-dk);margin:14px 0 6px}
 .chand{
-  background:#fff;border:1px solid #E6DCC0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
+  background:#fff;border:1px solid #EAE7E0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
   display:flex;flex-direction:column;gap:6px;
 }
 .chand.best{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral)}
@@ -295,7 +296,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 .chand .chname{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--deep)}
 .chand .chpts{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--gold-dk);white-space:nowrap}
 .chand .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px}
-.chand .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F4EDDA;font-weight:500}
+.chand .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
 .chand .chpat i.cR{color:var(--red)} .chand .chpat i.cG{color:var(--grn)} .chand .chpat i.cB{color:var(--blu)}
 .chand .chpat i.cN{color:#33413A} .chand .chpat i.cF{color:var(--coral-dk)}
 .chand .prog{display:flex;align-items:center;gap:8px}
@@ -307,32 +308,38 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 /* ---------- call bar ---------- */
 #callbar{
   position:fixed;left:10px;right:10px;top:130px;bottom:auto;z-index:40;display:none;
-  background:rgba(9,42,32,.96);border:1px solid var(--gold);border-radius:16px;padding:12px;
-  flex-direction:column;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  background:rgba(6,25,19,.98);border:1px solid var(--gold);border-radius:16px;padding:15px 16px 14px;
+  flex-direction:column;gap:11px;align-items:center;box-shadow:0 12px 34px rgba(0,0,0,.55);
 }
 #callbar.open{display:flex}
-#callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale)}
-.calladv{font-family:var(--sans);font-size:12.5px;letter-spacing:.05em;color:var(--gold);margin-top:5px}
+#callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale);text-align:center}
+.calladv{font-family:var(--sans);font-size:13px;letter-spacing:.04em;color:var(--gold);margin-top:8px;line-height:1.45;text-align:center;padding:0 4px}
 #callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 
 /* ---------- modal ---------- */
 #modal{
-  position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
-  background:rgba(5,20,15,.65);backdrop-filter:blur(4px);padding:24px;
+  position:fixed;inset:0;z-index:70;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(8,30,23,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
 #modal.open{display:flex}
 #modalin{
-  background:var(--ivory);color:var(--ink);border-radius:18px;padding:26px 22px 22px;max-width:340px;width:100%;
-  text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.5);max-height:86dvh;overflow-y:auto;
+  background:var(--paper);color:var(--ink);border-radius:26px 26px 0 0;
+  padding:11px 22px calc(env(safe-area-inset-bottom,10px) + 18px);max-width:520px;width:100%;
+  text-align:center;box-shadow:0 -14px 44px rgba(0,0,0,.4);max-height:88dvh;overflow-y:auto;
+  transform:translateY(100%);animation:sheetup .42s cubic-bezier(.22,1.12,.36,1) forwards;
 }
+@keyframes sheetup{to{transform:translateY(0)}}
+#modalin::before{content:'';display:block;width:38px;height:4.5px;border-radius:3px;background:#DFDBD1;margin:0 auto 13px}
+@media (prefers-reduced-motion:reduce){#modalin{animation:none;transform:none}}
 #modalin .mtop{font-size:10px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
 #modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
 #modalin .msub{font-size:14px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
 #modalin .mtiles{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:14px 0}
-.debrief{border-top:1px solid #E4DAC0;margin-top:16px;padding-top:13px}
+.debrief{border-top:1px solid #E8E5DE;margin-top:16px;padding-top:13px}
 .dbhead{font-family:var(--sans);font-size:10px;letter-spacing:.3em;color:#A8893C;font-weight:600}
 #modalin .mpts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--coral-dk);margin:6px 0 16px}
-#modalin .mbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#modalin .mbtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;flex-direction:column;align-items:stretch}
+#modalin .mbtns .abtn{width:100%;box-sizing:border-box}
 #modalin .rules{text-align:left;font-size:13px;line-height:1.65;color:#3E4E45}
 #modalin .rules b{color:var(--deep)}
 #modalin .rules p{margin-bottom:9px}
@@ -1473,7 +1480,7 @@ function declareWin(i,win){
      <div class="mtiles" id="mtiles"></div>
      <div class="mpts">${pts} points</div>
      <div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
-     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`);
+     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`);
   const mt=box.querySelector('#mtiles');
   for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
   if(!mine)addDebrief(box);
@@ -1488,7 +1495,7 @@ function wallGame(){
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
     <div class="msub">The wall is spent and no one made their hand.<br>The ladies order another round of spritzes.</div>
     <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button>
-    <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`;
+    <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`;
   addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
   box.querySelector('#mhome').onclick=goTitle;
@@ -1530,9 +1537,9 @@ function callAdvice(t){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
       if(!grp)continue;
       if(bf.hand.concealed)
-        return `<div class="calladv">✋ “${bf.hand.name}” must stay concealed — calling forfeits it</div>`;
+        return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>calling forfeits it</b></div>`;
       const away=Math.max(0,14-bf.score);
-      return `<div class="calladv">✨ fits “${bf.hand.name}” — you're ${away} away and this advances it</div>`;
+      return `<div class="calladv">fits <b>“${bf.hand.name}”</b> — ${away} away, calling advances it</div>`;
     }
     return `<div class="calladv">your closest hands don't need it</div>`;
   }catch(e){return ''}
@@ -1765,19 +1772,14 @@ function openImport(backToSheet){
   <div class="photozone">
     <div class="pz1">Enter your club code</div>
     <input type="text" id="codein" autocapitalize="characters" autocomplete="off" placeholder="CLUB CODE"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
     <div class="imperr" id="codeerr"></div>
     <button class="abtn" id="codego">UNLOCK MY CARD</button>
   </div>
   ${photoUI}
-  ${backToSheet?`<details class="altimp">
-    <summary>Load a card file (advanced)</summary>
-    <input type="file" id="impfile" accept=".json,application/json">
-    <textarea id="imparea" placeholder="…or paste the card data here"></textarea>
-    <div class="mbtns"><button class="abtn" id="impsave" style="font-size:11px;padding:9px 16px">SAVE CARD FILE</button></div>
-  </details>`:''}
+  
   <div class="imperr" id="imperr"></div>
-  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
+  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
   box.querySelector('#codego').onclick=async()=>{
     const code=box.querySelector('#codein').value;
     if(!code.trim()){box.querySelector('#codeerr').textContent='Type the code first';return}
@@ -1816,21 +1818,6 @@ function openImport(backToSheet){
       if(!got.length)return;
       if(got.length<3&&!confirm('Only '+got.length+' of 3 panels added — read the card anyway?'))return;
       convertPhotos(got,backToSheet);
-    };
-  }
-  if(box.querySelector('#impfile')){
-    box.querySelector('#impfile').addEventListener('change',e=>{
-      const f=e.target.files[0];if(!f)return;
-      const r=new FileReader();
-      r.onload=()=>{box.querySelector('#imparea').value=r.result};
-      r.readAsText(f);
-    });
-    box.querySelector('#impsave').onclick=()=>{
-      const err=saveCustomCard(box.querySelector('#imparea').value.trim());
-      if(err){box.querySelector('#imperr').textContent=err;return}
-      closeModal();
-      if(backToSheet)openSheet();
-      showMsg('CARD IMPORTED');
     };
   }
   box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
@@ -1906,7 +1893,7 @@ async function convertPhotos(files,backToSheet){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Hmm, that didn't work</h2>
       <div class="msub">${(e&&e.message)||'Something went wrong reading the photos.'}<br><br>Try retaking the photos — flat card, bright light, one full panel per photo.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rtry">TRY AGAIN</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="rcancel">${backToSheet?'CANCEL':'USE THE CLUB CARD'}</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rcancel">${backToSheet?'CANCEL':'USE THE CLUB CARD'}</button></div>`;
     box.querySelector('#rtry').onclick=()=>openImport(backToSheet);
     box.querySelector('#rcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   }
@@ -1927,10 +1914,10 @@ function reviewCard(card,fails,backToSheet){
     <div class="revlist">${list}</div>
     <details class="altimp"><summary>Troubleshooting — copy reading details</summary>
       <div class="msub" style="font-size:11px">If lines are wrong or missing, tap COPY and paste it to whoever maintains the app so the reader can be tuned.</div>
-      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B;font-size:11px;padding:8px 14px" id="revcopy">COPY READING DETAILS</button></div>
+      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4;font-size:11px;padding:8px 14px" id="revcopy">COPY READING DETAILS</button></div>
     </details>
     <div class="mbtns" style="margin-top:10px"><button class="abtn" id="revsave">LOOKS RIGHT — SAVE</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="revretry">RETRY PHOTOS</button></div>`;
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="revretry">RETRY PHOTOS</button></div>`;
   box.querySelector('#revcopy').onclick=()=>{
     const data=JSON.stringify({model:window.__modelUsed||'?',read:window.__reading||[],failed:fails||[]},null,1);
     (navigator.clipboard?navigator.clipboard.writeText(data):Promise.reject()).then(
@@ -1956,7 +1943,7 @@ function showWelcome(){
   <div class="msub">American mah jongg, beautifully.<br>Have a club code? It sets up this year's card.</div>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
     <button class="abtn" id="wmine">ENTER CLUB CODE</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="wclub">PLAY THE CLUB CARD</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="wclub">PLAY THE CLUB CARD</button>
   </div>`;
   const seen=()=>{try{localStorage.setItem('olmSeen','1')}catch(e){}};
   box.querySelector('#wmine').onclick=()=>{seen();openImport(false)};
@@ -2157,7 +2144,7 @@ function mpShowEnd(m){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
       <div class="msub">The wall is spent — nobody made their hand.</div>
       <div class="mbtns" style="margin-top:16px">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':''}
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleave">LEAVE TABLE</button></div>`;
     addDebrief(box);
   }else{
     const mine=MP.view&&m.seat===MP.view.you.seat;
@@ -2167,7 +2154,7 @@ function mpShowEnd(m){
       <div class="mtiles" id="mtiles"></div>
       <div class="mpts">${m.pts} points</div>
       <div class="mbtns">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':'<div class="msub">waiting for the host to re-deal…</div>'}
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleave">LEAVE TABLE</button></div>`;
     const mt=box.querySelector('#mtiles');
     for(const t of m.tiles)mt.appendChild(tileDOM(t,'t-md'));
     if(!mine)addDebrief(box);
@@ -2196,7 +2183,7 @@ function renderLobby(v){
     <div class="revlist" style="max-height:120px">${seats}</div>
     ${isHost?'<div class="msub" style="font-size:11px">Start whenever you like — friends who join later simply take over a bot\'s seat.</div>':''}
     <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
   box.querySelector('#lshare').onclick=()=>{
     const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
     const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
@@ -2224,7 +2211,7 @@ function openFriends(errMsg){
   }
   const box=$('modalin');
   const nameField=`<input type="text" id="fname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">`;
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">`;
   const getName=()=>{
     const n=box.querySelector('#fname').value.trim().slice(0,14);
     if(!n){box.querySelector('.imperr').textContent='Type your name first';return null}
@@ -2238,7 +2225,7 @@ function openFriends(errMsg){
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
         <button class="abtn" id="fcreate">HOST A NEW TABLE</button>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
-        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fcancel">CANCEL</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fcancel">CANCEL</button>
       </div>`;
     errMsg='';
     box.querySelector('#fcreate').onclick=()=>{
@@ -2256,10 +2243,10 @@ function openFriends(errMsg){
       <div class="msub">Type the 4-letter code your host shared.<br>Game already started? You'll take over a bot's seat.</div>
       <div class="imperr"></div>
       <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
-        style="width:140px;border:1px solid #CBBF9E;border-radius:10px;padding:12px;font-size:22px;text-align:center;letter-spacing:.3em;background:#fff;color:var(--ink)">
+        style="width:140px;border:1px solid #CFC9BC;border-radius:10px;padding:12px;font-size:22px;text-align:center;letter-spacing:.3em;background:#fff;color:var(--ink)">
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
         <button class="abtn gold" id="fjoin">JOIN TABLE</button>
-        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fback">BACK</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fback">BACK</button>
       </div>`;
     const doJoin=()=>{
       const code=box.querySelector('#fcode').value.trim().toUpperCase();
@@ -2295,10 +2282,10 @@ function openJoinInvite(code,host){
     <div class="msub">Type your name and take your seat.</div>
     <div class="imperr" id="jerr"></div>
     <input type="text" id="jname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
     <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:10px">
       <button class="abtn" id="jgo">JOIN THE TABLE</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="jno">NOT NOW</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="jno">NOT NOW</button>
     </div>`;
   const go=()=>{
     const n=box.querySelector('#jname').value.trim().slice(0,14);
@@ -2347,17 +2334,17 @@ function goTitle(){
 }
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
-  const bottom=MP.active
-    ?`<button class="abtn" id="mleavet">LEAVE TABLE</button>`
-    :`<button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">EXIT GAME</button>
-      <button class="abtn" id="mnewg">NEW GAME</button>`;
+  const top=MP.active
+    ?`<button class="abtn gold" id="mleavet">LEAVE TABLE</button>`
+    :`<button class="abtn gold" id="mnewg">NEW GAME</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
-    <button class="abtn gold" id="mclose">RETURN TO GAME</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mbots">BOTS: ${BOTLVL_NAMES[BOTLVL]}</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
-    ${bottom}
+    ${top}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mbots">BOTS: ${BOTLVL_NAMES[BOTLVL]}</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mrules">HOUSE RULES</button>
+    ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mtitle">EXIT GAME</button>`}
+    <button class="abtn" id="mclose">RETURN TO GAME</button>
   </div>`;
   box.querySelector('#msound').onclick=()=>{
     SND=!SND;
