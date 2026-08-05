@@ -1809,7 +1809,7 @@ function renderCardCtl(){
 }
 $('ccclub').onclick=()=>{useCard('club');openSheet()};
 $('ccmine').onclick=()=>{if(CUSTOM){useCard('custom');openSheet()}};
-function openImport(backToSheet){
+function openImport(backToSheet,focus){
   if(maybeOfferPendingCard(true))return;
   const box=$('modalin');
   const reading=readInProgress();
@@ -1890,6 +1890,12 @@ function openImport(backToSheet){
   }
   box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   $('modal').classList.add('open');
+  if(focus==='code')setTimeout(()=>{const c=box.querySelector('#codein');if(c)c.focus()},450);
+  if(focus==='photo'){
+    const pin=box.querySelector('#pin0');
+    if(pin)pin.click(); /* same tap → straight into the photo picker */
+    setTimeout(()=>{const z=[...box.querySelectorAll('.photozone')].pop();if(z)z.scrollIntoView({behavior:'smooth',block:'center'})},450);
+  }
 }
 function olmHttp(){return OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:')}
 /* background reading: the user plays on while the server reads their photos */
@@ -2008,13 +2014,15 @@ $('ccimport').onclick=()=>{
 function showWelcome(){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">WELCOME TO</div><h2>Ooh La Mahj</h2>
-  <div class="msub">American mah jongg, beautifully.<br>Have a club code? It sets up this year's card.</div>
+  <div class="msub">American mah jongg, beautifully.<br>Play with the card you own — enter a club code or photograph it.</div>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
     <button class="abtn" id="wmine">ENTER CLUB CODE</button>
+    <button class="abtn gold" id="wphoto">USE MY 2026 CARD</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="wclub">PLAY THE CLUB CARD</button>
   </div>`;
   const seen=()=>{try{localStorage.setItem('olmSeen','1')}catch(e){}};
-  box.querySelector('#wmine').onclick=()=>{seen();openImport(false)};
+  box.querySelector('#wmine').onclick=()=>{seen();openImport(false,'code')};
+  box.querySelector('#wphoto').onclick=()=>{seen();openImport(false,'photo')};
   box.querySelector('#wclub').onclick=()=>{seen();closeModal()};
   $('modal').classList.add('open');
 }
