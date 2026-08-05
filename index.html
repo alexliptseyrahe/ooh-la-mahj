@@ -286,6 +286,17 @@ details.altimp{margin-top:12px;text-align:left}
 details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:pointer}
 .spin{width:34px;height:34px;border:3px solid #E7E3DA;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* photo-read progress: home-screen pill + sheet progress bar */
+#readpill{display:none;margin:-14px auto 20px;background:rgba(8,40,30,.85);border:1px solid rgba(201,162,75,.5);border-radius:20px;padding:8px 16px;align-items:center;gap:8px;cursor:pointer}
+#readpill.on{display:flex}
+#readpill .rdot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(201,162,75,.8);flex:none}
+#readpill.live .rdot{animation:rpulse 1.6s ease-in-out infinite}
+#readpill.err .rdot{background:var(--coral);box-shadow:0 0 6px rgba(226,114,91,.8)}
+#readpill span{font-size:11px;letter-spacing:.08em;color:#F7F2E4}
+@keyframes rpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.rprog{height:5px;border-radius:3px;background:#EAE7E0;margin:14px 24px;overflow:hidden}
+.rprog i{display:block;height:100%;width:4%;background:linear-gradient(90deg,#C9A24B,#A8893C);border-radius:3px;transition:width .8s ease}
+.okcirc{width:38px;height:38px;border-radius:50%;background:var(--deep);color:#E8C97E;font-size:19px;display:flex;align-items:center;justify-content:center;margin:10px auto}
 .revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E7E3DA;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
 .revlist b{color:var(--deep)}
 .revcat{font-size:10.5px;letter-spacing:.2em;color:var(--gold-dk);margin-top:6px}
@@ -453,6 +464,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <h1>OOH LA MAHJ</h1>
   <h2>AMERICAN MAH JONGG</h2>
   <div class="est">EST. 2026</div>
+  <div id="readpill"><div class="rdot"></div><span></span></div>
   <div class="tbtns">
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
     <button class="abtn gold big" id="btnfriends">PLAY WITH FRIENDS</button>
@@ -1873,7 +1885,8 @@ function openImport(backToSheet,focus){
   <div class="orpill"><span>OR</span></div>
   <div class="photozone">
     <div class="pz1">Photograph your card</div>
-    <div class="pz2">Your photos are being read now — about ${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))} more minute${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))>1?'s':''}.<br>Play on — your card will appear the moment it's ready.</div>
+    <div class="pz2">Your photos are being read now.<br>Play on — your card will appear the moment it's ready.</div>
+    <div class="mbtns" style="margin-top:10px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4;font-size:11px;padding:8px 14px" id="pzprog">SEE PROGRESS</button></div>
   </div>`:`
   <div class="orpill"><span>OR</span></div>
   <div class="photozone">
@@ -1904,6 +1917,7 @@ function openImport(backToSheet,focus){
   
   <div class="imperr" id="imperr"></div>
   <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
+  const pz=box.querySelector('#pzprog');if(pz)pz.onclick=()=>renderReadSheet();
   box.querySelector('#codego').onclick=async()=>{
     const code=box.querySelector('#codein').value;
     if(!code.trim()){box.querySelector('#codeerr').textContent='Type the code first';return}
@@ -1954,31 +1968,118 @@ function openImport(backToSheet,focus){
   }
 }
 function olmHttp(){return OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:')}
-/* background reading: the user plays on while the server reads their photos */
-let BGREAD={timer:null};
+/* background reading: the user plays on while the server reads their photos.
+   BGREAD.state: 'working' | 'matched' (verified + auto-saved) | 'pending' (needs review) | 'error' | null */
+let BGREAD={timer:null,state:null,stage:null,done:0,of:3,secs:0};
 let READERR=null;
 function readInProgress(){try{return JSON.parse(localStorage.getItem('olmReadJob')||'null')}catch(e){return null}}
 function bgReadClear(){clearTimeout(BGREAD.timer);BGREAD.timer=null;try{localStorage.removeItem('olmReadJob')}catch(e){}}
+function readPillSync(){
+  const p=$('readpill');if(!p)return;
+  const st=BGREAD.state;let txt=null,live=false;
+  if(st==='working'){
+    live=true;
+    const pn='panel '+Math.min(BGREAD.done+1,BGREAD.of)+' of '+BGREAD.of;
+    if(BGREAD.stage==='reading')txt='Reading your card · '+pn;
+    else if(BGREAD.stage==='deep')txt='Careful read · '+pn;
+    else txt='Checking your photos…';
+  }
+  else if(st==='matched')txt='Your card is ready ✓';
+  else if(st==='pending')txt='Your card is ready — tap to review';
+  else if(st==='error')txt="Card read didn't work — tap for details";
+  p.classList.toggle('on',!!txt);
+  if(txt){p.querySelector('span').textContent=txt;p.classList.toggle('live',live);p.classList.toggle('err',st==='error')}
+}
+function readStagePct(){
+  const s=BGREAD;
+  if(s.state==='matched'||s.state==='pending')return 100;
+  if(s.stage==='reading')return Math.min(72,30+(s.done/(s.of||3))*35+Math.min(10,(s.secs||0)/10));
+  if(s.stage==='deep')return Math.min(96,72+(s.done/(s.of||3))*20+Math.min(4,(s.secs||0)/60));
+  return Math.min(28,4+(s.secs||0)*2.5);
+}
+function readSheetLive(){return $('modal').classList.contains('open')&&!!$('modalin').querySelector('#rsflag')}
+let RSKEY='';
+function renderReadSheet(){
+  const box=$('modalin');const st=BGREAD.state;
+  RSKEY=(st||'')+'|'+(BGREAD.stage||'');
+  const flag='<span id="rsflag" style="display:none"></span>';
+  if(st==='matched'){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">That's the 2026 card</h2>
+      <div class="msub">Your photos check out — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands are':'your card is'} ready.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsplay">PLAY WITH MY CARD</button></div>`;
+    box.querySelector('#rsplay').onclick=()=>{BGREAD.state=null;readPillSync();closeModal();showMsg('CARD READY')};
+    return;
+  }
+  if(st==='error'){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">That read didn't work</h2>
+      <div class="msub">${READERR||'Something went wrong.'}<br><br>Retakes work best with the card flat, in bright light, one full panel per photo.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsretake">RETAKE PHOTOS</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsclub">USE THE CLUB CARD</button></div>`;
+    box.querySelector('#rsretake').onclick=()=>{BGREAD.state=null;readPillSync();openImport(false,'photo')};
+    box.querySelector('#rsclub').onclick=()=>{BGREAD.state=null;readPillSync();closeModal()};
+    return;
+  }
+  const deep=BGREAD.stage==='deep';
+  if(BGREAD.stage==='reading'||deep){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Giving your photos the ${deep?'extra-careful':'careful'} read</h2>
+      <div class="rprog"><i style="width:${Math.round(readStagePct())}%"></i></div>
+      <div class="msub">${deep?'This card is getting the slow, thorough read — a few minutes.':'About a minute or two.'} It keeps going in the background — play a hand with the club card meanwhile, and we'll swap yours in the moment it's ready.</div>
+      <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center">
+        <button class="abtn" id="rsgo">PLAY WHILE I WAIT</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsstay">I'LL SIT TIGHT</button></div>`;
+    box.querySelector('#rsgo').onclick=()=>closeModal();
+    box.querySelector('#rsstay').onclick=()=>{const r=box.querySelector('#rsstay');if(r)r.outerHTML='<div class="msub" style="font-size:11px;margin-top:6px">We’ll flip this screen the moment it’s ready.</div>'};
+    return;
+  }
+  box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Checking your photos…</h2>
+    <div class="spin"></div><div class="msub">Matching them against the 2026 card.</div>`;
+}
+function openReadSheet(){renderReadSheet();$('modal').classList.add('open')}
+function readSheetTick(){
+  if(!readSheetLive())return;
+  const key=(BGREAD.state||'')+'|'+(BGREAD.stage||'');
+  if(key!==RSKEY){renderReadSheet();return}
+  const bar=$('modalin').querySelector('.rprog i');
+  if(bar)bar.style.width=Math.round(readStagePct())+'%';
+}
 async function bgReadPoll(job){
   clearTimeout(BGREAD.timer);
   try{
     const r=await fetch(olmHttp()+'/api/readjob?id='+job+'&t='+Date.now());
     const j=await r.json();
+    if(j.stage)BGREAD.stage=j.stage==='done'?BGREAD.stage:j.stage;
+    if(j.of)BGREAD.of=j.of;
+    BGREAD.done=j.done||0;BGREAD.secs=j.secs||0;
     if(j.status==='done'&&j.result&&j.result.card&&!validateCard(j.result.card)){
       bgReadClear();
-      try{localStorage.setItem('olmPendingCard',JSON.stringify({card:j.result.card,flags:j.result.flags||[],panels:j.result.panels||[],model:j.result.model||'?'}))}catch(e){}
-      showMsg('YOUR CARD IS READY');
+      const titleVisible=!$('title').classList.contains('hide');
+      const inGame=!titleVisible&&G&&G.phase&&G.phase!=='over';
+      if(j.result.matched&&!inGame){
+        /* verified against the known card — safe to save without a review pass */
+        const err=saveCustomCard(JSON.stringify(j.result.card));
+        if(!err){
+          BGREAD.state='matched';readPillSync();showMsg('YOUR CARD IS READY');
+          if(readSheetLive())renderReadSheet();
+          else if(titleVisible&&!$('modal').classList.contains('open'))openReadSheet();
+          return;
+        }
+      }
+      try{localStorage.setItem('olmPendingCard',JSON.stringify({card:j.result.card,flags:j.result.flags||[],panels:j.result.panels||[],model:j.result.model||'?',matched:!!j.result.matched}))}catch(e){}
+      BGREAD.state='pending';readPillSync();showMsg('YOUR CARD IS READY');
       maybeOfferPendingCard();
       return;
     }
     if(j.status==='error'||j.err){
       bgReadClear();
-      READERR=(j.result&&j.result.error)||j.err||'The reading failed — try again with brighter, flatter photos.';
-      showMsg('CARD READ FAILED');
+      READERR=j.err==='no such job'?'The reader restarted mid-read — please send the photos again.':
+        (j.result&&j.result.error)||j.err||'The reading failed — try again with brighter, flatter photos.';
+      BGREAD.state='error';readPillSync();
+      if(readSheetLive())renderReadSheet();else showMsg('CARD READ FAILED');
       return;
     }
   }catch(e){}
-  BGREAD.timer=setTimeout(()=>bgReadPoll(job),10000);
+  BGREAD.state='working';readPillSync();readSheetTick();
+  BGREAD.timer=setTimeout(()=>bgReadPoll(job),BGREAD.stage==='reading'||BGREAD.stage==='deep'?8000:3000);
 }
 function maybeOfferPendingCard(force){
   let p=null;try{p=JSON.parse(localStorage.getItem('olmPendingCard')||'null')}catch(e){}
@@ -1987,27 +2088,41 @@ function maybeOfferPendingCard(force){
   const inGame=!titleVisible&&G&&G.phase&&G.phase!=='over';
   if(inGame&&!force)return false;
   try{localStorage.removeItem('olmPendingCard')}catch(e){}
+  if(p.matched){
+    /* verified against the known card — save and celebrate, no review needed */
+    const err=saveCustomCard(JSON.stringify(p.card));
+    if(!err){BGREAD.state='matched';readPillSync();openReadSheet();return true}
+  }
+  BGREAD.state=null;readPillSync();
   window.__reading=p.panels;window.__modelUsed=p.model;
   reviewCard(p.card,p.flags,false);
   return true;
 }
+$('readpill').onclick=()=>{
+  const st=BGREAD.state;
+  if(st==='working'||st==='error'){openReadSheet();return}
+  if(st==='matched'){BGREAD.state=null;readPillSync();openSheet();return}
+  if(st==='pending')maybeOfferPendingCard(true);
+};
 async function convertPhotos(files,backToSheet){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">One moment</h2>
     <div class="spin"></div><div class="msub">Preparing your photos…</div>`;
   try{
     const photos=await Promise.all(files.map(f=>fileToJpeg(f,2000)));
-    closeModal();
-    if(backToSheet)openSheet();
-    showMsg('READING YOUR CARD');
-    READERR=null;
+    READERR=null;clearTimeout(BGREAD.timer);
+    BGREAD.state='working';BGREAD.stage=null;BGREAD.done=0;BGREAD.of=photos.length;BGREAD.secs=0;
+    openReadSheet();readPillSync();
     (async()=>{
       try{
         const base=olmHttp();
         let awake=false;
         for(let a=0;a<15&&!awake;a++){
           try{const r=await fetch(base+'/?wake='+Date.now());awake=r.ok}catch(e){}
-          if(!awake)await new Promise(r=>setTimeout(r,8000));
+          if(!awake){
+            if(a===0&&readSheetLive()){const m=$('modalin').querySelector('.msub');if(m)m.textContent='The reading service is waking up — shouldn’t be more than a minute.'}
+            await new Promise(r=>setTimeout(r,8000));
+          }
         }
         if(!awake)throw new Error('The reading service is not reachable — try again in a few minutes');
         const pr=await fetch(base+'/api/read',{method:'POST',headers:{'content-type':'application/json'},
@@ -2016,7 +2131,10 @@ async function convertPhotos(files,backToSheet){
         if(pj.err)throw new Error(pj.err);
         try{localStorage.setItem('olmReadJob',JSON.stringify({job:pj.job,ts:Date.now()}))}catch(e){}
         bgReadPoll(pj.job);
-      }catch(e){READERR=e.message;showMsg('CARD READ FAILED')}
+      }catch(e){
+        READERR=e.message;BGREAD.state='error';readPillSync();
+        if(readSheetLive())renderReadSheet();else showMsg('CARD READ FAILED');
+      }
     })();
     return;
   }catch(e){
@@ -2697,7 +2815,11 @@ bootCard();
   if(!seen&&!CUSTOM)showWelcome();
   else{try{localStorage.setItem('olmSeen','1')}catch(e){}}
   const rj=readInProgress();
-  if(rj)bgReadPoll(rj.job);
+  if(rj){BGREAD.state='working';readPillSync();bgReadPoll(rj.job)}
+  else{
+    let pp=null;try{pp=JSON.parse(localStorage.getItem('olmPendingCard')||'null')}catch(e){}
+    if(pp){BGREAD.state='pending';readPillSync()}
+  }
   setTimeout(()=>maybeOfferPendingCard(),600);
 })();
 </script>
