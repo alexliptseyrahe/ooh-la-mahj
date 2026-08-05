@@ -438,7 +438,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
     <h3 id="sheettitle">THE OOH LA MAHJ CARD</h3>
     <div class="sub">F=FLOWER · 0=SOAP · C/X = CONCEALED/EXPOSED</div>
     <div id="cardctl">
-      <button class="cbtn" id="ccclub">CLUB CARD</button>
+      <button class="cbtn" id="ccclub">OOH LA CARD</button>
       <button class="cbtn" id="ccmine">MY CARD</button>
       <button class="cbtn imp" id="ccimport">IMPORT…</button>
     </div>
@@ -1870,7 +1870,7 @@ function renderActions(){
 
 /* ---------- card sheet ---------- */
 function renderCardCtl(){
-  $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA MAHJ CARD';
+  $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA CARD';
   $('ccclub').classList.toggle('on',activeCardName()==='club');
   $('ccmine').classList.toggle('on',activeCardName()==='custom');
   $('ccmine').disabled=!CUSTOM;
@@ -1916,7 +1916,7 @@ function openImport(backToSheet,focus){
   ${photoUI}
   
   <div class="imperr" id="imperr"></div>
-  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
+  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE OOH LA CARD'}</button></div>`;
   const pz=box.querySelector('#pzprog');if(pz)pz.onclick=()=>renderReadSheet();
   box.querySelector('#codego').onclick=async()=>{
     const code=box.querySelector('#codein').value;
@@ -2014,7 +2014,7 @@ function renderReadSheet(){
     box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">That read didn't work</h2>
       <div class="msub">${READERR||'Something went wrong.'}<br><br>Retakes work best with the card flat, in bright light, one full panel per photo.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsretake">RETAKE PHOTOS</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsclub">USE THE CLUB CARD</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsclub">USE THE OOH LA CARD</button></div>`;
     box.querySelector('#rsretake').onclick=()=>{BGREAD.state=null;readPillSync();openImport(false,'photo')};
     box.querySelector('#rsclub').onclick=()=>{BGREAD.state=null;readPillSync();closeModal()};
     return;
@@ -2023,7 +2023,7 @@ function renderReadSheet(){
   if(BGREAD.stage==='reading'||deep){
     box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Giving your photos the ${deep?'extra-careful':'careful'} read</h2>
       <div class="rprog"><i style="width:${Math.round(readStagePct())}%"></i></div>
-      <div class="msub">${deep?'This card is getting the slow, thorough read — a few minutes.':'About a minute or two.'} It keeps going in the background — play a hand with the club card meanwhile, and we'll swap yours in the moment it's ready.</div>
+      <div class="msub">${deep?'This card is getting the slow, thorough read — a few minutes.':'About a minute or two.'} It keeps going in the background — play a hand with the Ooh La Card meanwhile, and we'll swap yours in the moment it's ready.</div>
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center">
         <button class="abtn" id="rsgo">PLAY WHILE I WAIT</button>
         <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsstay">I'LL SIT TIGHT</button></div>`;
@@ -2141,7 +2141,7 @@ async function convertPhotos(files,backToSheet){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Hmm, that didn't work</h2>
       <div class="msub">${(e&&e.message)||'Something went wrong reading the photos.'}<br><br>Try retaking the photos — flat card, bright light, one full panel per photo.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rtry">TRY AGAIN</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rcancel">${backToSheet?'CANCEL':'USE THE CLUB CARD'}</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rcancel">${backToSheet?'CANCEL':'USE THE OOH LA CARD'}</button></div>`;
     box.querySelector('#rtry').onclick=()=>openImport(backToSheet);
     box.querySelector('#rcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   }
@@ -2192,7 +2192,7 @@ function showWelcome(){
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
     <button class="abtn" id="wmine">ENTER CLUB CODE</button>
     <button class="abtn gold" id="wphoto">USE MY 2026 CARD</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="wclub">PLAY THE CLUB CARD</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="wclub">PLAY THE OOH LA CARD</button>
   </div>`;
   const seen=()=>{try{localStorage.setItem('olmSeen','1')}catch(e){}};
   box.querySelector('#wmine').onclick=()=>{seen();openImport(false,'code')};
@@ -2237,7 +2237,7 @@ $('btnhow').onclick=()=>{
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">HOUSE RULES</div><h2 style="font-size:24px">How We Play</h2>
   <div class="rules" style="margin-top:12px">
-  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Palm Club card (tap CARD anytime — it shows how close you are).</p>
+  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Ooh La Card (tap CARD anytime — it shows how close you are).</p>
   <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. Never pass a joker.</p>
   <p><b>Your turn.</b> Draw a tile, discard a tile. Tap a tile, then DISCARD.</p>
   <p><b>Calling.</b> When someone discards a tile you need for a group of 3+ (pung, kong, quint), you may call it — the group is then exposed. Pairs may never be called.</p>
