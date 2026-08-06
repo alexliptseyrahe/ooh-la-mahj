@@ -114,7 +114,7 @@ function bestFit(T, p) {
   const { c, jk } = countsOf(p.rack); const hasExp = p.exp.length > 0; const ec = expCount(p);
   let best = null;
   for (const h of T.hands) {
-    if (h.concealed && (hasExp || jk > 0)) continue;
+    if (h.concealed && hasExp) continue;
     for (const v of h.variants) {
       const rem = lockGroups(p, v);
       if (!rem) continue;
@@ -138,7 +138,7 @@ function topFitsCount(T, p) {
   const { c, jk } = countsOf(p.rack); const hasExp = p.exp.length > 0;
   let n = 0;
   for (const h of T.hands) {
-    if (h.concealed && (hasExp || jk > 0)) continue;
+    if (h.concealed && hasExp) continue;
     for (const v of h.variants) { if (lockGroups(p, v)) { n++; break; } }
   }
   return n;
@@ -267,8 +267,8 @@ function newSeat(kind, name) {
   return { kind, name, token: null, connected: kind === 'bot', botSub: false,
            rack: [], exp: [], chPass: null, graceTimer: null };
 }
-function makeTable(hostP, cardJson, config) {
-  const code = code4();
+function makeTable(hostP, cardJson, config, forceCode, schedAt) {
+  const code = forceCode || code4();
   let hands = CLUB_HANDS, cardMeta = { title: 'THE OOH LA MAHJ CARD', custom: false };
   if (cardJson) {
     const err = validateCard(cardJson);
@@ -276,11 +276,13 @@ function makeTable(hostP, cardJson, config) {
   }
   const T = {
     code, hands, cardMeta,
-    config: { pace: (config && config.pace) === 'timed' ? 'timed' : 'relaxed', hints: !(config && config.hints === false) },
+    config: { pace: (config && config.pace) === 'timed' ? 'timed' : 'relaxed', hints: !(config && config.hints === false),
+      charleston: (config && config.charleston) === 'express' ? 'express' : 'full' },
     phase: 'lobby', chStep: 0, wall: [], discards: [],
     dealer: 0, turn: 0, step: 'discard',
     seats: [newSeat('human', hostP.name), null, null, null],
     callWin: null, seq: 0, timers: {}, created: Date.now(), lastActive: Date.now(),
+    schedAt: schedAt || null,
   };
   T.seats[0].token = hostP.token;
   T.seats[0].connected = true;
@@ -311,8 +313,9 @@ function viewFor(T, seatIdx) {
     }); });
   }
   return {
-    type: 'view', code: T.code, phase: T.phase, chStep: T.chStep,
+    type: 'view', code: T.code, phase: T.phase, chStep: T.chStep, chPhase: T.chPhase || 'pass',
     over: T.phase === 'ended' ? (T.endInfo || null) : undefined,
+    schedAt: T.schedAt || undefined,
     turn: T.turn, step: T.step, wall: T.wall.length, dealer: T.dealer,
     discards: T.discards.map(d => ({ t: pubTile(d.t), by: d.by })),
     config: T.config, cardTitle: T.cardMeta.title,
@@ -325,7 +328,8 @@ function viewFor(T, seatIdx) {
     you: me ? {
       seat: seatIdx, rack: me.rack.map(pubTile),
       canMahjong: !!winNow, swaps,
-      chSubmitted: !!me.chPass, dead: T.phase === 'play' && me.exp.length > 0 && topFitsCount(T, me) === 0,
+      chSubmitted: !!me.chPass, chVoted: me.chVote != null, chOffered: me.chOffer != null,
+      dead: T.phase === 'play' && me.exp.length > 0 && topFitsCount(T, me) === 0,
     } : null,
   };
 }
@@ -344,11 +348,16 @@ function broadcast(T, evt) {
 function eventMsg(kind, data) { return Object.assign({ type: 'event', kind }, data || {}); }
 
 /* ---------- game flow ---------- */
+const CHSEQ = [
+  { dir: 'RIGHT', off: 1 }, { dir: 'ACROSS', off: 2 }, { dir: 'LEFT', off: 3, blind: true },
+  { dir: 'LEFT', off: 3 }, { dir: 'ACROSS', off: 2 }, { dir: 'RIGHT', off: 1, blind: true },
+];
 function startGame(T) {
   _tid = 0;
   for (let i = 0; i < 4; i++) if (!T.seats[i]) T.seats[i] = newSeat('bot', BOTNAMES[i]);
   T.wall = shuffle(makeDeck());
-  for (const s of T.seats) { s.rack = []; s.exp = []; s.chPass = null; }
+  for (const s of T.seats) { s.rack = []; s.exp = []; s.chPass = null; s.chVote = null; s.chOffer = null; }
+  T.chPhase = 'pass';
   for (let i = 0; i < 13; i++) for (const s of T.seats) s.rack.push(T.wall.pop());
   T.dealer = Math.floor(Math.random() * 4);
   T.seats[T.dealer].rack.push(T.wall.pop());
@@ -371,24 +380,119 @@ function armCharleston(T) {
   });
   tryResolveCharleston(T);   // resolves immediately when no connected humans still owe a pass
 }
-function tryResolveCharleston(T) {
+function resolveCh(T) {
   if (T.phase !== 'charleston') return;
+  const ph = T.chPhase || 'pass';
+  if (ph === 'pass') return tryResolveCharleston(T);
+  if (ph === 'vote') return tryResolveVote(T);
+  if (ph === 'courtesy') return tryResolveCourtesy(T);
+}
+function tryResolveCharleston(T) {
+  if (T.phase !== 'charleston' || (T.chPhase || 'pass') !== 'pass') return;
   for (const i of humanSeats(T)) if (!T.seats[i].chPass && !T.seats[i].botSub) return;
   for (let i = 0; i < 4; i++) {
     const s = T.seats[i];
     if (seatDriver(T, i) === 'bot' && !s.chPass) s.chPass = botPassTiles(T, s).map(t => t.id);
   }
-  const passes = T.seats.map(s => {
-    const out = s.rack.filter(t => s.chPass.includes(t.id)).slice(0, 3);
-    s.rack = s.rack.filter(t => !out.includes(t));
-    return out;
-  });
-  const off = [1, 2, 3][T.chStep];
-  for (let i = 0; i < 4; i++) T.seats[(i + off) % 4].rack.push(...passes[i]);
+  const off = CHSEQ[T.chStep].off;
+  const outs = T.seats.map(s => s.rack.filter(t => s.chPass.includes(t.id) && t.s !== 'J').slice(0, 3));
+  /* only seats that CHOSE a blind pass get topped up — a donor whose pile shrinks
+     from someone else's pass-through simply delivers fewer, by design */
+  const choseBlind = outs.map(o => o.length < 3);
+  for (let i = 0; i < 4; i++) {
+    if (!choseBlind[i] || outs[i].length >= 3) continue;
+    /* blind: shortfall passes straight through from the incoming pile, unseen */
+    const donor = (i - off + 4) % 4;
+    while (outs[i].length < 3 && outs[donor].length) outs[i].push(outs[donor].shift());
+    if (outs[i].length < 3) {
+      /* pathological multi-blind chain: auto-complete from own rack so counts stay exact */
+      const chosen = new Set(outs[i].map(t => t.id));
+      const own = shuffle(T.seats[i].rack.filter(t => t.s !== 'J' && !chosen.has(t.id)));
+      while (outs[i].length < 3 && own.length) outs[i].push(own.shift());
+    }
+  }
+  { const allOut = new Set(); for (const o of outs) for (const t of o) allOut.add(t.id);
+    for (let i = 0; i < 4; i++) T.seats[i].rack = T.seats[i].rack.filter(t => !allOut.has(t.id)); }
+  for (let i = 0; i < 4; i++) T.seats[(i + off) % 4].rack.push(...outs[i]);
   for (const s of T.seats) s.chPass = null;
   T.chStep++;
-  if (T.chStep < 3) { broadcast(T, eventMsg('charleston', { step: T.chStep })); armCharleston(T); }
-  else beginPlay(T);
+  if (T.chStep === 3) {
+    if (T.config.charleston === 'express') return beginPlay(T);
+    return beginChVote(T);
+  }
+  if (T.chStep >= 6) return beginCourtesy(T);
+  broadcast(T, eventMsg('charleston', { step: T.chStep }));
+  armCharleston(T);
+}
+function botVoteContinue(T, p) {
+  const bf = bestFit(T, p);
+  const close = bf && bf.score >= 10;
+  return Math.random() < (close ? 0.3 : 0.8);
+}
+function botCourtesyOffer(T, p) {
+  const cand = botPassTiles(T, p);
+  return cand.slice(0, Math.min(cand.length, Math.floor(Math.random() * 4))).map(t => t.id);
+}
+function beginChVote(T) {
+  T.chPhase = 'vote';
+  for (const s of T.seats) s.chVote = null;
+  for (let i = 0; i < 4; i++) if (seatDriver(T, i) === 'bot') T.seats[i].chVote = botVoteContinue(T, T.seats[i]);
+  later(T, 'charleston', 25000, () => {
+    for (const i of humanSeats(T)) { const s = T.seats[i]; if (s.chVote == null) s.chVote = false; }
+    tryResolveVote(T);
+  });
+  broadcast(T);
+  tryResolveVote(T);
+}
+function tryResolveVote(T) {
+  if (T.phase !== 'charleston' || T.chPhase !== 'vote') return;
+  for (let i = 0; i < 4; i++) { const s = T.seats[i]; if (s.chVote == null && seatDriver(T, i) === 'bot') s.chVote = botVoteContinue(T, s); }
+  for (let i = 0; i < 4; i++) {
+    if (T.seats[i].chVote === false) {
+      clearTimeout(T.timers.charleston);
+      broadcast(T, eventMsg('chvote_end', { name: T.seats[i].name }));
+      return beginCourtesy(T);
+    }
+  }
+  for (let i = 0; i < 4; i++) if (T.seats[i].chVote == null) return;
+  clearTimeout(T.timers.charleston);
+  T.chStep = 3; T.chPhase = 'pass';
+  for (const s of T.seats) s.chPass = null;
+  broadcast(T, eventMsg('chvote_on', {}));
+  armCharleston(T);
+}
+function beginCourtesy(T) {
+  T.chPhase = 'courtesy';
+  for (const s of T.seats) s.chOffer = null;
+  for (let i = 0; i < 4; i++) if (seatDriver(T, i) === 'bot') T.seats[i].chOffer = botCourtesyOffer(T, T.seats[i]);
+  later(T, 'charleston', 25000, () => {
+    for (const i of humanSeats(T)) { const s = T.seats[i]; if (s.chOffer == null) s.chOffer = []; }
+    tryResolveCourtesy(T);
+  });
+  broadcast(T);
+  tryResolveCourtesy(T);
+}
+function tryResolveCourtesy(T) {
+  if (T.phase !== 'charleston' || T.chPhase !== 'courtesy') return;
+  for (let i = 0; i < 4; i++) { const s = T.seats[i]; if (s.chOffer == null) { if (seatDriver(T, i) === 'bot') s.chOffer = botCourtesyOffer(T, s); else return; } }
+  clearTimeout(T.timers.charleston);
+  const pairs = [[0, 2], [1, 3]];
+  const exInfo = [0, 0];
+  pairs.forEach(([a, b], pi) => {
+    const A = T.seats[a], B = T.seats[b];
+    const ta = A.rack.filter(t => A.chOffer.includes(t.id) && t.s !== 'J').slice(0, 3);
+    const tb = B.rack.filter(t => B.chOffer.includes(t.id) && t.s !== 'J').slice(0, 3);
+    const ex = Math.min(ta.length, tb.length);
+    exInfo[pi] = ex;
+    if (ex) {
+      const ga = ta.slice(0, ex), gb = tb.slice(0, ex);
+      A.rack = A.rack.filter(t => !ga.includes(t)).concat(gb);
+      B.rack = B.rack.filter(t => !gb.includes(t)).concat(ga);
+    }
+  });
+  for (const s of T.seats) { s.chOffer = null; s.chVote = null; s.chPass = null; }
+  for (const i of humanSeats(T)) send(T.seats[i].token, eventMsg('courtesy_done', { ex: exInfo[(i === 0 || i === 2) ? 0 : 1] }));
+  beginPlay(T);
 }
 function beginPlay(T) {
   T.phase = 'play'; T.turn = T.dealer; T.step = 'discard';
@@ -406,7 +510,14 @@ function driveTurn(T) {
   }
   if (seatDriver(T, i) === 'bot') {
     later(T, 'bot', BOT_MS, () => {
-      const win = checkWin(T, s);
+      let win = checkWin(T, s);
+      if (win) return endWin(T, i, win);
+      /* bots redeem jokers from any exposure before discarding, like real players */
+      for (let q = 0; q < 4; q++) for (let ei = 0; ei < T.seats[q].exp.length; ei++) {
+        const e = T.seats[q].exp[ei];
+        if (e.tiles.some(t => t.s === 'J') && s.rack.some(t => key(t) === e.rep)) { doJokerSwap(T, i, q, ei); break; }
+      }
+      win = checkWin(T, s);
       if (win) return endWin(T, i, win);
       const t = botDiscardChoice(T, s);
       doDiscard(T, i, t);
@@ -573,10 +684,29 @@ function handleMsg(p, m) {
       broadcast(nt);
       break;
     }
+    case 'schedjoin': {
+      const code = String(m.code || '').toUpperCase().trim();
+      if (tables.has(code)) { handleMsg(p, { type: 'join', code }); break; }
+      const sc = SCHED.get(code);
+      if (!sc) { send(p.token, { type: 'err', msg: 'No scheduled game with that code' }); break; }
+      if (Date.now() < sc.at - 60 * 60000) {
+        send(p.token, { type: 'err', msg: 'This table opens an hour before game time', at: sc.at }); break;
+      }
+      if (T && seat >= 0) leaveTable(p, T, seat);
+      /* the scheduled table materializes for whoever arrives first — they hold the host seat */
+      const nt = makeTable(p, sc.card || null, sc.config, code, sc.at);
+      p.tableCode = code;
+      console.log(JSON.stringify({ ev: 'sched_materialized', code }));
+      broadcast(nt);
+      break;
+    }
     case 'join': {
       const code = String(m.code || '').toUpperCase().trim();
       const JT = tables.get(code);
-      if (!JT) return send(p.token, { type: 'err', msg: 'No table with that code' });
+      if (!JT) {
+        if (SCHED.has(code)) { handleMsg(p, { type: 'schedjoin', code }); break; }
+        return send(p.token, { type: 'err', msg: 'No table with that code' });
+      }
       const existing = seatOf(JT, p.token);
       if (existing >= 0) {
         p.tableCode = code;
@@ -607,7 +737,7 @@ function handleMsg(p, m) {
         p.tableCode = code;
         if (JT.phase === 'play' && JT.turn === claim) clearTimeout(JT.timers.bot);
         broadcast(JT, eventMsg('takeover', { seat: claim, name: p.name }));
-        if (JT.phase === 'charleston') tryResolveCharleston(JT);
+        if (JT.phase === 'charleston') resolveCh(JT);
       }
       break;
     }
@@ -622,14 +752,33 @@ function handleMsg(p, m) {
       break;
     }
     case 'chpass': {
-      if (!T || seat < 0 || T.phase !== 'charleston') return;
+      if (!T || seat < 0 || T.phase !== 'charleston' || (T.chPhase || 'pass') !== 'pass') return;
       const s = T.seats[seat];
+      const blind = !!CHSEQ[T.chStep].blind;
       const ids = Array.isArray(m.tiles) ? m.tiles.slice(0, 3) : [];
       const tiles = s.rack.filter(t => ids.includes(t.id) && t.s !== 'J');
-      if (tiles.length !== 3) return send(p.token, { type: 'err', msg: 'Pick exactly 3 tiles (no jokers)' });
+      if (!blind && tiles.length !== 3) return send(p.token, { type: 'err', msg: 'Pick exactly 3 tiles (no jokers)' });
       s.chPass = tiles.map(t => t.id);
       broadcast(T);
       tryResolveCharleston(T);
+      break;
+    }
+    case 'chvote': {
+      if (!T || seat < 0 || T.phase !== 'charleston' || T.chPhase !== 'vote') return;
+      if (T.seats[seat].chVote != null) return;
+      T.seats[seat].chVote = !!m.again;
+      broadcast(T);
+      tryResolveVote(T);
+      break;
+    }
+    case 'chcourtesy': {
+      if (!T || seat < 0 || T.phase !== 'charleston' || T.chPhase !== 'courtesy') return;
+      const cs = T.seats[seat];
+      if (cs.chOffer != null) return;
+      const cids = Array.isArray(m.tiles) ? m.tiles.slice(0, 3) : [];
+      cs.chOffer = cs.rack.filter(t => cids.includes(t.id) && t.s !== 'J').slice(0, 3).map(t => t.id);
+      broadcast(T);
+      tryResolveCourtesy(T);
       break;
     }
     case 'discard': {
@@ -677,7 +826,7 @@ function leaveTable(p, T, seat) {
     const s = T.seats[seat];
     s.botSub = true; s.connected = false; s.token = null;   // deliberate exit: stop sending this player anything
     clearTimeout(s.graceTimer);
-    if (T.phase === 'charleston') tryResolveCharleston(T);
+    if (T.phase === 'charleston') resolveCh(T);
     else if (T.phase === 'play' && T.turn === seat && T.step === 'discard' && !T.callWin) driveTurn(T);
     else if (T.callWin && T.callWin.eligible[seat] && T.callWin.responses[seat] === undefined) respondCall(T, seat, 'pass');
   }
@@ -695,7 +844,7 @@ function onDisconnect(p) {
     if (!s.connected && tables.get(T.code) === T) {
       s.botSub = true;
       broadcast(T, eventMsg('botsub', { seat }));
-      if (T.phase === 'charleston') tryResolveCharleston(T);
+      if (T.phase === 'charleston') resolveCh(T);
       else if (T.phase === 'play' && T.turn === seat && !T.callWin) driveTurn(T);
       else if (T.callWin && T.callWin.eligible[seat] && T.callWin.responses[seat] === undefined) respondCall(T, seat, 'pass');
     }
@@ -713,7 +862,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r22';
+const LAB_VERSION = 'r24';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -1277,6 +1426,51 @@ function readBody(req, cap) {
   });
 }
 
+/* ---------- scheduling: find-a-time polls + future tables ---------- */
+const fs = require('fs');
+const DATA_DIR = process.env.DATA_DIR || '';
+function loadJson(n, d) { if (!DATA_DIR) return d; try { return JSON.parse(fs.readFileSync(DATA_DIR + '/' + n, 'utf8')); } catch (e) { return d; } }
+function saveJson(n, o) { if (!DATA_DIR) return; try { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(DATA_DIR + '/' + n, JSON.stringify(o)); } catch (e) { console.log(JSON.stringify({ ev: 'persist_fail', f: n, m: e.message })); } }
+const POLLS = new Map(Object.entries(loadJson('polls.json', {})));
+const SCHED = new Map(Object.entries(loadJson('sched.json', {})));
+const persistSched = () => saveJson('sched.json', Object.fromEntries(SCHED));
+const persistPolls = () => saveJson('polls.json', Object.fromEntries(POLLS));
+function schedCode() {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let c;
+  do { c = Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join(''); }
+  while (tables.has(c) || SCHED.has(c) || POLLS.has(c));
+  return c;
+}
+function purgeOldSched() {
+  const now = Date.now(); let ch = false;
+  for (const [k, s] of SCHED) if (now > s.at + 24 * 3600e3) { SCHED.delete(k); ch = true; }
+  for (const [k, p] of POLLS) if (now > Math.max(...p.slots) + 24 * 3600e3) { POLLS.delete(k); ch = true; }
+  if (ch) { persistSched(); persistPolls(); }
+}
+setInterval(purgeOldSched, 3600e3);
+purgeOldSched();
+const sanConf = c => ({ pace: (c && c.pace) === 'timed' ? 'timed' : 'relaxed', hints: !(c && c.hints === false),
+  charleston: (c && c.charleston) === 'express' ? 'express' : 'full' });
+const icsEsc = s => String(s || '').replace(/[\\,;]/g, ' ').replace(/[\r\n]/g, ' ').slice(0, 30);
+function icsFor(code, at, hostName) {
+  const dt = t => new Date(t).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const link = 'https://oohlamahj.com/?g=' + code;
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ooh La Mahj//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT', 'UID:' + code + '@oohlamahj.com', 'DTSTAMP:' + dt(Date.now()),
+    'DTSTART:' + dt(at), 'DTEND:' + dt(at + 2 * 3600e3),
+    'SUMMARY:Mahj — ' + icsEsc(hostName) + "'s table",
+    'DESCRIPTION:Tap to sit down: ' + link, 'URL:' + link,
+    'BEGIN:VALARM', 'TRIGGER:-PT10M', 'ACTION:DISPLAY', 'DESCRIPTION:Mahj starts in 10 minutes', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function pollInfo(p, tok) {
+  return { slots: p.slots, hostName: p.host.name,
+    votes: Object.values(p.votes).map(v => ({ name: v.name, ok: v.ok })),
+    youVoted: p.votes[tok] ? p.votes[tok].ok : null,
+    isHost: !!tok && tok === p.host.token, locked: p.locked || null };
+}
+
 /* ---------- server ---------- */
 
 const server = http.createServer(async (req, res) => {
@@ -1290,6 +1484,77 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204, { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS',
       'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' });
     return res.end();
+  }
+  if (u.pathname === '/api/sched' && req.method === 'POST') {
+    let body; try { body = JSON.parse(await readBody(req, 2 * 1024 * 1024)); } catch (e) { return send200({ err: 'Bad request' }); }
+    const at = +body.at;
+    if (!at || at < Date.now() - 3600e3 || at > Date.now() + 90 * 24 * 3600e3) return send200({ err: 'Pick a time within the next 90 days' });
+    const code = schedCode();
+    SCHED.set(code, { at, config: sanConf(body.config), card: body.card || null,
+      host: { token: String(body.token || '').slice(0, 64), name: String(body.name || 'A friend').slice(0, 14) }, created: Date.now() });
+    persistSched();
+    console.log(JSON.stringify({ ev: 'sched_created', code, at: new Date(at).toISOString() }));
+    return send200({ code, at });
+  }
+  if (u.pathname === '/api/schedinfo') {
+    const code = String(u.searchParams.get('code') || '').toUpperCase();
+    const s = SCHED.get(code);
+    if (!s) return send200({ err: 'No scheduled game with that code' });
+    return send200({ code, at: s.at, hostName: s.host.name, config: s.config, live: tables.has(code) });
+  }
+  if (u.pathname === '/api/poll' && req.method === 'POST') {
+    let body; try { body = JSON.parse(await readBody(req, 2 * 1024 * 1024)); } catch (e) { return send200({ err: 'Bad request' }); }
+    const slots = (Array.isArray(body.slots) ? body.slots : []).map(Number)
+      .filter(t => t > Date.now() - 3600e3 && t < Date.now() + 90 * 24 * 3600e3).slice(0, 5);
+    if (slots.length < 2) return send200({ err: 'Propose at least two times' });
+    const id = schedCode();
+    POLLS.set(id, { slots, config: sanConf(body.config), card: body.card || null,
+      host: { token: String(body.token || '').slice(0, 64), name: String(body.name || 'A friend').slice(0, 14) },
+      votes: {}, locked: null, created: Date.now() });
+    persistPolls();
+    console.log(JSON.stringify({ ev: 'poll_created', id, slots: slots.length }));
+    return send200({ id });
+  }
+  if (u.pathname === '/api/pollinfo') {
+    const p2 = POLLS.get(String(u.searchParams.get('id') || '').toUpperCase());
+    if (!p2) return send200({ err: 'That poll has expired or never existed' });
+    return send200(pollInfo(p2, String(u.searchParams.get('tok') || '').slice(0, 64)));
+  }
+  if (u.pathname === '/api/pollvote' && req.method === 'POST') {
+    let body; try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return send200({ err: 'Bad request' }); }
+    const p2 = POLLS.get(String(body.id || '').toUpperCase());
+    if (!p2) return send200({ err: 'That poll has expired or never existed' });
+    if (p2.locked) return send200({ err: 'This one is already locked in', locked: p2.locked });
+    const tok = String(body.token || '').slice(0, 64);
+    if (!tok) return send200({ err: 'Bad request' });
+    if (Object.keys(p2.votes).length >= 12 && !p2.votes[tok]) return send200({ err: 'This poll is full' });
+    const ok = [...new Set((Array.isArray(body.ok) ? body.ok : []).map(Number).filter(i => Number.isInteger(i) && i >= 0 && i < p2.slots.length))];
+    p2.votes[tok] = { name: String(body.name || 'A friend').slice(0, 14), ok };
+    persistPolls();
+    return send200(pollInfo(p2, tok));
+  }
+  if (u.pathname === '/api/polllock' && req.method === 'POST') {
+    let body; try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return send200({ err: 'Bad request' }); }
+    const p2 = POLLS.get(String(body.id || '').toUpperCase());
+    if (!p2) return send200({ err: 'That poll has expired or never existed' });
+    if (String(body.token || '') !== p2.host.token) return send200({ err: 'Only the host can lock the time' });
+    if (p2.locked) return send200({ code: p2.locked.code, at: p2.locked.at });
+    const slot = +body.slot;
+    if (!(slot >= 0 && slot < p2.slots.length)) return send200({ err: 'Bad slot' });
+    const code = schedCode();
+    SCHED.set(code, { at: p2.slots[slot], config: p2.config, card: p2.card, host: p2.host, created: Date.now() });
+    p2.locked = { slot, code, at: p2.slots[slot] };
+    persistSched(); persistPolls();
+    console.log(JSON.stringify({ ev: 'poll_locked', id: String(body.id).toUpperCase(), code }));
+    return send200({ code, at: p2.slots[slot] });
+  }
+  if (u.pathname.startsWith('/cal/')) {
+    const code = u.pathname.slice(5).replace(/\.ics$/i, '').toUpperCase();
+    const s = SCHED.get(code);
+    if (!s) { res.writeHead(404, { 'content-type': 'text/plain' }); return res.end('No such game'); }
+    res.writeHead(200, { 'content-type': 'text/calendar; charset=utf-8', 'access-control-allow-origin': '*',
+      'content-disposition': 'inline; filename="mahj-' + code + '.ics"' });
+    return res.end(icsFor(code, s.at, s.host.name));
   }
   if (u.pathname === '/api/read' && req.method === 'POST') {
     if (!OLM_API_KEY && !MOCK_AI) return send200({ err: 'The card reader is not configured on the server' });

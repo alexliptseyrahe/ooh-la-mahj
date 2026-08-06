@@ -185,8 +185,11 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #titlemural{-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.55) 62%,rgba(0,0,0,.3) 76%,rgba(0,0,0,.2) 100%);
   mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.55) 62%,rgba(0,0,0,.3) 76%,rgba(0,0,0,.2) 100%)}
 .tlinks{display:flex;justify-content:center;gap:14px;align-items:center;margin-top:20px}
-.tlinks button{font-size:11px;letter-spacing:.18em;color:rgba(232,217,174,.7);background:none;border:none;padding:4px 2px;font-family:var(--sans)}
-.tlinks i{font-style:normal;color:rgba(201,162,75,.5);font-size:10px}
+.sav.justin{animation:seatpop .9s cubic-bezier(.3,1.6,.4,1)}
+@keyframes seatpop{0%{transform:scale(.35);box-shadow:0 0 0 0 rgba(201,162,75,.75)}55%{transform:scale(1.18)}100%{transform:scale(1);box-shadow:0 0 0 14px rgba(201,162,75,0)}}
+.snm .justtag{color:#C9A24B;font-style:italic;font-size:9px}
+.tlinks button{font-size:12.5px;letter-spacing:.18em;color:rgba(232,217,174,.75);background:none;border:none;padding:4px 2px;font-family:var(--sans)}
+.tlinks i{font-style:normal;color:rgba(201,162,75,.5);font-size:11px}
 .abtn:disabled{opacity:.4;pointer-events:none}
 #statusline{text-align:center;font-size:14px;letter-spacing:.1em;color:rgba(251,247,236,.8);min-height:16px;padding-top:2px}
 /* tablets & desktop: centered table, generous tiles */
@@ -296,6 +299,9 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
   box-shadow:0 -8px 30px rgba(0,0,0,.4);
 }
 #sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CFC9BC;margin:10px auto 4px}
+#sheetin{transition:transform .3s cubic-bezier(.32,.72,.28,1)}
+#sheetin.notrans{transition:none}
+#sheetin .grab,#sheettitle,#sheetin .sub{touch-action:none}
 #sheetin h3{
   font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
   padding:4px 0 2px;
@@ -1081,7 +1087,7 @@ function bestFit(p){
   const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   let best=null;
   for(const h of HANDS){
-    if(h.concealed&&(hasExp||jk>0))continue;
+    if(h.concealed&&hasExp)continue;
     for(const v of h.variants){
       const rem=lockGroups(p,v);
       if(!rem)continue;
@@ -1135,7 +1141,7 @@ function newGame(){
   players[dealer].hand.push(wall.pop());
   players[0].hand=sortHand(players[0].hand);
   G={phase:'charleston',wall,players,dealer,turn:dealer,step:'discard',
-     chStep:0,sel:new Set(),discards:[],winNow:null};
+     chStep:0,chPhase:'pass',sel:new Set(),discards:[],winNow:null};
   $('title').classList.add('hide');
   closeCall();closeModal();
   renderAll();
@@ -1143,11 +1149,19 @@ function newGame(){
   promptCharleston();
 }
 
-/* ---------- charleston ---------- */
-const CHDIR=['RIGHT','ACROSS','LEFT'];
+/* ---------- charleston (full traditional flow) ---------- */
+const CHSEQ=[
+  {dir:'RIGHT',off:1},{dir:'ACROSS',off:2},{dir:'LEFT',off:3,blind:true},
+  {dir:'LEFT',off:3},{dir:'ACROSS',off:2},{dir:'RIGHT',off:1,blind:true}
+];
+let CHFULL=true;try{CHFULL=localStorage.getItem('olmChar')!=='express'}catch(e){}
 function promptCharleston(){
   G.sel.clear();
-  setStatus(`Charleston — choose 3 tiles to pass <b>${CHDIR[G.chStep].toLowerCase()}</b>`);
+  G.chPhase='pass';
+  const S=CHSEQ[G.chStep]||CHSEQ[0];
+  setStatus(S.blind
+    ?`Charleston — pass 3 <b>${S.dir.toLowerCase()}</b> · select fewer and the rest go <b>blind</b>`
+    :`Charleston — choose 3 tiles to pass <b>${S.dir.toLowerCase()}</b>`);
   renderRack();renderActions();
 }
 function botPassTiles(p){
@@ -1159,7 +1173,10 @@ function botPassTiles(p){
   return cand.slice(0,3);
 }
 function doCharlestonPass(){
-  if(G.sel.size!==3)return;
+  const S=CHSEQ[G.chStep]||CHSEQ[0];
+  const k=G.sel.size;
+  if(!S.blind&&k!==3)return;
+  if(k>3)return;
   if(MP.active){
     mpSend({type:'chpass',tiles:[...G.sel]});
     MP.chSubmitted=true;
@@ -1168,28 +1185,97 @@ function doCharlestonPass(){
     renderActions();renderRack();
     return;
   }
-  const passes=[];
+  const outs=[];
   for(let i=0;i<4;i++){
     const p=G.players[i];
-    let out;
-    if(i===0){out=p.hand.filter(t=>G.sel.has(t.id))}
-    else{out=botPassTiles(p)}
-    p.hand=p.hand.filter(t=>!out.includes(t));
-    passes.push(out);
+    outs.push(i===0?p.hand.filter(t=>G.sel.has(t.id)):botPassTiles(p));
   }
-  const off=[1,2,3][G.chStep];
-  for(let i=0;i<4;i++){
-    G.players[(i+off)%4].hand.push(...passes[i]);
+  const off=S.off;
+  let blindN=0;
+  if(outs[0].length<3){
+    /* blind: the shortfall passes straight through from the incoming pile, unseen */
+    const donor=(0-off+4)%4;
+    blindN=Math.min(3-outs[0].length,outs[donor].length);
+    outs[0]=outs[0].concat(outs[donor].splice(0,blindN));
   }
+  {const allOut=new Set();for(const o of outs)for(const t of o)allOut.add(t.id);
+   for(let i=0;i<4;i++)G.players[i].hand=G.players[i].hand.filter(t=>!allOut.has(t.id));}
+  for(let i=0;i<4;i++)G.players[(i+off)%4].hand.push(...outs[i]);
   G.sel.clear();
   G.chStep++;
   renderAll();
-  if(G.chStep<3){
-    showMsg('PASS '+CHDIR[G.chStep]);
-    promptCharleston();
+  if(blindN)setStatus(`${blindN} tile${blindN>1?'s':''} passed through <b>blind</b>`);
+  if(G.chStep===3){
+    if(CHFULL)later(blindN?900:0,beginChVote);
+    else startPlay();                     /* express — today's behavior */
+  }else if(G.chStep<6){
+    showMsg('PASS '+CHSEQ[G.chStep].dir);
+    later(blindN?900:0,promptCharleston);
   }else{
-    startPlay();
+    later(blindN?900:0,beginCourtesy);
   }
+}
+function beginChVote(){
+  G.chPhase='vote';G.sel.clear();
+  setStatus('Pass again? The second Charleston runs only if <b>everyone</b> is in');
+  renderRack();renderActions();
+}
+function botVoteContinue(p){
+  const bf=bestFit(p);
+  const close=bf&&bf.score>=10;
+  if(BOTLVL===0)return Math.random()<0.9;
+  return Math.random()<(close?0.3:0.8);
+}
+function chVote(mine){
+  G.chPhase='voted';renderActions();
+  if(!mine){setStatus('You end the passing');later(1000,beginCourtesy);return}
+  const stops=[];
+  for(let j=1;j<4;j++)if(!botVoteContinue(G.players[j]))stops.push(G.players[j].name);
+  later(700,()=>{
+    if(stops.length){
+      setStatus(`<b>${stops[0]}</b> is done — the passing ends`);
+      later(1200,beginCourtesy);
+    }else{
+      setStatus('Everyone is in — pass on');
+      later(800,()=>{showMsg('PASS '+CHSEQ[3].dir);promptCharleston()});
+    }
+  });
+}
+function beginCourtesy(){
+  G.chPhase='courtesy';G.sel.clear();
+  setStatus(`Courtesy — offer up to 3 <b>across</b> to ${G.players[2].name}, or none · the smaller offer counts`);
+  renderRack();renderActions();
+}
+function botCourtesyOffer(p){
+  const cand=botPassTiles(p);
+  const n=Math.min(cand.length,Math.floor(Math.random()*4));
+  return cand.slice(0,n);
+}
+function doCourtesy(){
+  const me=G.players[0],across=G.players[2];
+  const mine=me.hand.filter(t=>G.sel.has(t.id));
+  const theirs=botCourtesyOffer(across);
+  const ex=Math.min(mine.length,theirs.length);
+  /* the side pair (bots 1 & 3) exchange quietly */
+  {const a=botCourtesyOffer(G.players[1]),b=botCourtesyOffer(G.players[3]);
+   const e2=Math.min(a.length,b.length);
+   if(e2){const ga=a.slice(0,e2),gb=b.slice(0,e2);
+     G.players[1].hand=G.players[1].hand.filter(t=>!ga.includes(t)).concat(gb);
+     G.players[3].hand=G.players[3].hand.filter(t=>!gb.includes(t)).concat(ga);}}
+  G.chPhase='voted'; /* lock the buttons while it resolves */
+  renderActions();
+  if(ex){
+    const give=mine.slice(0,ex),get=theirs.slice(0,ex);
+    me.hand=me.hand.filter(t=>!give.includes(t)).concat(get);
+    across.hand=across.hand.filter(t=>!get.includes(t)).concat(give);
+    setStatus(`<b>${across.name}</b> offers ${theirs.length} — you exchange <b>${ex}</b>`
+      +(mine.length>ex?' · your extra stays put':''));
+  }else{
+    setStatus(mine.length?`<b>${across.name}</b> offers none — no exchange`:'No exchange');
+  }
+  G.sel.clear();
+  renderRack();
+  later(1200,startPlay);
 }
 function startPlay(){
   G.phase='play';G.turn=G.dealer;G.step='discard';
@@ -1420,7 +1506,20 @@ function botScoreDiscard(p,j,cand){
   }
   return best||cand[0];
 }
+function botJokerSwapFor(p){
+  for(const q of G.players)for(const e of q.exp){
+    const jt=e.tiles.find(t=>t.s==='J');if(!jt)continue;
+    const real=p.hand.find(t=>key(t)===e.rep);
+    if(real){p.hand=p.hand.filter(t=>t!==real);e.tiles[e.tiles.indexOf(jt)]=real;p.hand.push(jt);return true}
+  }
+  return false;
+}
 function botDiscard(p,j){
+  if(botJokerSwapFor(p)){
+    sfx('joker');setStatus(`<b>${p.name}</b> swaps for a <b>Joker</b>`);renderAll();
+    const w=checkWin(p);
+    if(w){later(900,()=>declareWin(j,w));return}
+  }
   const bf=bestFit(p),keep=bf?keepIdsFor(p,bf.rem):new Set();
   let cand=p.hand.filter(t=>t.s!=='J'&&!keep.has(t.id));
   if(!cand.length)cand=p.hand.filter(t=>t.s!=='J');
@@ -1489,6 +1588,7 @@ function sfx(kind){
   else if(kind==='draw'){click(0,.22,2900)}
   else if(kind==='shuffle'){for(let i=0;i<6;i++)click(i*.032+Math.random()*.012,.2,1300+Math.random()*1000)}
   else if(kind==='call'){click(0,.5,950);click(.1,.5,950)}
+  else if(kind==='seat'){click(0,.4,780);click(.09,.4,1040);click(.19,.5,1240)}
   else if(kind==='win'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>{tone(f,i*.095,.5,.1);tone(f*2,i*.095,.25,.02)})}
   else if(kind==='lose'){tone(392,.0,.22,.05,'triangle');tone(311,.16,.3,.05,'triangle')}
   else if(kind==='joker'){tone(659,.0,.09,.055);tone(880,.09,.14,.055)}
@@ -1834,7 +1934,7 @@ function topFits(p){
   const {c,jk}=countsOf(p.hand),hasExp=p.exp.length>0,ec=expCount(p);
   const list=[];
   for(const h of HANDS){
-    if(h.concealed&&(hasExp||jk>0))continue;
+    if(h.concealed&&hasExp)continue;
     let best=null;
     for(const v of h.variants){
       const rem=lockGroups(p,v);
@@ -1934,7 +2034,9 @@ function rackPointer(e,t,td){
 }
 function tapTile(t){
   if(G.phase==='charleston'){
-    if(MP.active&&MP.chSubmitted)return;
+    const ph=G.chPhase||'pass';
+    if(ph==='vote'||ph==='voted')return;
+    if(MP.active&&(ph==='pass'?MP.chSubmitted:MP.chOffered))return;
     if(t.s==='J'){setStatus('Jokers may never be passed, darling');return}
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else if(G.sel.size<3)G.sel.add(t.id);
@@ -1956,8 +2058,26 @@ function renderActions(){
     box.appendChild(b);return b;
   };
   if(G.phase==='charleston'){
-    if(MP.active&&MP.chSubmitted){mk('PASSED ✓','ghost',()=>{},true)}
-    else mk(`PASS ${G.sel.size}/3 ${CHDIR[G.chStep]}`,G.sel.size===3?'':'ghost',doCharlestonPass,G.sel.size!==3);
+    const ph=G.chPhase||'pass';
+    const S=CHSEQ[G.chStep]||CHSEQ[0];
+    const k=G.sel.size;
+    if(ph==='pass'){
+      if(MP.active&&MP.chSubmitted){mk('PASSED ✓','ghost',()=>{},true)}
+      else if(S.blind&&k<3)mk(k===0?'PASS ALL 3 BLIND':`PASS ${k} + ${3-k} BLIND`,k===0?'gold':'',doCharlestonPass);
+      else mk(`PASS ${k}/3 ${S.dir}`,k===3?'':'ghost',doCharlestonPass,k!==3);
+    }else if(ph==='vote'){
+      if(MP.active&&MP.chVoted){mk('ANSWERED ✓','ghost',()=>{},true)}
+      else{
+        mk('KEEP PASSING','',()=>{if(MP.active){MP.chVoted=true;mpSend({type:'chvote',again:true});renderActions()}else chVote(true)});
+        mk("I'M DONE",'ghost',()=>{if(MP.active){MP.chVoted=true;mpSend({type:'chvote',again:false});renderActions()}else chVote(false)});
+      }
+    }else if(ph==='courtesy'){
+      if(MP.active&&MP.chOffered){mk('OFFERED ✓','ghost',()=>{},true)}
+      else mk(k?`OFFER ${k} ACROSS`:'OFFER NOTHING',k?'':'gold',()=>{
+        if(MP.active){MP.chOffered=true;mpSend({type:'chcourtesy',tiles:[...G.sel]});G.sel.clear();renderActions();renderRack()}
+        else doCourtesy();
+      });
+    }else{mk('…','ghost',()=>{},true)}
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
     if(MP.active){
       if(G.winNow)mk('MAH JONGG!','gold',()=>mpSend({type:'mahjong'}));
@@ -2443,6 +2563,34 @@ $('btncard').onclick=()=>{
 };
 $('btncard2').onclick=openSheet;
 $('sheetdim').onclick=()=>$('sheet').classList.remove('open');
+/* swipe down on the card sheet to close it */
+{
+  const sin=$('sheetin');
+  let sd=null;
+  sin.addEventListener('pointerdown',e=>{
+    if(e.target.closest('#cardlist')||e.target.closest('button')||e.target.closest('input'))return;
+    sd={y0:e.clientY,t0:Date.now(),pid:e.pointerId};
+    sin.classList.add('notrans');
+    try{sin.setPointerCapture(e.pointerId)}catch(x){}
+  });
+  sin.addEventListener('pointermove',e=>{
+    if(!sd)return;
+    const dy=e.clientY-sd.y0;
+    if(dy>0)sin.style.transform=`translateY(${dy}px)`;
+  });
+  const sinFin=e=>{
+    if(!sd)return;
+    sin.classList.remove('notrans');
+    const dy=e.clientY-sd.y0,v=dy/Math.max(1,Date.now()-sd.t0);
+    if(dy>110||v>.5){
+      sin.style.transform='translateY(110%)';
+      setTimeout(()=>{$('sheet').classList.remove('open');sin.style.transform=''},280);
+    }else sin.style.transform='';
+    sd=null;
+  };
+  sin.addEventListener('pointerup',sinFin);
+  sin.addEventListener('pointercancel',()=>{if(sd){sin.classList.remove('notrans');sin.style.transform='';sd=null}});
+}
 $('sheetin').addEventListener('click',e=>e.stopPropagation());
 $('sheet').addEventListener('click',()=>$('sheet').classList.remove('open'));
 
@@ -2532,13 +2680,16 @@ function mpOnMsg(m){
     }
     case 'event':{
       if(m.kind==='discard'&&MP.view){stFlash(`<b>${seatName(m.seat)}</b> discards`);if(MP.view.you&&m.seat!==MP.view.you.seat)sfx('placebot')}
-      if(m.kind==='charleston'){showMsg('PASS '+['RIGHT','ACROSS','LEFT'][m.step]);sfx('shuffle')}
+      if(m.kind==='charleston'){showMsg('PASS '+(CHSEQ[m.step]||CHSEQ[0]).dir);sfx('shuffle')}
+      if(m.kind==='chvote_end'){stFlash(m.name?`<b>${m.name}</b> is done — the passing ends`:'The passing ends')}
+      if(m.kind==='chvote_on'){showMsg('PASS '+CHSEQ[3].dir);sfx('shuffle')}
+      if(m.kind==='courtesy_done'&&typeof m.ex==='number'){stFlash(m.ex?`Courtesy — <b>${m.ex}</b> exchanged`:'Courtesy — no exchange')}
       if(m.kind==='start'){showMsg('THE CHARLESTON');sfx('shuffle')}
       if(m.kind==='gameon'){showMsg('GAME ON');sfx('shuffle')}
       if(m.kind==='call'){stFlash(`<b>${seatName(m.seat)}</b> calls!`);sfx('call')}
       if(m.kind==='botsub')stFlash(`<b>${seatName(m.seat)}</b> lost connection — a bot fills in`);
       if(m.kind==='rejoin')stFlash(`<b>${seatName(m.seat)}</b> is back`);
-      if(m.kind==='takeover'){stFlash(`<b>${m.name}</b> joins the table!`);showMsg(m.name.toUpperCase()+' JOINS')}
+      if(m.kind==='takeover'){stFlash(`<b>${m.name}</b> takes a seat!`);showMsg(m.name.toUpperCase()+' TAKES A SEAT');sfx('seat')}
       break;
     }
     case 'end':{if(!MP.intended)return;MP.endSeen=true;mpShowEnd(m);break}
@@ -2582,7 +2733,7 @@ function mpRenderGame(v){
     });
   }
   G={phase:v.phase==='charleston'?'charleston':'play',
-     chStep:v.chStep,wall:{length:v.wall},
+     chStep:v.chStep,chPhase:v.chPhase||'pass',wall:{length:v.wall},
      players,dealer:(v.dealer-meIdx+4)%4,
      turn:(v.turn-meIdx+4)%4,step:v.step,
      discards:v.discards.map(d=>({t:d.t,by:(d.by-meIdx+4)%4})),
@@ -2591,9 +2742,19 @@ function mpRenderGame(v){
   G.winNow=v.you.canMahjong?{mp:true}:null;
   MP.swaps=v.you.swaps||[];
   MP.chSubmitted=v.you.chSubmitted;
+  MP.chVoted=v.you.chVoted;
+  MP.chOffered=v.you.chOffered;
   renderAll();
   if(v.phase==='charleston'){
-    setStatus(MP.chSubmitted?'Passed — waiting for the table…':`Charleston — choose 3 tiles to pass <b>${['right','across','left'][v.chStep]}</b>`);
+    const ph=v.chPhase||'pass';
+    if(ph==='vote')setStatus(MP.chVoted?'Answered — waiting for the table…':'Pass again? The second Charleston runs only if <b>everyone</b> is in');
+    else if(ph==='courtesy')setStatus(MP.chOffered?'Offered — waiting for the exchange…':'Courtesy — offer up to 3 <b>across</b>, or none · the smaller offer counts');
+    else{
+      const S=CHSEQ[v.chStep]||CHSEQ[0];
+      setStatus(MP.chSubmitted?'Passed — waiting for the table…'
+        :S.blind?`Charleston — pass 3 <b>${S.dir.toLowerCase()}</b> · fewer than 3 go <b>blind</b>`
+        :`Charleston — choose 3 tiles to pass <b>${S.dir.toLowerCase()}</b>`);
+    }
   }else if(v.phase==='play'){
     const myExpTiles=v.seats[meIdx].exp.reduce((s,e)=>s+e.tiles.length,0);
     const mustDiscard=v.turn===meIdx&&v.step==='discard'&&v.you.rack.length===14-myExpTiles;
@@ -2672,13 +2833,25 @@ function renderLobby(v){
   const cardLine=isHost
     ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
     :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`;
+  /* who just sat down? (fresh lobby seeds silently; after that, new friends get a pop + chime) */
+  if(MP.lobbyCode!==v.code){MP.lobbyCode=v.code;MP.lobbySeen=new Set(v.seats.map((sx,i)=>sx&&sx.kind==='human'?i+':'+sx.name:null).filter(Boolean))}
+  const fresh=new Set();
+  v.seats.forEach((sx,i)=>{
+    if(sx&&sx.kind==='human'&&!sx.isYou){
+      const k=i+':'+sx.name;
+      if(!MP.lobbySeen.has(k)){fresh.add(i);MP.lobbySeen.add(k)}
+    }
+  });
   const seatDots=v.seats.map((sx,i)=>{
     if(!sx)return `<div class="seat"><div class="sav open">+</div><div class="snm">open</div></div>`;
     const ini=(sx.name||'?').trim().slice(0,2).toUpperCase();
     const cls=sx.isYou?'you':(sx.kind==='bot'?'bot':'friend');
-    const nm=sx.isYou?`${sx.name}<br><i>you</i>`:sx.name+(sx.connected===false?'<br><i>reconnecting…</i>':'');
-    return `<div class="seat"><div class="sav ${cls}">${ini}</div><div class="snm">${nm}</div></div>`;
+    const isNew=fresh.has(i);
+    const nm=sx.isYou?`${sx.name}<br><i>you</i>`
+      :sx.name+(isNew?'<br><i class="justtag">takes a seat!</i>':(sx.connected===false?'<br><i>reconnecting…</i>':''));
+    return `<div class="seat"><div class="sav ${cls}${isNew?' justin':''}">${ini}</div><div class="snm">${nm}</div></div>`;
   }).join('');
+  if(fresh.size)sfx('seat');
   const anyOpen=v.seats.some(sx=>!sx);
   const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'')
     +(anyOpen?'<br>Seats still open at the deal are played by the bots.':'');
@@ -2726,6 +2899,10 @@ function openFriends(errMsg){
             <button class="chip on" id="fhintyes">✓ HINTS ALLOWED</button>
             <button class="chip" id="fhintno">NO HINTS</button>
           </div>
+          <div class="chiprow">
+            <button class="chip on" id="fcharfull">✓ FULL CHARLESTON</button>
+            <button class="chip" id="fcharexp">EXPRESS</button>
+          </div>
         </div>
         <div class="orpill" style="width:100%"><span>OR</span></div>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
@@ -2743,12 +2920,23 @@ function openFriends(errMsg){
     };
     box.querySelector('#fhintyes').onclick=()=>setHints(true);
     box.querySelector('#fhintno').onclick=()=>setHints(false);
+    let charFull=true;
+    const setChar=v=>{
+      charFull=v;
+      box.querySelector('#fcharfull').classList.toggle('on',v);
+      box.querySelector('#fcharfull').textContent=v?'✓ FULL CHARLESTON':'FULL CHARLESTON';
+      box.querySelector('#fcharexp').classList.toggle('on',!v);
+      box.querySelector('#fcharexp').textContent=v?'EXPRESS':'✓ EXPRESS';
+      sfx('tap');
+    };
+    box.querySelector('#fcharfull').onclick=()=>setChar(true);
+    box.querySelector('#fcharexp').onclick=()=>setChar(false);
     box.querySelector('#fcreate').onclick=()=>{
       if(!getName())return;
       MP.intended=true;
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints}}));
+      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints,charleston:charFull?'full':'express'}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
     box.querySelector('#fcancel').onclick=closeModal;
@@ -2857,6 +3045,7 @@ $('btnmenu').onclick=()=>{
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
+    ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mchar">CHARLESTON: ${CHFULL?'FULL':'EXPRESS'}</button>`}
     ${MP.active?'':`<div style="width:100%;max-width:280px;text-align:left">
       <div style="font-size:10px;letter-spacing:.24em;color:#A8A296;margin:4px 0 6px;text-align:center">THE BOTS</div>
       ${[0,1,2].map(i=>`<button class="bopt${i===BOTLVL?' on':''}" data-lvl="${i}">
@@ -2871,6 +3060,13 @@ $('btnmenu').onclick=()=>{
     try{localStorage.setItem('olmSnd',SND?'1':'0')}catch(e){}
     box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
     if(SND)sfx('tap');
+  };
+  const mc=box.querySelector('#mchar');
+  if(mc)mc.onclick=()=>{
+    CHFULL=!CHFULL;
+    try{localStorage.setItem('olmChar',CHFULL?'full':'express')}catch(e){}
+    mc.textContent='CHARLESTON: '+(CHFULL?'FULL':'EXPRESS');
+    sfx('tap');
   };
   box.querySelectorAll('.bopt').forEach(b=>{
     b.onclick=()=>{
