@@ -1708,19 +1708,19 @@ function callAdvice(t){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
       if(!grp)continue;
       if(bf.hand.concealed)
-        return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>calling forfeits it</b></div>`;
+        return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>pass</b></div>`;
       const kNeed=grp[1];
       if(sizes.includes(kNeed)&&callKeepsAlive(me,t,kNeed)){
         const away=Math.max(0,14-bf.score);
         const label=kNeed===3?'PUNG':kNeed===4?'KONG':'QUINT';
-        return `<div class="calladv">fits <b>“${bf.hand.name}”</b> — take the <b>${label}</b>, ${away} away</div>`;
+        return `<div class="calladv"><b>${label}</b> fits “${bf.hand.name}” — ${away} away</div>`;
       }
       if(!sizes.includes(kNeed))
-        return `<div class="calladv">“${bf.hand.name}” needs the <b>${kNeed===4?'kong':'quint'}</b> here — you can only expose ${Math.max(...sizes,0)||'fewer'}, so calling would <b>dead your hand</b>. Pass.</div>`;
+        return `<div class="calladv">“${bf.hand.name}” needs the <b>${kNeed===4?'kong':'quint'}</b> — <b>pass</b></div>`;
     }
     if(!sizes.some(k=>callKeepsAlive(me,t,k)))
-      return `<div class="calladv">no line on the card survives this call — <b>calling would dead your hand</b>. Pass.</div>`;
-    return `<div class="calladv">your closest hands don't need it</div>`;
+      return `<div class="calladv">calling kills this hand — <b>pass</b></div>`;
+    return `<div class="calladv">you don't need it</div>`;
   }catch(e){return ''}
 }
 
