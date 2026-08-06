@@ -9,6 +9,7 @@
 <link rel="icon" type="image/png" href="icon.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0C3B2E">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0C3B2E">
 <title>Ooh La Mahj</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +33,7 @@
   --red:#B23A2F;
   --grn:#1B6B4C;
   --blu:#2C5F82;
+  --paper:#FAF9F5;
   --tile-face:#FFFDF4;
   --tile-face2:#F5EEDB;
   --tile-edge:#E0D6B8;
@@ -172,7 +174,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
   box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
 }
 .abtn:active{transform:translateY(1px)}
-.abtn.gold{background:linear-gradient(160deg,var(--gold),var(--gold-dk));color:#241C08}
+.abtn.gold{background:#93794A;color:#FBF7EC;box-shadow:0 3px 8px rgba(0,0,0,.28)}
 .abtn.ghost{background:none;border:1px solid rgba(251,247,236,.45);box-shadow:none;color:var(--ivory);font-weight:500}
 .abtn.big{font-size:15px;padding:13px 30px}
 .abtn:disabled{opacity:.4;pointer-events:none}
@@ -248,46 +250,70 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 }
 #sheet.open{display:flex}
 #sheetin{
-  background:var(--ivory);color:var(--ink);border-radius:20px 20px 0 0;
+  background:var(--paper);color:var(--ink);border-radius:20px 20px 0 0;
   max-height:82dvh;display:flex;flex-direction:column;
   box-shadow:0 -8px 30px rgba(0,0,0,.4);
 }
-#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CBBF9E;margin:10px auto 4px}
+#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CFC9BC;margin:10px auto 4px}
 #sheetin h3{
   font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
   padding:4px 0 2px;
 }
-#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E2D8BC}
+#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
 #cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
-.cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CBBF9E;border-radius:13px;padding:5px 13px;background:#fff}
+.cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CFC9BC;border-radius:13px;padding:5px 13px;background:#fff}
 .cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
 .cbtn.imp{color:var(--coral-dk);border-color:var(--coral)}
 .cbtn:disabled{opacity:.35}
-#imparea{width:100%;height:90px;border:1px solid #CBBF9E;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FDFBF4;color:var(--ink)}
+#imparea{width:100%;height:90px;border:1px solid #CFC9BC;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FCFBF9;color:var(--ink)}
 #impfile{font-size:12px;margin:2px 0 6px;max-width:100%}
 .imperr{color:var(--red);font-size:13px;min-height:16px;margin-bottom:6px}
-.photozone{border:2px dashed #CBBF9E;border-radius:14px;padding:18px 12px;text-align:center;margin:12px 0;background:#FDFBF4}
+.photozone{border:none;border-radius:16px;padding:16px 12px;text-align:center;margin:10px 0;background:#F1EFE9}
+.orpill{display:flex;align-items:center;gap:10px;margin:4px 0}
+.orpill::before,.orpill::after{content:'';flex:1;height:1px;background:#E4E1D8}
+.orpill span{font-size:10px;letter-spacing:.26em;color:#A8A296}
 .photozone .pz1{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--deep)}
 .photozone .pz2{font-size:13px;color:#8A7F5F;margin:6px 0 12px;line-height:1.5}
 .pslots{display:flex;gap:8px;justify-content:center;margin-top:6px}
-.pslot{width:88px;height:66px;border:1.5px dashed #CBBF9E;border-radius:10px;background:#FFFDF4;
+.pslot{width:88px;height:66px;border:none;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(40,50,44,.1);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;overflow:hidden;position:relative;padding:0}
 .pslot span{font-size:10.5px;letter-spacing:.14em;color:#8A7F5F;font-weight:600}
 .pslot b{font-size:17px;color:var(--coral-dk);line-height:1}
 .pslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pslot.filled{border-style:solid;border-color:var(--grn)}
 .pslot.filled::after{content:'✓';position:absolute;top:2px;right:5px;color:#fff;font-size:12px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.pslot.next{box-shadow:0 0 0 2.5px var(--coral)}
+.pslot.next span{color:var(--coral-dk)}
+/* trifold card diagram — fills in as photos arrive */
+.fold{display:flex;justify-content:center;gap:2px;margin:6px 0 10px}
+.fseg{width:30px;height:42px;border-radius:4px;border:1.5px solid var(--gold);background:#fff;position:relative}
+.fseg::before{content:'';position:absolute;inset:6px 5px;background:repeating-linear-gradient(#EAE7E0 0 2px,transparent 2px 7px)}
+.fseg.done{background:var(--deep);border-color:var(--deep)}
+.fseg.done::before{content:'✓';background:none;color:#E8C97E;font-size:14px;inset:0;display:flex;align-items:center;justify-content:center}
+.fseg.next{border-color:var(--coral);box-shadow:0 0 0 3px rgba(226,114,91,.3)}
+.abtn.off{background:#EAE7E0;color:#A8A296;box-shadow:none}
 details.altimp{margin-top:12px;text-align:left}
 details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:pointer}
-.spin{width:34px;height:34px;border:3px solid #E2D8BC;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
+.spin{width:34px;height:34px;border:3px solid #E7E3DA;border-top-color:var(--coral);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E2D8BC;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
+/* photo-read progress: home-screen pill + sheet progress bar */
+#readpill{display:none;margin:-14px auto 20px;background:rgba(8,40,30,.85);border:1px solid rgba(201,162,75,.5);border-radius:20px;padding:8px 16px;align-items:center;gap:8px;cursor:pointer}
+#readpill.on{display:flex}
+#readpill .rdot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(201,162,75,.8);flex:none}
+#readpill.live .rdot{animation:rpulse 1.6s ease-in-out infinite}
+#readpill.err .rdot{background:var(--coral);box-shadow:0 0 6px rgba(226,114,91,.8)}
+#readpill span{font-size:11px;letter-spacing:.08em;color:#F7F2E4}
+@keyframes rpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.rprog{height:5px;border-radius:3px;background:#EAE7E0;margin:14px 24px;overflow:hidden}
+.rprog i{display:block;height:100%;width:4%;background:linear-gradient(90deg,#C9A24B,#A8893C);border-radius:3px;transition:width .8s ease}
+.okcirc{width:38px;height:38px;border-radius:50%;background:var(--deep);color:#E8C97E;font-size:19px;display:flex;align-items:center;justify-content:center;margin:10px auto}
+.revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E7E3DA;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
 .revlist b{color:var(--deep)}
 .revcat{font-size:10.5px;letter-spacing:.2em;color:var(--gold-dk);margin-top:6px}
 .ccat{font-size:10.5px;font-weight:600;letter-spacing:.26em;color:var(--gold-dk);margin:14px 0 6px}
 .chand{
-  background:#fff;border:1px solid #E6DCC0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
+  background:#fff;border:1px solid #EAE7E0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
   display:flex;flex-direction:column;gap:6px;
 }
 .chand.best{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral)}
@@ -295,7 +321,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 .chand .chname{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--deep)}
 .chand .chpts{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--gold-dk);white-space:nowrap}
 .chand .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px}
-.chand .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F4EDDA;font-weight:500}
+.chand .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
 .chand .chpat i.cR{color:var(--red)} .chand .chpat i.cG{color:var(--grn)} .chand .chpat i.cB{color:var(--blu)}
 .chand .chpat i.cN{color:#33413A} .chand .chpat i.cF{color:var(--coral-dk)}
 .chand .prog{display:flex;align-items:center;gap:8px}
@@ -307,38 +333,84 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 /* ---------- call bar ---------- */
 #callbar{
   position:fixed;left:10px;right:10px;top:130px;bottom:auto;z-index:40;display:none;
-  background:rgba(9,42,32,.96);border:1px solid var(--gold);border-radius:16px;padding:12px;
-  flex-direction:column;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  background:rgba(6,25,19,.98);border:1px solid var(--gold);border-radius:16px;padding:15px 16px 14px;
+  flex-direction:column;gap:11px;align-items:center;box-shadow:0 12px 34px rgba(0,0,0,.55);
 }
 #callbar.open{display:flex}
-#callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale)}
-.calladv{font-family:var(--sans);font-size:12.5px;letter-spacing:.05em;color:var(--gold);margin-top:5px}
+#callbar .cq{font-family:var(--serif);font-size:17px;color:var(--gold-pale);text-align:center}
+.lcode{letter-spacing:.32em;margin-left:.32em;font-size:38px}
+.lobbycard{background:#F1EFE9;border-radius:13px;padding:10px 14px;font-size:12.5px;color:#4A5A50;margin:8px 0 2px}
+.lobbycard b{color:var(--deep)}
+.seatrow{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.seat{width:64px}
+.sav{width:52px;height:52px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.03em}
+.sav.you{background:var(--deep);color:#E8D9AE}
+.sav.friend{background:var(--gold);color:#241C08}
+.sav.bot{background:#E4E1D8;color:#8A8579}
+.sav.open{background:#F1EFE9;color:#B4AE9F;font-size:24px;font-weight:400}
+.snm{font-size:10px;color:#6B6248;text-align:center;line-height:1.25}
+.snm i{color:#A8A296;font-style:normal;font-size:9px}
+.hostcard{background:#F1EFE9;border-radius:16px;padding:12px;width:100%;box-sizing:border-box}
+.chiprow{display:flex;gap:8px;margin-top:10px}
+.chip{flex:1;padding:10px 0;border-radius:19px;font-size:11px;letter-spacing:.08em;font-weight:600;
+  background:#fff;border:1px solid #EAE7E0;color:#6B6248;transition:background .15s,color .15s}
+.chip.on{background:var(--deep);border-color:var(--deep);color:#E8D9AE}
+.bopt{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;
+  background:#fff;border:1px solid #EAE7E0;border-radius:13px;padding:10px 12px;margin-bottom:7px;text-align:left}
+.bopt .bnm{display:block;font-size:12.5px;font-weight:700;color:var(--deep);letter-spacing:.06em}
+.bopt .bds{display:block;font-size:10.5px;color:#8A7F5F;margin-top:1px}
+.bopt .bck{width:19px;height:19px;border-radius:50%;border:1.5px solid #D9D5CB;flex:none;margin-left:10px;position:relative}
+.bopt.on{border-color:var(--gold)}
+.bopt.on .bck{background:var(--deep);border-color:var(--deep)}
+.bopt.on .bck::after{content:'✓';color:#E8C97E;font-size:12px;position:absolute;left:4.5px;top:1px}
+.calladv{font-family:var(--sans);font-size:13px;letter-spacing:.04em;color:var(--gold);margin-top:8px;line-height:1.45;text-align:center;padding:0 4px}
 #callbar .cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#calltick{display:none;height:3px;border-radius:2px;background:rgba(232,217,174,.16);overflow:hidden;width:82%;margin-top:2px}
+#calltick.on{display:block}
+#calltick i{display:block;height:100%;width:100%;background:var(--gold);border-radius:2px}
 
 /* ---------- modal ---------- */
 #modal{
-  position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
-  background:rgba(5,20,15,.65);backdrop-filter:blur(4px);padding:24px;
+  position:fixed;inset:0;z-index:70;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(8,30,23,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
 #modal.open{display:flex}
 #modalin{
-  background:var(--ivory);color:var(--ink);border-radius:18px;padding:26px 22px 22px;max-width:340px;width:100%;
-  text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.5);max-height:86dvh;overflow-y:auto;
+  background:var(--paper);color:var(--ink);border-radius:26px 26px 0 0;
+  padding:11px 22px calc(env(safe-area-inset-bottom,10px) + 18px);max-width:520px;width:100%;
+  text-align:center;box-shadow:0 -14px 44px rgba(0,0,0,.4);max-height:88dvh;overflow-y:auto;
+  animation:sheetup .42s cubic-bezier(.22,1.12,.36,1);
 }
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#modalin::before{content:'';display:block;width:38px;height:4.5px;border-radius:3px;background:#DFDBD1;margin:0 auto 13px}
+@media (prefers-reduced-motion:reduce){#modalin{animation:none;transform:none}}
+#modal.kb{align-items:flex-start}
+#modal.kb #modalin{
+  border-radius:22px;animation:none;transform:none;max-height:46dvh;padding-top:16px;
+  margin:calc(env(safe-area-inset-top,0px) + 10px) 10px 0;width:calc(100% - 20px);
+  box-shadow:0 10px 36px rgba(0,0,0,.45);
+}
+#modal.kb #modalin::before{display:none}
 #modalin .mtop{font-size:10px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
 #modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
 #modalin .msub{font-size:14px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
 #modalin .mtiles{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:14px 0}
-.debrief{border-top:1px solid #E4DAC0;margin-top:16px;padding-top:13px}
+.debrief{border-top:1px solid #E8E5DE;margin-top:16px;padding-top:13px}
 .dbhead{font-family:var(--sans);font-size:10px;letter-spacing:.3em;color:#A8893C;font-weight:600}
 #modalin .mpts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--coral-dk);margin:6px 0 16px}
-#modalin .mbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#modalin .mbtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;flex-direction:column;align-items:stretch}
+#modalin .mbtns .abtn{width:100%;box-sizing:border-box}
 #modalin .rules{text-align:left;font-size:13px;line-height:1.65;color:#3E4E45}
 #modalin .rules b{color:var(--deep)}
 #modalin .rules p{margin-bottom:9px}
 
 .fade{animation:fadein .35s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+
+
+
 </style>
 </head>
 <body>
@@ -375,6 +447,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 <div id="callbar">
   <div class="cq" id="callq"></div>
   <div class="cbtns" id="callbtns"></div>
+  <div id="calltick"><i></i></div>
 </div>
 
 <div id="sheet">
@@ -384,7 +457,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
     <h3 id="sheettitle">THE OOH LA MAHJ CARD</h3>
     <div class="sub">F=FLOWER · 0=SOAP · C/X = CONCEALED/EXPOSED</div>
     <div id="cardctl">
-      <button class="cbtn" id="ccclub">CLUB CARD</button>
+      <button class="cbtn" id="ccclub">OOH LA CARD</button>
       <button class="cbtn" id="ccmine">MY CARD</button>
       <button class="cbtn imp" id="ccimport">IMPORT…</button>
     </div>
@@ -410,6 +483,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <h1>OOH LA MAHJ</h1>
   <h2>AMERICAN MAH JONGG</h2>
   <div class="est">EST. 2026</div>
+  <div id="readpill"><div class="rdot"></div><span></span></div>
   <div class="tbtns">
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
     <button class="abtn gold big" id="btnfriends">PLAY WITH FRIENDS</button>
@@ -428,7 +502,7 @@ const $=id=>document.getElementById(id);
 
 /* extra CSS for center-art tiles */
 document.head.insertAdjacentHTML('beforeend',`<style>
-body{touch-action:manipulation}
+*{touch-action:manipulation}
 .tile .lbl{color:#8A7F5F}
 .t-lg .m.art svg{width:27px;height:27px}
 .t-md .m.art svg{width:17px;height:17px}
@@ -1253,6 +1327,7 @@ function botAct(){
 /* bot difficulty: 0 breezy, 1 club player (default), 2 shark */
 let BOTLVL=1;try{BOTLVL=Math.min(2,Math.max(0,parseInt(localStorage.getItem('olmBots'))||1))}catch(e){}
 const BOTLVL_NAMES=['BREEZY','CLUB PLAYER','SHARK'];
+const BOT_DESCS=['forgiving table, generous discards','plays a solid game, misses a little','defends, never misses a call'];
 function visibleCounts(){
   const v={};
   for(const d of G.discards){const k=key(d.t);v[k]=(v[k]||0)+1}
@@ -1473,7 +1548,7 @@ function declareWin(i,win){
      <div class="mtiles" id="mtiles"></div>
      <div class="mpts">${pts} points</div>
      <div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
-     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`);
+     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`);
   const mt=box.querySelector('#mtiles');
   for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
   if(!mine)addDebrief(box);
@@ -1488,13 +1563,91 @@ function wallGame(){
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
     <div class="msub">The wall is spent and no one made their hand.<br>The ladies order another round of spritzes.</div>
     <div class="mbtns" style="margin-top:16px"><button class="abtn" id="mnew">PLAY AGAIN</button>
-    <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#B9AD8B">EXIT GAME</button></div>`;
+    <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`;
   addDebrief(box);
   box.querySelector('#mnew').onclick=newGame;
   box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
-function closeModal(){$('modal').classList.remove('open')}
+function closeModal(){
+  $('modal').classList.remove('open');$('modal').classList.remove('kb');
+  $('modalin').style.animation='';  /* re-arm the entrance for the next open */
+}
+$('modalin').addEventListener('animationend',()=>{$('modalin').style.animation='none'});
+/* iOS double-tap-zoom hard stop: cancel the second tap's zoom, keep its click */
+let LASTTAP=0;
+document.addEventListener('touchend',e=>{
+  const now=Date.now();
+  const quick=now-LASTTAP<350;
+  LASTTAP=now;
+  if(!quick)return;
+  if(e.target&&e.target.closest&&e.target.closest('input,textarea,select'))return;
+  if(!e.cancelable)return;
+  e.preventDefault();
+  const btn=e.target&&e.target.closest?e.target.closest('button,a,[onclick]'):null;
+  if(btn)btn.click(); /* re-deliver the click the preventDefault swallowed */
+},{passive:false});
+/* keyboard vs bottom sheet: while an input is focused, pin the sheet to the top */
+function typingField(el){
+  if(!el)return false;
+  if(el.tagName==='TEXTAREA')return true;
+  if(el.tagName!=='INPUT')return false;
+  return !/^(file|checkbox|radio|button|submit|range)$/.test(el.type||'text');
+}
+function kbSync(){
+  const vv=window.visualViewport;
+  const keyboardUp=vv?vv.height<window.innerHeight*0.78:false;
+  const a=document.activeElement;
+  const typing=typingField(a)&&a.closest&&a.closest('#modalin');
+  $('modal').classList.toggle('kb',!!(keyboardUp&&typing));
+}
+function pinPage(){
+  if($('modal').classList.contains('open')&&(window.scrollY||document.documentElement.scrollTop))
+    window.scrollTo(0,0);
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{kbSync();pinPage()});
+  window.visualViewport.addEventListener('scroll',pinPage);
+}
+window.addEventListener('scroll',pinPage);
+document.addEventListener('focusin',()=>{setTimeout(kbSync,120);setTimeout(kbSync,400)});
+document.addEventListener('focusout',()=>setTimeout(kbSync,120));
+/* swipe-down to dismiss the sheet — only where dismissing is safe */
+(function(){
+  const mi=$('modalin');
+  let sy=0,dy=0,drag=false;
+  const softClose=()=>{
+    const b=mi.querySelector('#mclose')||mi.querySelector('#impcancel')||mi.querySelector('#wclub');
+    if(b)b.click();else closeModal();
+  };
+  const dismissible=()=>!MP.active&&!MP.intended&&!MP.view&&!mi.querySelector('#revsave')&&!mi.querySelector('#convmsg');
+  mi.addEventListener('touchstart',e=>{
+    if(e.target.closest&&e.target.closest('input,textarea,select,button,details'))return;
+    if(!dismissible()||mi.scrollTop>4)return;
+    sy=e.touches[0].clientY;dy=0;drag=true;
+    mi.style.animation='none';mi.style.transition='none';
+  },{passive:true});
+  mi.addEventListener('touchmove',e=>{
+    if(!drag)return;
+    dy=e.touches[0].clientY-sy;
+    if(dy<=0||mi.scrollTop>0){mi.style.transform='';return}
+    e.preventDefault();
+    mi.style.transform='translateY('+dy+'px)';
+  },{passive:false});
+  const finish=()=>{
+    if(!drag)return;drag=false;
+    mi.style.transition='transform .26s cubic-bezier(.3,.9,.4,1)';
+    if(dy>90){
+      mi.style.transform='translateY(115%)';
+      setTimeout(()=>{softClose();mi.style.transform='';mi.style.transition=''},210);
+    }else{
+      mi.style.transform='translateY(0)';
+      setTimeout(()=>{mi.style.transform='';mi.style.transition=''},280);
+    }
+  };
+  mi.addEventListener('touchend',finish);
+  mi.addEventListener('touchcancel',finish);
+})();
 
 /* ---------- call bar ---------- */
 let callTimer=null;
@@ -1515,13 +1668,14 @@ function openCallBar(t,opts,onPass){
   bb.appendChild(pass);
   bar.classList.add('open');
   clearTimeout(callTimer);
-  callTimer=setTimeout(()=>{closeCall();onPass()},6500);
+  /* solo: no countdown — it's your table, the bots will wait as long as you like */
+  $('calltick').classList.remove('on');
 }
-function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open')}
+function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open');$('calltick').classList.remove('on')}
 /* hint-aware call advice — only speaks when the player has chosen hints */
 function callAdvice(t){
   try{
-    if(!HINTON)return '';
+    if(!HINTON||!hintsAllowed())return '';
     const me=G.players[0];
     const tk=key(t);
     const fits=topFits(me);
@@ -1530,16 +1684,21 @@ function callAdvice(t){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
       if(!grp)continue;
       if(bf.hand.concealed)
-        return `<div class="calladv">✋ “${bf.hand.name}” must stay concealed — calling forfeits it</div>`;
+        return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>calling forfeits it</b></div>`;
       const away=Math.max(0,14-bf.score);
-      return `<div class="calladv">✨ fits “${bf.hand.name}” — you're ${away} away and this advances it</div>`;
+      return `<div class="calladv">fits <b>“${bf.hand.name}”</b> — ${away} away, calling advances it</div>`;
     }
     return `<div class="calladv">your closest hands don't need it</div>`;
   }catch(e){return ''}
 }
 
 /* ---------- rendering ---------- */
-function setStatus(html){$('statusline').innerHTML=html}
+let HINTBASE='',STREVERT=null;
+function setStatus(html){
+  $('statusline').innerHTML=html;
+  clearTimeout(STREVERT);
+  if(HINTBASE&&html!==HINTBASE)STREVERT=setTimeout(()=>{$('statusline').innerHTML=HINTBASE},2200);
+}
 let msgTimer=null;
 function showMsg(txt){
   $('tablemsgtxt').textContent=txt;
@@ -1615,13 +1774,15 @@ function renderRack(){
   const box=$('rack');box.innerHTML='';
   const me=G.players[0];
   let hintKeep=null;
-  if(HINTON&&(G.phase==='charleston'||G.phase==='play')){
+  if(HINTON&&hintsAllowed()&&(G.phase==='charleston'||G.phase==='play')){
     const fits=topFits(me);
     if(fits.length){
       if(HINTIDX>=fits.length)HINTIDX=0;
       hintKeep=keepIdsFor(me,fits[HINTIDX].rem);
-    }
-  }
+      const bf=fits[HINTIDX];
+      HINTBASE=`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`;
+    }else HINTBASE='';
+  }else HINTBASE='';
   for(const t of me.hand){
     const td=tileDOM(t,'t-lg');
     if(G.sel.has(t.id))td.classList.add('sel');
@@ -1729,55 +1890,55 @@ function renderActions(){
 
 /* ---------- card sheet ---------- */
 function renderCardCtl(){
-  $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA MAHJ CARD';
+  $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA CARD';
   $('ccclub').classList.toggle('on',activeCardName()==='club');
   $('ccmine').classList.toggle('on',activeCardName()==='custom');
   $('ccmine').disabled=!CUSTOM;
 }
 $('ccclub').onclick=()=>{useCard('club');openSheet()};
 $('ccmine').onclick=()=>{if(CUSTOM){useCard('custom');openSheet()}};
-function openImport(backToSheet){
+function openImport(backToSheet,focus){
   if(maybeOfferPendingCard(true))return;
   const box=$('modalin');
   const reading=readInProgress();
-  const photoUI=aiReady()?(reading?`
+  const photoZone=aiReady()?(reading?`
   <div class="photozone">
-    <div class="pz1">…or photograph your card</div>
-    <div class="pz2">Your photos are being read now — about ${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))} more minute${Math.max(1,5-Math.round((Date.now()-reading.ts)/60000))>1?'s':''}.<br>Play on — your card will appear the moment it's ready.</div>
+    <div class="pz1">Photograph your card</div>
+    <div class="pz2">Your photos are being read now.<br>Play on — your card will appear the moment it's ready.</div>
+    <div class="mbtns" style="margin-top:10px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4;font-size:11px;padding:8px 14px" id="pzprog">SEE PROGRESS</button></div>
   </div>`:`
   <div class="photozone">
-    <div class="pz1">…or photograph your card</div>
+    <div class="pz1">Photograph your card</div>
     ${READERR?`<div class="imperr" style="display:block">${READERR}</div>`:''}
-    <div class="pz2">Add one photo of each panel of this year's card.<br>Good light, card flat, whole panel in frame.<br>You can keep playing while it reads.</div>
+    <div class="pz2" id="pzsub" style="margin-bottom:6px">One photo per section of the fold</div>
+    <div class="fold"><div class="fseg" id="fs0"></div><div class="fseg" id="fs1"></div><div class="fseg" id="fs2"></div></div>
     <div class="pslots">
-      <button class="pslot" id="slot0"><b>+</b><span>PANEL 1</span></button>
-      <button class="pslot" id="slot1"><b>+</b><span>PANEL 2</span></button>
-      <button class="pslot" id="slot2"><b>+</b><span>PANEL 3</span></button>
+      <button class="pslot" id="slot0"><b>+</b><span>LEFT</span></button>
+      <button class="pslot" id="slot1"><b>+</b><span>MIDDLE</span></button>
+      <button class="pslot" id="slot2"><b>+</b><span>RIGHT</span></button>
     </div>
     <input type="file" id="pin0" accept="image/*" style="display:none">
     <input type="file" id="pin1" accept="image/*" style="display:none">
     <input type="file" id="pin2" accept="image/*" style="display:none">
-    <div class="mbtns" id="convertrow" style="display:none;margin-top:14px">
-      <button class="abtn gold" id="convertgo">READ MY CARD</button>
-    </div>
+    <div class="mbtns" style="margin-top:12px"><button class="abtn off" id="convertgo">READ MY CARD</button></div>
+    <div class="pz2" style="margin:8px 0 0;font-size:11px">Good light, card flat, one full section per photo.</div>
   </div>`):'';
-  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
-  <div class="photozone">
+  const codeZone=`<div class="photozone">
     <div class="pz1">Enter your club code</div>
     <input type="text" id="codein" autocapitalize="characters" autocomplete="off" placeholder="CLUB CODE"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);font-family:var(--sans);margin-top:8px">
     <div class="imperr" id="codeerr"></div>
     <button class="abtn" id="codego">UNLOCK MY CARD</button>
-  </div>
-  ${photoUI}
-  ${backToSheet?`<details class="altimp">
-    <summary>Load a card file (advanced)</summary>
-    <input type="file" id="impfile" accept=".json,application/json">
-    <textarea id="imparea" placeholder="…or paste the card data here"></textarea>
-    <div class="mbtns"><button class="abtn" id="impsave" style="font-size:11px;padding:9px 16px">SAVE CARD FILE</button></div>
-  </details>`:''}
+  </div>`;
+  /* order follows intent: photo-first arrivals see photos on top, club code below */
+  const zones=(focus==='photo'&&photoZone)
+    ?photoZone+`<div class="orpill"><span>HAVE A CLUB CODE?</span></div>`+codeZone
+    :codeZone+(photoZone?`<div class="orpill"><span>OR</span></div>`+photoZone:'');
+  box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Set up your card</h2>
+  ${zones}
   <div class="imperr" id="imperr"></div>
-  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE CLUB CARD'}</button></div>`;
+  <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="impcancel">${backToSheet?'CANCEL':'SKIP — USE THE OOH LA CARD'}</button></div>`;
+  const pz=box.querySelector('#pzprog');if(pz)pz.onclick=()=>renderReadSheet();
   box.querySelector('#codego').onclick=async()=>{
     const code=box.querySelector('#codein').value;
     if(!code.trim()){box.querySelector('#codeerr').textContent='Type the code first';return}
@@ -1797,6 +1958,22 @@ function openImport(backToSheet){
   box.querySelector('#codein').addEventListener('keydown',e=>{if(e.key==='Enter')box.querySelector('#codego').click()});
   let photos=[null,null,null];
   if(aiReady()&&!reading){
+    const SECS=['left','middle','right'];
+    const sync=()=>{
+      const n=photos.filter(Boolean).length;
+      let nextI=-1;for(let i=0;i<3;i++)if(!photos[i]){nextI=i;break}
+      for(let i=0;i<3;i++){
+        const fs=box.querySelector('#fs'+i),sl=box.querySelector('#slot'+i);
+        if(fs){fs.classList.toggle('done',!!photos[i]);fs.classList.toggle('next',i===nextI)}
+        if(sl)sl.classList.toggle('next',i===nextI);
+      }
+      const sub=box.querySelector('#pzsub');
+      if(sub)sub.textContent=n===0?'One photo per section of the fold':
+        n===3?'All three sections in — ready to read':
+        (n===1?'One down':'Two down')+' — now the '+SECS[nextI]+' section';
+      const go=box.querySelector('#convertgo');
+      if(go){go.classList.toggle('off',n===0);go.textContent=n===0||n===3?'READ MY CARD':'READ MY CARD · '+n+' OF 3'}
+    };
     for(let i=0;i<3;i++){
       const slot=box.querySelector('#slot'+i),pin=box.querySelector('#pin'+i);
       slot.onclick=()=>pin.click();
@@ -1808,60 +1985,139 @@ function openImport(backToSheet){
         const im=document.createElement('img');
         im.src=URL.createObjectURL(f);
         slot.appendChild(im);
-        box.querySelector('#convertrow').style.display=photos.some(Boolean)?'flex':'none';
+        sync();
       });
     }
+    sync();
     box.querySelector('#convertgo').onclick=()=>{
       const got=photos.filter(Boolean);
       if(!got.length)return;
-      if(got.length<3&&!confirm('Only '+got.length+' of 3 panels added — read the card anyway?'))return;
+      if(got.length<3&&!confirm('Only '+got.length+' of 3 sections added — read the card anyway?'))return;
       convertPhotos(got,backToSheet);
-    };
-  }
-  if(box.querySelector('#impfile')){
-    box.querySelector('#impfile').addEventListener('change',e=>{
-      const f=e.target.files[0];if(!f)return;
-      const r=new FileReader();
-      r.onload=()=>{box.querySelector('#imparea').value=r.result};
-      r.readAsText(f);
-    });
-    box.querySelector('#impsave').onclick=()=>{
-      const err=saveCustomCard(box.querySelector('#imparea').value.trim());
-      if(err){box.querySelector('#imperr').textContent=err;return}
-      closeModal();
-      if(backToSheet)openSheet();
-      showMsg('CARD IMPORTED');
     };
   }
   box.querySelector('#impcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   $('modal').classList.add('open');
+  if(focus==='code'&&!('ontouchstart' in window))setTimeout(()=>{const c=box.querySelector('#codein');if(c)c.focus()},450);
+  if(focus==='photo'){
+    const pin=box.querySelector('#pin0');
+    if(pin)pin.click(); /* same tap → straight into the photo picker */
+    setTimeout(()=>{const z=[...box.querySelectorAll('.photozone')].pop();if(z)z.scrollIntoView({behavior:'smooth',block:'center'})},450);
+  }
 }
 function olmHttp(){return OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:')}
-/* background reading: the user plays on while the server reads their photos */
-let BGREAD={timer:null};
+/* background reading: the user plays on while the server reads their photos.
+   BGREAD.state: 'working' | 'matched' (verified + auto-saved) | 'pending' (needs review) | 'error' | null */
+let BGREAD={timer:null,state:null,stage:null,done:0,of:3,secs:0};
 let READERR=null;
 function readInProgress(){try{return JSON.parse(localStorage.getItem('olmReadJob')||'null')}catch(e){return null}}
 function bgReadClear(){clearTimeout(BGREAD.timer);BGREAD.timer=null;try{localStorage.removeItem('olmReadJob')}catch(e){}}
+function readPillSync(){
+  const p=$('readpill');if(!p)return;
+  const st=BGREAD.state;let txt=null,live=false;
+  if(st==='working'){
+    live=true;
+    const pn='panel '+Math.min(BGREAD.done+1,BGREAD.of)+' of '+BGREAD.of;
+    if(BGREAD.stage==='reading')txt='Reading your card · '+pn;
+    else if(BGREAD.stage==='deep')txt='Careful read · '+pn;
+    else txt='Checking your photos…';
+  }
+  else if(st==='matched')txt='Your card is ready ✓';
+  else if(st==='pending')txt='Your card is ready — tap to review';
+  else if(st==='error')txt="Card read didn't work — tap for details";
+  p.classList.toggle('on',!!txt);
+  if(txt){p.querySelector('span').textContent=txt;p.classList.toggle('live',live);p.classList.toggle('err',st==='error')}
+}
+function readStagePct(){
+  const s=BGREAD;
+  if(s.state==='matched'||s.state==='pending')return 100;
+  if(s.stage==='reading')return Math.min(72,30+(s.done/(s.of||3))*35+Math.min(10,(s.secs||0)/10));
+  if(s.stage==='deep')return Math.min(96,72+(s.done/(s.of||3))*20+Math.min(4,(s.secs||0)/60));
+  return Math.min(28,4+(s.secs||0)*2.5);
+}
+function readSheetLive(){return $('modal').classList.contains('open')&&!!$('modalin').querySelector('#rsflag')}
+let RSKEY='';
+function renderReadSheet(){
+  const box=$('modalin');const st=BGREAD.state;
+  RSKEY=(st||'')+'|'+(BGREAD.stage||'');
+  const flag='<span id="rsflag" style="display:none"></span>';
+  if(st==='matched'){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">That's your 2026 card</h2>
+      <div class="msub">Your photos check out — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands are':'your card is'} ready.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsplay">PLAY WITH MY CARD</button></div>`;
+    box.querySelector('#rsplay').onclick=()=>{BGREAD.state=null;readPillSync();closeModal();showMsg('CARD READY')};
+    return;
+  }
+  if(st==='error'){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">That read didn't work</h2>
+      <div class="msub">${READERR||'Something went wrong.'}<br><br>Retakes work best with the card flat, in bright light, one full panel per photo.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsretake">RETAKE PHOTOS</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsclub">USE THE OOH LA CARD</button></div>`;
+    box.querySelector('#rsretake').onclick=()=>{BGREAD.state=null;readPillSync();openImport(false,'photo')};
+    box.querySelector('#rsclub').onclick=()=>{BGREAD.state=null;readPillSync();closeModal()};
+    return;
+  }
+  const deep=BGREAD.stage==='deep';
+  if(BGREAD.stage==='reading'||deep){
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Giving your photos the ${deep?'extra-careful':'careful'} read</h2>
+      <div class="rprog"><i style="width:${Math.round(readStagePct())}%"></i></div>
+      <div class="msub">${deep?'This card is getting the slow, thorough read — a few minutes.':'About a minute or two.'} It keeps going in the background — play a hand with the Ooh La Card meanwhile, and we'll swap yours in the moment it's ready.</div>
+      <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center">
+        <button class="abtn" id="rsgo">PLAY WHILE I WAIT</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rsstay">I'LL SIT TIGHT</button></div>`;
+    box.querySelector('#rsgo').onclick=()=>closeModal();
+    box.querySelector('#rsstay').onclick=()=>{const r=box.querySelector('#rsstay');if(r)r.outerHTML='<div class="msub" style="font-size:11px;margin-top:6px">We’ll flip this screen the moment it’s ready.</div>'};
+    return;
+  }
+  box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Checking your photos…</h2>
+    <div class="spin"></div><div class="msub">Matching them against your 2026 card.</div>`;
+}
+function openReadSheet(){renderReadSheet();$('modal').classList.add('open')}
+function readSheetTick(){
+  if(!readSheetLive())return;
+  const key=(BGREAD.state||'')+'|'+(BGREAD.stage||'');
+  if(key!==RSKEY){renderReadSheet();return}
+  const bar=$('modalin').querySelector('.rprog i');
+  if(bar)bar.style.width=Math.round(readStagePct())+'%';
+}
 async function bgReadPoll(job){
   clearTimeout(BGREAD.timer);
   try{
     const r=await fetch(olmHttp()+'/api/readjob?id='+job+'&t='+Date.now());
     const j=await r.json();
+    if(j.stage)BGREAD.stage=j.stage==='done'?BGREAD.stage:j.stage;
+    if(j.of)BGREAD.of=j.of;
+    BGREAD.done=j.done||0;BGREAD.secs=j.secs||0;
     if(j.status==='done'&&j.result&&j.result.card&&!validateCard(j.result.card)){
       bgReadClear();
-      try{localStorage.setItem('olmPendingCard',JSON.stringify({card:j.result.card,flags:j.result.flags||[],panels:j.result.panels||[],model:j.result.model||'?'}))}catch(e){}
-      showMsg('YOUR CARD IS READY');
+      const titleVisible=!$('title').classList.contains('hide');
+      const inGame=!titleVisible&&G&&G.phase&&G.phase!=='over';
+      if(j.result.matched&&!inGame){
+        /* verified against the known card — safe to save without a review pass */
+        const err=saveCustomCard(JSON.stringify(j.result.card));
+        if(!err){
+          BGREAD.state='matched';readPillSync();showMsg('YOUR CARD IS READY');
+          if(readSheetLive())renderReadSheet();
+          else if(titleVisible&&!$('modal').classList.contains('open'))openReadSheet();
+          return;
+        }
+      }
+      try{localStorage.setItem('olmPendingCard',JSON.stringify({card:j.result.card,flags:j.result.flags||[],panels:j.result.panels||[],model:j.result.model||'?',matched:!!j.result.matched}))}catch(e){}
+      BGREAD.state='pending';readPillSync();showMsg('YOUR CARD IS READY');
       maybeOfferPendingCard();
       return;
     }
     if(j.status==='error'||j.err){
       bgReadClear();
-      READERR=(j.result&&j.result.error)||j.err||'The reading failed — try again with brighter, flatter photos.';
-      showMsg('CARD READ FAILED');
+      READERR=j.err==='no such job'?'The reader restarted mid-read — please send the photos again.':
+        (j.result&&j.result.error)||j.err||'The reading failed — try again with brighter, flatter photos.';
+      BGREAD.state='error';readPillSync();
+      if(readSheetLive())renderReadSheet();else showMsg('CARD READ FAILED');
       return;
     }
   }catch(e){}
-  BGREAD.timer=setTimeout(()=>bgReadPoll(job),10000);
+  BGREAD.state='working';readPillSync();readSheetTick();
+  BGREAD.timer=setTimeout(()=>bgReadPoll(job),BGREAD.stage==='reading'||BGREAD.stage==='deep'?8000:3000);
 }
 function maybeOfferPendingCard(force){
   let p=null;try{p=JSON.parse(localStorage.getItem('olmPendingCard')||'null')}catch(e){}
@@ -1870,27 +2126,41 @@ function maybeOfferPendingCard(force){
   const inGame=!titleVisible&&G&&G.phase&&G.phase!=='over';
   if(inGame&&!force)return false;
   try{localStorage.removeItem('olmPendingCard')}catch(e){}
+  if(p.matched){
+    /* verified against the known card — save and celebrate, no review needed */
+    const err=saveCustomCard(JSON.stringify(p.card));
+    if(!err){BGREAD.state='matched';readPillSync();openReadSheet();return true}
+  }
+  BGREAD.state=null;readPillSync();
   window.__reading=p.panels;window.__modelUsed=p.model;
   reviewCard(p.card,p.flags,false);
   return true;
 }
+$('readpill').onclick=()=>{
+  const st=BGREAD.state;
+  if(st==='working'||st==='error'){openReadSheet();return}
+  if(st==='matched'){BGREAD.state=null;readPillSync();openSheet();return}
+  if(st==='pending')maybeOfferPendingCard(true);
+};
 async function convertPhotos(files,backToSheet){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">One moment</h2>
     <div class="spin"></div><div class="msub">Preparing your photos…</div>`;
   try{
     const photos=await Promise.all(files.map(f=>fileToJpeg(f,2000)));
-    closeModal();
-    if(backToSheet)openSheet();
-    showMsg('READING YOUR CARD');
-    READERR=null;
+    READERR=null;clearTimeout(BGREAD.timer);
+    BGREAD.state='working';BGREAD.stage=null;BGREAD.done=0;BGREAD.of=photos.length;BGREAD.secs=0;
+    openReadSheet();readPillSync();
     (async()=>{
       try{
         const base=olmHttp();
         let awake=false;
         for(let a=0;a<15&&!awake;a++){
           try{const r=await fetch(base+'/?wake='+Date.now());awake=r.ok}catch(e){}
-          if(!awake)await new Promise(r=>setTimeout(r,8000));
+          if(!awake){
+            if(a===0&&readSheetLive()){const m=$('modalin').querySelector('.msub');if(m)m.textContent='The reading service is waking up — shouldn’t be more than a minute.'}
+            await new Promise(r=>setTimeout(r,8000));
+          }
         }
         if(!awake)throw new Error('The reading service is not reachable — try again in a few minutes');
         const pr=await fetch(base+'/api/read',{method:'POST',headers:{'content-type':'application/json'},
@@ -1899,14 +2169,17 @@ async function convertPhotos(files,backToSheet){
         if(pj.err)throw new Error(pj.err);
         try{localStorage.setItem('olmReadJob',JSON.stringify({job:pj.job,ts:Date.now()}))}catch(e){}
         bgReadPoll(pj.job);
-      }catch(e){READERR=e.message;showMsg('CARD READ FAILED')}
+      }catch(e){
+        READERR=e.message;BGREAD.state='error';readPillSync();
+        if(readSheetLive())renderReadSheet();else showMsg('CARD READ FAILED');
+      }
     })();
     return;
   }catch(e){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Hmm, that didn't work</h2>
       <div class="msub">${(e&&e.message)||'Something went wrong reading the photos.'}<br><br>Try retaking the photos — flat card, bright light, one full panel per photo.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rtry">TRY AGAIN</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="rcancel">${backToSheet?'CANCEL':'USE THE CLUB CARD'}</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rcancel">${backToSheet?'CANCEL':'USE THE OOH LA CARD'}</button></div>`;
     box.querySelector('#rtry').onclick=()=>openImport(backToSheet);
     box.querySelector('#rcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
   }
@@ -1927,10 +2200,10 @@ function reviewCard(card,fails,backToSheet){
     <div class="revlist">${list}</div>
     <details class="altimp"><summary>Troubleshooting — copy reading details</summary>
       <div class="msub" style="font-size:11px">If lines are wrong or missing, tap COPY and paste it to whoever maintains the app so the reader can be tuned.</div>
-      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B;font-size:11px;padding:8px 14px" id="revcopy">COPY READING DETAILS</button></div>
+      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4;font-size:11px;padding:8px 14px" id="revcopy">COPY READING DETAILS</button></div>
     </details>
     <div class="mbtns" style="margin-top:10px"><button class="abtn" id="revsave">LOOKS RIGHT — SAVE</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="revretry">RETRY PHOTOS</button></div>`;
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="revretry">RETRY PHOTOS</button></div>`;
   box.querySelector('#revcopy').onclick=()=>{
     const data=JSON.stringify({model:window.__modelUsed||'?',read:window.__reading||[],failed:fails||[]},null,1);
     (navigator.clipboard?navigator.clipboard.writeText(data):Promise.reject()).then(
@@ -1953,13 +2226,15 @@ $('ccimport').onclick=()=>{
 function showWelcome(){
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">WELCOME TO</div><h2>Ooh La Mahj</h2>
-  <div class="msub">American mah jongg, beautifully.<br>Have a club code? It sets up this year's card.</div>
+  <div class="msub">American mah jongg, beautifully.<br>Play with the card you own — enter a club code or photograph it.</div>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center">
     <button class="abtn" id="wmine">ENTER CLUB CODE</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="wclub">PLAY THE CLUB CARD</button>
+    <button class="abtn gold" id="wphoto">USE MY 2026 CARD</button>
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="wclub">PLAY THE OOH LA CARD</button>
   </div>`;
   const seen=()=>{try{localStorage.setItem('olmSeen','1')}catch(e){}};
-  box.querySelector('#wmine').onclick=()=>{seen();openImport(false)};
+  box.querySelector('#wmine').onclick=()=>{seen();openImport(false,'code')};
+  box.querySelector('#wphoto').onclick=()=>{seen();openImport(false,'photo')};
   box.querySelector('#wclub').onclick=()=>{seen();closeModal()};
   $('modal').classList.add('open');
 }
@@ -2000,7 +2275,7 @@ $('btnhow').onclick=()=>{
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">HOUSE RULES</div><h2 style="font-size:24px">How We Play</h2>
   <div class="rules" style="margin-top:12px">
-  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Palm Club card (tap CARD anytime — it shows how close you are).</p>
+  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Ooh La Card (tap CARD anytime — it shows how close you are).</p>
   <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. Never pass a joker.</p>
   <p><b>Your turn.</b> Draw a tile, discard a tile. Tap a tile, then DISCARD.</p>
   <p><b>Calling.</b> When someone discards a tile you need for a group of 3+ (pung, kong, quint), you may call it — the group is then exposed. Pairs may never be called.</p>
@@ -2084,6 +2359,19 @@ function mpOnMsg(m){
   }
 }
 function seatName(i){return MP.view&&MP.view.seats[i]?MP.view.seats[i].name:'Seat '+(i+1)}
+function shareInvite(btn){
+  if(!MP.view||!MP.view.code)return;
+  const hostName=MP.view.seats&&MP.view.seats[0]?MP.view.seats[0].name:'your host';
+  const url=siteURL()+'?join='+MP.view.code+'&h='+encodeURIComponent(hostName);
+  const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
+  if(navigator.share){navigator.share({text}).catch(()=>{})}
+  else{
+    (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
+      ()=>{if(btn)btn.textContent='COPIED ✓'},
+      ()=>{prompt('Copy this invite:',text)});
+  }
+}
+function hintsAllowed(){return !MP.active||!MP.view||!MP.view.config||MP.view.config.hints!==false}
 function stFlash(h){setStatus(h);MP.stHold=Date.now()}
 /* fake-G so the existing renderers draw server views */
 function mpRenderGame(v){
@@ -2147,7 +2435,14 @@ function mpShowCallBar(m){
   mkb('PASS','pass','ghost');
   bar.classList.add('open');
   clearTimeout(callTimer);
-  callTimer=setTimeout(()=>{mpSend({type:'call',choice:'pass'});closeCall()},m.ms||8000);
+  const ms=m.ms||12000;
+  /* friends are waiting, so a deadline exists — but make it visible: a thin draining bar */
+  const tk=$('calltick'),ti=tk.querySelector('i');
+  tk.classList.add('on');
+  ti.style.transition='none';ti.style.width='100%';
+  void ti.offsetWidth;
+  ti.style.transition='width '+ms+'ms linear';ti.style.width='0%';
+  callTimer=setTimeout(()=>{mpSend({type:'call',choice:'pass'});closeCall()},ms);
 }
 function mpShowEnd(m){
   closeCall();
@@ -2157,7 +2452,7 @@ function mpShowEnd(m){
     box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2>Wall Game</h2>
       <div class="msub">The wall is spent — nobody made their hand.</div>
       <div class="mbtns" style="margin-top:16px">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':''}
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleave">LEAVE TABLE</button></div>`;
     addDebrief(box);
   }else{
     const mine=MP.view&&m.seat===MP.view.you.seat;
@@ -2167,7 +2462,7 @@ function mpShowEnd(m){
       <div class="mtiles" id="mtiles"></div>
       <div class="mpts">${m.pts} points</div>
       <div class="mbtns">${MP.view&&MP.view.you.seat===0?'<button class="abtn" id="mrem">PLAY AGAIN</button>':'<div class="msub">waiting for the host to re-deal…</div>'}
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mleave">LEAVE TABLE</button></div>`;
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleave">LEAVE TABLE</button></div>`;
     const mt=box.querySelector('#mtiles');
     for(const t of m.tiles)mt.appendChild(tileDOM(t,'t-md'));
     if(!mine)addDebrief(box);
@@ -2187,26 +2482,25 @@ function renderLobby(v){
     return `<div><b>${s.name}</b>${s.isYou?' (you)':''}${s.connected?'':' · reconnecting…'}</div>`;
   }).join('');
   const cardLine=isHost
-    ?`This table plays <b>your</b> card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(set when you created the table — everyone at the table plays it)</span>`
-    :`Everyone plays ${hostName}'s card: <b>${v.cardTitle}</b><br><span style="font-size:11px;color:#A08F63">(the host's card rules the table — nothing for you to set up)</span>`;
-  box.innerHTML=`<div class="mtop">TABLE CODE — SHARE IT WITH YOUR FOURSOME</div>
-    <h2 style="letter-spacing:.3em">${v.code}</h2>
-    <div class="mbtns" style="margin:4px 0 10px"><button class="abtn gold" id="lshare" style="font-size:11px;padding:9px 18px">SHARE INVITE</button></div>
-    <div class="msub">${cardLine}</div>
-    <div class="revlist" style="max-height:120px">${seats}</div>
-    ${isHost?'<div class="msub" style="font-size:11px">Start whenever you like — friends who join later simply take over a bot\'s seat.</div>':''}
-    <div class="mbtns">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="lleave">LEAVE</button></div>`;
-  box.querySelector('#lshare').onclick=()=>{
-    const url=siteURL()+'?join='+v.code+'&h='+encodeURIComponent(hostName);
-    const text=`Mahj? Join my table — tap the link, type your name, you're in:\n${url}`;
-    if(navigator.share){navigator.share({text}).catch(()=>{})}
-    else{
-      (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(
-        ()=>{box.querySelector('#lshare').textContent='COPIED ✓'},
-        ()=>{prompt('Copy this invite:',text)});
-    }
-  };
+    ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
+    :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`;
+  const seatDots=v.seats.map((sx,i)=>{
+    if(!sx)return `<div class="seat"><div class="sav open">+</div><div class="snm">open</div></div>`;
+    const ini=(sx.name||'?').trim().slice(0,2).toUpperCase();
+    const cls=sx.isYou?'you':(sx.kind==='bot'?'bot':'friend');
+    const nm=sx.isYou?`${sx.name}<br><i>you</i>`:sx.name+(sx.connected===false?'<br><i>reconnecting…</i>':'');
+    return `<div class="seat"><div class="sav ${cls}">${ini}</div><div class="snm">${nm}</div></div>`;
+  }).join('');
+  const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'');
+  box.innerHTML=`<div class="mtop">YOUR TABLE — CODE</div>
+    <h2 class="lcode">${v.code}</h2>
+    <div class="mbtns" style="margin:14px 0 0"><button class="abtn gold" id="lshare">SHARE INVITE</button></div>
+    <div class="seatrow" style="margin:22px 0 18px">${seatDots}</div>
+    <div class="lobbycard" style="margin:0 0 6px">${info}</div>
+    <div class="mbtns" style="margin-top:14px">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
+  box.querySelectorAll('.sav.open').forEach(el=>{el.style.cursor='pointer';el.onclick=()=>box.querySelector('#lshare').click()});
+  box.querySelector('#lshare').onclick=()=>shareInvite(box.querySelector('#lshare'));
   const st=box.querySelector('#lstart');
   if(st)st.onclick=()=>mpSend({type:'start'});
   box.querySelector('#lleave').onclick=()=>mpSend({type:'leave'});
@@ -2224,7 +2518,7 @@ function openFriends(errMsg){
   }
   const box=$('modalin');
   const nameField=`<input type="text" id="fname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">`;
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">`;
   const getName=()=>{
     const n=box.querySelector('#fname').value.trim().slice(0,14);
     if(!n){box.querySelector('.imperr').textContent='Type your name first';return null}
@@ -2236,17 +2530,35 @@ function openFriends(errMsg){
       <div class="imperr">${errMsg||''}</div>
       ${nameField}
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
-        <button class="abtn" id="fcreate">HOST A NEW TABLE</button>
+        <div class="hostcard">
+          <button class="abtn" id="fcreate" style="width:100%;box-sizing:border-box">HOST A NEW TABLE</button>
+          <div class="chiprow">
+            <button class="chip on" id="fhintyes">✓ HINTS ALLOWED</button>
+            <button class="chip" id="fhintno">NO HINTS</button>
+          </div>
+        </div>
+        <div class="orpill" style="width:100%"><span>OR</span></div>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
-        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fcancel">CANCEL</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fcancel">CANCEL</button>
       </div>`;
     errMsg='';
+    let allowHints=true;
+    const setHints=v=>{
+      allowHints=v;
+      box.querySelector('#fhintyes').classList.toggle('on',v);
+      box.querySelector('#fhintyes').textContent=v?'\u2713 HINTS ALLOWED':'HINTS ALLOWED';
+      box.querySelector('#fhintno').classList.toggle('on',!v);
+      box.querySelector('#fhintno').textContent=v?'NO HINTS':'\u2713 NO HINTS';
+      sfx('tap');
+    };
+    box.querySelector('#fhintyes').onclick=()=>setHints(true);
+    box.querySelector('#fhintno').onclick=()=>setHints(false);
     box.querySelector('#fcreate').onclick=()=>{
       if(!getName())return;
       MP.intended=true;
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed'}}));
+      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
     box.querySelector('#fcancel').onclick=closeModal;
@@ -2256,10 +2568,10 @@ function openFriends(errMsg){
       <div class="msub">Type the 4-letter code your host shared.<br>Game already started? You'll take over a bot's seat.</div>
       <div class="imperr"></div>
       <input type="text" id="fcode" placeholder="CODE" maxlength="4" autocapitalize="characters"
-        style="width:140px;border:1px solid #CBBF9E;border-radius:10px;padding:12px;font-size:22px;text-align:center;letter-spacing:.3em;background:#fff;color:var(--ink)">
+        style="width:140px;border:1px solid #CFC9BC;border-radius:10px;padding:12px;font-size:22px;text-align:center;letter-spacing:.3em;background:#fff;color:var(--ink)">
       <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:11px">
         <button class="abtn gold" id="fjoin">JOIN TABLE</button>
-        <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="fback">BACK</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fback">BACK</button>
       </div>`;
     const doJoin=()=>{
       const code=box.querySelector('#fcode').value.trim().toUpperCase();
@@ -2295,10 +2607,10 @@ function openJoinInvite(code,host){
     <div class="msub">Type your name and take your seat.</div>
     <div class="imperr" id="jerr"></div>
     <input type="text" id="jname" placeholder="YOUR NAME" maxlength="14" value="${mpName()}"
-      style="width:80%;border:1px solid #CBBF9E;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
+      style="width:80%;border:1px solid #CFC9BC;border-radius:10px;padding:10px;font-size:16px;text-align:center;background:#fff;color:var(--ink)">
     <div class="mbtns" style="margin-top:14px;flex-direction:column;align-items:center;gap:10px">
       <button class="abtn" id="jgo">JOIN THE TABLE</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="jno">NOT NOW</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="jno">NOT NOW</button>
     </div>`;
   const go=()=>{
     const n=box.querySelector('#jname').value.trim().slice(0,14);
@@ -2347,17 +2659,22 @@ function goTitle(){
 }
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
-  const bottom=MP.active
-    ?`<button class="abtn" id="mleavet">LEAVE TABLE</button>`
-    :`<button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mtitle">EXIT GAME</button>
-      <button class="abtn" id="mnewg">NEW GAME</button>`;
+  const top=MP.active
+    ?`<button class="abtn gold" id="mshare">SHARE INVITE — SEAT A FRIEND</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleavet">LEAVE TABLE</button>`
+    :`<button class="abtn gold" id="mtitle">EXIT GAME</button>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
-    <button class="abtn gold" id="mclose">RETURN TO GAME</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mbots">BOTS: ${BOTLVL_NAMES[BOTLVL]}</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#B9AD8B" id="mrules">HOUSE RULES</button>
-    ${bottom}
+    ${top}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
+    ${MP.active?'':`<div style="width:100%;max-width:280px;text-align:left">
+      <div style="font-size:10px;letter-spacing:.24em;color:#A8A296;margin:4px 0 6px;text-align:center">THE BOTS</div>
+      ${[0,1,2].map(i=>`<button class="bopt${i===BOTLVL?' on':''}" data-lvl="${i}">
+        <span class="btxt"><span class="bnm">${BOTLVL_NAMES[i]}</span><span class="bds">${BOT_DESCS[i]}</span></span>
+        <span class="bck"></span></button>`).join('')}
+    </div>`}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mrules">HOUSE RULES</button>
+    <button class="abtn" id="mclose">RETURN TO GAME</button>
   </div>`;
   box.querySelector('#msound').onclick=()=>{
     SND=!SND;
@@ -2365,15 +2682,18 @@ $('btnmenu').onclick=()=>{
     box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
     if(SND)sfx('tap');
   };
-  box.querySelector('#mbots').onclick=()=>{
-    BOTLVL=(BOTLVL+1)%3;
-    try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
-    box.querySelector('#mbots').textContent='BOTS: '+BOTLVL_NAMES[BOTLVL];
-  };
+  box.querySelectorAll('.bopt').forEach(b=>{
+    b.onclick=()=>{
+      BOTLVL=+b.dataset.lvl;
+      try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
+      box.querySelectorAll('.bopt').forEach(x=>x.classList.toggle('on',+x.dataset.lvl===BOTLVL));
+      sfx('tap');
+    };
+  });
+  const ms=box.querySelector('#mshare');
+  if(ms)ms.onclick=()=>shareInvite(ms);
   const lt=box.querySelector('#mleavet');
   if(lt)lt.onclick=()=>{mpSend({type:'leave'});closeModal()};
-  const ng=box.querySelector('#mnewg');
-  if(ng)ng.onclick=()=>{closeModal();newGame()};
   const bt=box.querySelector('#mtitle');
   if(bt)bt.onclick=goTitle;
   box.querySelector('#mrules').onclick=()=>{closeModal();$('btnhow').click()};
@@ -2383,8 +2703,29 @@ $('btnmenu').onclick=()=>{
 $('btnsort').onclick=()=>{
   if(!G||G.phase==='over')return;
   killClones();
-  G.players[0].hand=sortHand(G.players[0].hand);
-  if(MP.active)MP.orderIds=G.players[0].hand.map(x=>x.id);
+  const me=G.players[0];
+  let arranged=null;
+  if(HINTON&&hintsAllowed()){
+    /* hint showing → arrange the rack in the target hand's own shape:
+       keepers left in pattern order, jokers staged, discardables right */
+    const fits=topFits(me);
+    if(fits.length){
+      const bf=fits[Math.min(HINTIDX,fits.length-1)];
+      const keep=keepIdsFor(me,bf.rem);
+      const used=new Set(),out=[];
+      for(const [tk]of bf.rem){
+        for(const t of me.hand){
+          if(used.has(t.id)||!keep.has(t.id))continue;
+          if(key(t)===tk){used.add(t.id);out.push(t)}
+        }
+      }
+      for(const t of me.hand){if(t.s==='J'&&keep.has(t.id)&&!used.has(t.id)){used.add(t.id);out.push(t)}}
+      const rest=sortHand(me.hand.filter(t=>!used.has(t.id)));
+      arranged=out.concat(rest);
+    }
+  }
+  me.hand=arranged||sortHand(me.hand);
+  if(MP.active)MP.orderIds=me.hand.map(x=>x.id);
   renderRack();
 };
 function describeVariant(v){
@@ -2415,6 +2756,7 @@ function describeVariant(v){
 }
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
+  if(!hintsAllowed()){setStatus('The host has turned hints off for this table');return}
   const fits=topFits(G.players[0]);
   if(!fits.length){
     HINTON=false;$('btnhint').classList.remove('on');
@@ -2495,9 +2837,10 @@ function applyMat(i){
   bd.style.backgroundSize='cover';bd.style.backgroundPosition='center';
   $('titlemural').style.backgroundImage=`url("${uri}")`;
   $('btnmat').style.background=`conic-gradient(${th.bg1} 0 33%, ${th.blossom} 33% 66%, ${th.branch} 66% 100%)`;
-  document.querySelector('meta[name=theme-color]').setAttribute('content',th.bg2);
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',th.bg2));
   document.querySelectorAll('.matsw').forEach((b,j)=>b.classList.toggle('on',j===i));
   $('matname').textContent=th.name;
+  try{localStorage.setItem('olmMat',String(i))}catch(e){}
 }
 (function buildMatRow(){
   const row=$('matrow');
@@ -2510,7 +2853,7 @@ function applyMat(i){
   });
 })();
 $('btnmat').onclick=()=>applyMat((MAT+1)%THEMES.length);
-applyMat(0);
+applyMat((()=>{try{const v=+localStorage.getItem('olmMat');return v>=0&&v<THEMES.length?v:0}catch(e){return 0}})());
 bootCard();
 (function(){
   let seen=false;
@@ -2518,7 +2861,11 @@ bootCard();
   if(!seen&&!CUSTOM)showWelcome();
   else{try{localStorage.setItem('olmSeen','1')}catch(e){}}
   const rj=readInProgress();
-  if(rj)bgReadPoll(rj.job);
+  if(rj){BGREAD.state='working';readPillSync();bgReadPoll(rj.job)}
+  else{
+    let pp=null;try{pp=JSON.parse(localStorage.getItem('olmPendingCard')||'null')}catch(e){}
+    if(pp){BGREAD.state='pending';readPillSync()}
+  }
   setTimeout(()=>maybeOfferPendingCard(),600);
 })();
 </script>
