@@ -1674,7 +1674,28 @@ function openCallBar(t,opts,onPass){
   $('calltick').classList.remove('on');
 }
 function closeCall(){clearTimeout(callTimer);$('callbar').classList.remove('open');$('calltick').classList.remove('on')}
-/* hint-aware call advice — only speaks when the player has chosen hints */
+/* hint-aware call advice — only speaks when the player has chosen hints.
+   Crucially: never blesses a call that would leave the hand dead. A call of
+   k tiles must land on a card group of exactly k — punging into a kong slot
+   kills the hand, and the advice now knows it. */
+function callSizes(me,t){
+  const {c,jk}=countsOf(me.hand),copies=c[key(t)]||0,sizes=[];
+  for(const k of [3,4,5]){
+    const need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
+    if(jNeed<=jk&&copies+jk>=need)sizes.push(k);
+  }
+  return sizes;
+}
+function callKeepsAlive(me,t,kSize){
+  const tk=key(t);
+  const hand=[...me.hand];
+  let need=kSize-1;
+  for(let i=hand.length-1;i>=0&&need>0;i--)if(key(hand[i])===tk){hand.splice(i,1);need--}
+  for(let i=hand.length-1;i>=0&&need>0;i--)if(hand[i].s==='J'){hand.splice(i,1);need--}
+  if(need>0)return false;
+  const p2={hand,exp:[...me.exp,{rep:tk,tiles:new Array(kSize).fill(0)}]};
+  return handProgress(p2).some(x=>!x.dead);
+}
 function callAdvice(t){
   try{
     if(!HINTON||!hintsAllowed())return '';
@@ -1682,14 +1703,23 @@ function callAdvice(t){
     const tk=key(t);
     const fits=topFits(me);
     if(!fits.length)return '';
+    const sizes=callSizes(me,t);
     for(const bf of fits){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
       if(!grp)continue;
       if(bf.hand.concealed)
         return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>calling forfeits it</b></div>`;
-      const away=Math.max(0,14-bf.score);
-      return `<div class="calladv">fits <b>“${bf.hand.name}”</b> — ${away} away, calling advances it</div>`;
+      const kNeed=grp[1];
+      if(sizes.includes(kNeed)&&callKeepsAlive(me,t,kNeed)){
+        const away=Math.max(0,14-bf.score);
+        const label=kNeed===3?'PUNG':kNeed===4?'KONG':'QUINT';
+        return `<div class="calladv">fits <b>“${bf.hand.name}”</b> — take the <b>${label}</b>, ${away} away</div>`;
+      }
+      if(!sizes.includes(kNeed))
+        return `<div class="calladv">“${bf.hand.name}” needs the <b>${kNeed===4?'kong':'quint'}</b> here — you can only expose ${Math.max(...sizes,0)||'fewer'}, so calling would <b>dead your hand</b>. Pass.</div>`;
     }
+    if(!sizes.some(k=>callKeepsAlive(me,t,k)))
+      return `<div class="calladv">no line on the card survives this call — <b>calling would dead your hand</b>. Pass.</div>`;
     return `<div class="calladv">your closest hands don't need it</div>`;
   }catch(e){return ''}
 }
