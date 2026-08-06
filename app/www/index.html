@@ -260,17 +260,20 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 /* in-game pull-down card — tap/drag the tab, or press-and-hold to peek */
 #peekdim{position:fixed;inset:0;background:rgba(5,20,15,.45);z-index:34;opacity:0;pointer-events:none;transition:opacity .3s}
 body.peekopen #peekdim{opacity:1;pointer-events:auto}
-#peek{position:fixed;left:6px;right:6px;z-index:35;display:none;transform:translateY(-100%);transition:transform .32s cubic-bezier(.32,.72,.28,1)}
-#peek.show{display:block}
+#peekwrap{position:fixed;left:6px;right:6px;z-index:35;display:none;overflow:hidden;pointer-events:none}
+#peekwrap.show{display:block}
+#peek{position:absolute;left:0;right:0;top:0;height:calc(100% - 40px);transform:translateY(-100%);
+  transition:transform .32s cubic-bezier(.32,.72,.28,1);pointer-events:auto}
 #peek.notrans{transition:none}
+#peektab{position:absolute;left:50%;top:100%;transform:translateX(-50%);background:var(--paper);color:var(--deep);
+  border-radius:0 0 13px 13px;padding:7px 20px 9px;font-size:9px;letter-spacing:.22em;font-weight:700;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);display:none;align-items:center;gap:7px;white-space:nowrap;
+  touch-action:none;font-family:var(--sans);user-select:none;-webkit-user-select:none}
+#peek.open #peektab{display:flex}
+#peektab .chev{font-size:10px;color:var(--gold)}
 #peekbody{height:100%;background:var(--paper);color:var(--ink);border-radius:0 0 18px 18px;
   box-shadow:0 12px 34px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden}
-#peektab{position:absolute;left:50%;top:100%;transform:translateX(-50%);background:var(--paper);color:var(--deep);
-  border-radius:0 0 13px 13px;padding:7px 18px 9px;font-size:9px;letter-spacing:.22em;font-weight:700;
-  box-shadow:0 6px 16px rgba(0,0,0,.35);display:flex;align-items:center;gap:7px;white-space:nowrap;
-  touch-action:none;font-family:var(--sans);user-select:none;-webkit-user-select:none}
-#peektab .chev{transition:transform .3s;font-size:10px;color:var(--gold)}
-#peek.open #peektab .chev{transform:rotate(180deg)}
+#hdr #btncard.on{background:var(--gold);color:#0C3B2E;border-color:var(--gold)}
 #peekhead{padding:12px 16px 6px;text-align:center;border-bottom:1px solid #ECE8DF}
 #peekhead h3{margin:0;font-family:Georgia,serif;font-size:15px;color:var(--deep);font-weight:600}
 #peekhead p{margin:3px 0 0;font-size:8.5px;letter-spacing:.2em;color:#A8893C;font-weight:700}
@@ -278,8 +281,13 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 .pkline{display:flex;align-items:center;gap:9px;padding:8px;border-bottom:1px solid #ECE8DF;border-radius:8px}
 .pkline .pkl{flex:1;min-width:0}
 .pkline .pkname{font-size:10px;letter-spacing:.06em;font-weight:600;color:#6B6250}
-.pkline .pkcat{font-size:8px;letter-spacing:.14em;color:#A8A296;margin-left:6px}
-.pkline .chpat{margin-top:2px}
+.pksect{font-size:8.5px;letter-spacing:.26em;color:var(--coral);font-weight:700;margin:14px 6px 3px;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:4px}
+.pknote{font-size:9px;color:#A8A296;margin-top:2px;line-height:1.4}
+.pksect:first-child{margin-top:8px}
+.pkline .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.pkline .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
+.pkline .chpat i.cR{color:var(--red)} .pkline .chpat i.cG{color:var(--grn)} .pkline .chpat i.cB{color:var(--blu)}
+.pkline .chpat i.cN{color:#33413A} .pkline .chpat i.cF{color:var(--coral-dk)}
 .pkline .pkpts{font-size:9px;color:#A8A296;white-space:nowrap}
 .pkchip{font-size:8.5px;font-weight:700;letter-spacing:.08em;border-radius:10px;padding:4px 8px;white-space:nowrap}
 .pkline.hot{background:linear-gradient(90deg,rgba(201,162,75,.16),rgba(201,162,75,.03));border-bottom-color:transparent}
@@ -498,12 +506,14 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 </div>
 
 <div id="peekdim"></div>
+<div id="peekwrap">
 <div id="peek">
   <div id="peekbody">
     <div id="peekhead"><h3 id="peektitle">Your Card</h3><p id="peeksub"></p></div>
     <div id="peeklines"></div>
   </div>
-  <div id="peektab"><span>THE CARD</span><span class="chev">▾</span></div>
+  <div id="peektab"><span>CLOSE</span><span class="chev">▲</span></div>
+</div>
 </div>
 
 <div id="sheet">
@@ -2472,95 +2482,113 @@ const PEEK={open:false,drag:null,holdT:null};
 function peekBounds(){
   const hb=$('hdr').getBoundingClientRect().bottom;
   const mt=$('me').getBoundingClientRect().top;
-  const el=$('peek');
-  el.style.top=(hb+4)+'px';
-  el.style.height=Math.max(180,mt-hb-42)+'px';
+  const w=$('peekwrap');
+  w.style.top=(hb+4)+'px';
+  w.style.height=Math.max(220,mt-hb-8)+'px';
+  $('peekdim').style.top=(hb+4)+'px';
 }
 function renderPeekVis(){
   const on=G&&(G.phase==='play'||G.phase==='charleston');
-  $('peek').classList.toggle('show',!!on);
+  $('peekwrap').classList.toggle('show',!!on);
   if(!on){if(PEEK.open)peekClose(true);return}
   peekBounds();
   if(PEEK.open)renderPeekLines();
 }
 function renderPeekLines(){
   const me=G.players[0];
-  const sorted=hintsAllowed();
+  const sorted=hintsAllowed()&&HINTON;
   const prog=handProgress(me);
   let rows=HANDS.map((h,i)=>({h,score:prog[i].score,dead:prog[i].dead,away:Math.max(0,14-prog[i].score)}));
   if(sorted)rows=rows.slice().sort((a,b)=>((a.dead?1:0)-(b.dead?1:0))||(a.away-b.away)||(b.h.pts-a.h.pts));
   $('peektitle').textContent=activeCardName()==='custom'?((CUSTOM&&CUSTOM.title)||'MY CARD'):'THE OOH LA CARD';
-  $('peeksub').textContent=sorted?'SORTED BY FIT · CLOSEST FIRST':'AS PRINTED';
-  $('peeklines').innerHTML=rows.map(r=>{
-    const cls=sorted?(r.dead?'dead':r.away<=2?'hot':r.away<=4?'warm':'far'):'';
-    const chip=sorted?`<span class="pkchip">${r.dead?'DEAD':r.away+' AWAY'}</span>`:'';
-    return `<div class="pkline ${cls}"><div class="pkl">`
-      +`<span class="pkname">${r.h.name}</span><span class="pkcat">${r.h.cat}</span>`
-      +`<div class="chpat">${r.h.disp.map(([s2,c2])=>`<i class="${c2}">${s2}</i>`).join('')}</div></div>`
-      +`<span class="pkpts">${r.h.pts}${r.h.concealed?' · C':''}</span>${chip}</div>`;
-  }).join('');
+  $('peeksub').textContent=sorted?'SORTED BY FIT · CLOSEST FIRST'
+    :(hintsAllowed()?'AS PRINTED · TURN ON HINT TO SORT BY FIT':'AS PRINTED');
+  /* group into sections like the printed card; in fit-sort, closest sections rise */
+  const cats=[];const byCat={};
+  for(const r of rows){
+    if(!byCat[r.h.cat]){byCat[r.h.cat]=[];cats.push(r.h.cat)}
+    byCat[r.h.cat].push(r);
+  }
+  if(sorted)cats.sort((a,b)=>{
+    const best=L=>Math.min(...L.map(x=>x.dead?99:x.away));
+    return best(byCat[a])-best(byCat[b]);
+  });
+  $('peeklines').innerHTML=cats.map(cat=>
+    `<div class="pksect">${cat}</div>`+
+    byCat[cat].map(r=>{
+      const cls=sorted?(r.dead?'dead':r.away<=2?'hot':r.away<=4?'warm':'far'):'';
+      const chip=sorted?`<span class="pkchip">${r.dead?'DEAD':r.away+' AWAY'}</span>`:'';
+      const patTxt=r.h.disp.map(x=>x[0]).join('').replace(/[\s]/g,'').toUpperCase();
+      const nameTxt=(r.h.name||'').replace(/[\s]/g,'').toUpperCase();
+      const showName=nameTxt&&nameTxt!==patTxt;
+      return `<div class="pkline ${cls}"><div class="pkl">`
+        +(showName?`<span class="pkname">${r.h.name}</span>`:'')
+        +`<div class="chpat">${r.h.disp.map(([s2,c2])=>`<i class="${c2}">${s2}</i>`).join('')}</div>`
+        +(r.h.note?`<div class="pknote">${r.h.note}</div>`:'')
+        +`</div><span class="pkpts">${r.h.pts}${r.h.concealed?' · C':''}</span>${chip}</div>`;
+    }).join('')
+  ).join('');
 }
 function peekOpen(){
   PEEK.open=true;peekBounds();renderPeekLines();
   const el=$('peek');el.classList.add('open');el.style.transform='translateY(0)';
-  document.body.classList.add('peekopen');sfx('tap');
+  document.body.classList.add('peekopen');
+  $('btncard').classList.add('on');
+  sfx('tap');
 }
 function peekClose(silent){
   PEEK.open=false;
   const el=$('peek');el.classList.remove('open');el.style.transform='';
   document.body.classList.remove('peekopen');
+  $('btncard').classList.remove('on');
   if(!silent)sfx('tap');
 }
+/* close affordances: the tab (tap or flick up), the dim, and window resize keeps bounds honest */
 {
-  const ptab=$('peektab');
-  ptab.addEventListener('pointerdown',e=>{
+  const pt=$('peektab');
+  let td=null;
+  pt.addEventListener('pointerdown',e=>{
     e.preventDefault();
-    if(!PEEK.open)renderPeekLines();
-    const H=$('peek').getBoundingClientRect().height;
-    PEEK.drag={y0:e.clientY,t0:Date.now(),base:PEEK.open?0:-H,H,moved:false,peeked:false};
-    PEEK.holdT=setTimeout(()=>{
-      const d=PEEK.drag;
-      if(d&&!d.moved&&!PEEK.open){d.peeked=true;d.base=0;peekOpen()}
-    },380);
+    td={y0:e.clientY,t0:Date.now(),H:$('peek').getBoundingClientRect().height,moved:false};
     $('peek').classList.add('notrans');
-    try{ptab.setPointerCapture(e.pointerId)}catch(x){}
+    try{pt.setPointerCapture(e.pointerId)}catch(x){}
   });
-  ptab.addEventListener('pointermove',e=>{
-    const d=PEEK.drag;if(!d)return;
-    const dy=e.clientY-d.y0;
-    if(Math.abs(dy)>8)d.moved=true;
-    if(!d.moved)return;
-    clearTimeout(PEEK.holdT);
-    const y=Math.min(0,Math.max(-d.H,d.base+dy));
-    $('peek').style.transform=`translateY(${y}px)`;
-    document.body.classList.toggle('peekopen',1+y/d.H>.35);
+  pt.addEventListener('pointermove',e=>{
+    if(!td)return;
+    const dy=e.clientY-td.y0;
+    if(Math.abs(dy)>6)td.moved=true;
+    if(dy<0)$('peek').style.transform=`translateY(${Math.max(-td.H,dy)}px)`;
   });
-  ptab.addEventListener('pointerup',e=>{
-    const d=PEEK.drag;if(!d)return;
-    clearTimeout(PEEK.holdT);
+  pt.addEventListener('pointerup',e=>{
+    if(!td)return;
     $('peek').classList.remove('notrans');
-    const dy=e.clientY-d.y0,dt=Date.now()-d.t0,v=dy/Math.max(1,dt);
-    if(d.peeked)peekClose();                              /* hold-to-peek: release closes */
-    else if(!d.moved){PEEK.open?peekClose():peekOpen()}   /* plain tap toggles */
-    else if(v>.35)peekOpen();                             /* flick down */
-    else if(v<-.35)peekClose();                           /* flick up */
-    else{(1+Math.min(0,Math.max(-d.H,d.base+dy))/d.H)>.5?peekOpen():peekClose()}
-    PEEK.drag=null;
+    const dy=e.clientY-td.y0,v=dy/Math.max(1,Date.now()-td.t0);
+    if(!td.moved||dy<-70||v<-.4)peekClose();
+    else $('peek').style.transform='translateY(0)';
+    td=null;
   });
-  ptab.addEventListener('pointercancel',()=>{
-    clearTimeout(PEEK.holdT);
-    $('peek').classList.remove('notrans');
-    if(PEEK.drag&&PEEK.drag.peeked)peekClose(true);
-    else if(!PEEK.open){$('peek').style.transform='';document.body.classList.remove('peekopen')}
-    PEEK.drag=null;
-  });
+  pt.addEventListener('pointercancel',()=>{if(td){$('peek').classList.remove('notrans');$('peek').style.transform='translateY(0)';td=null}});
   $('peekdim').addEventListener('pointerdown',()=>peekClose());
-  window.addEventListener('resize',()=>{if($('peek').classList.contains('show'))peekBounds()});
+  window.addEventListener('resize',()=>{if($('peekwrap').classList.contains('show'))peekBounds()});
 }
-$('btncard').onclick=()=>{
-  if(G&&(G.phase==='play'||G.phase==='charleston')){PEEK.open?peekClose():peekOpen()}
-  else openSheet();
-};
+/* header CARD button: tap toggles the pull-down in game (hold to peek); opens card manager elsewhere */
+{
+  const bc=$('btncard');
+  let bcHold=null,bcPeeked=false;
+  bc.addEventListener('pointerdown',e=>{
+    if(!(G&&(G.phase==='play'||G.phase==='charleston')))return;
+    bcPeeked=false;
+    bcHold=setTimeout(()=>{if(!PEEK.open){bcPeeked=true;peekOpen()}},380);
+  });
+  bc.addEventListener('pointerup',()=>{clearTimeout(bcHold)});
+  bc.addEventListener('pointercancel',()=>{clearTimeout(bcHold);if(bcPeeked){peekClose(true);bcPeeked=false}});
+  bc.onclick=()=>{
+    if(G&&(G.phase==='play'||G.phase==='charleston')){
+      if(bcPeeked){peekClose();bcPeeked=false}
+      else PEEK.open?peekClose():peekOpen();
+    }else openSheet();
+  };
+}
 $('btncard2').onclick=openSheet;
 $('sheetdim').onclick=()=>$('sheet').classList.remove('open');
 /* swipe down on the card sheet to close it */
@@ -3044,6 +3072,7 @@ $('btnmenu').onclick=()=>{
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
   <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
     ${top}
+    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mcard">MY CARD — SWITCH OR IMPORT</button>
     <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
     ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mchar">CHARLESTON: ${CHFULL?'FULL':'EXPRESS'}</button>`}
     ${MP.active?'':`<div style="width:100%;max-width:280px;text-align:left">
@@ -3061,6 +3090,8 @@ $('btnmenu').onclick=()=>{
     box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
     if(SND)sfx('tap');
   };
+  const mcd=box.querySelector('#mcard');
+  if(mcd)mcd.onclick=()=>{closeModal();openSheet()};
   const mc=box.querySelector('#mchar');
   if(mc)mc.onclick=()=>{
     CHFULL=!CHFULL;
@@ -3152,6 +3183,7 @@ $('btnhint').onclick=()=>{
   if(!HINTON){HINTON=true;HINTIDX=0}
   else{HINTIDX++;if(HINTIDX>=fits.length){HINTON=false;HINTIDX=0}}
   $('btnhint').classList.toggle('on',HINTON);
+  if(PEEK.open)renderPeekLines();
   if(HINTON){
     const bf=fits[HINTIDX];
     setStatus(`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`);
