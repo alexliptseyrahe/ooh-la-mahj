@@ -6,6 +6,8 @@ workflows:
     integrations:
       app_store_connect: OLM_ASC_KEY
     environment:
+      groups:
+        - appstore
       node: 20
       xcode: latest
       cocoapods: default
@@ -43,7 +45,7 @@ workflows:
       - name: Signing — fetch or create certificates & profiles
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --certificate-key=@env:CERTIFICATE_PRIVATE_KEY --create
           keychain add-certificates
           cd app
           xcode-project use-profiles
