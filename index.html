@@ -307,6 +307,68 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 .codewhisper b{letter-spacing:.26em;color:#8A6F2F;font-size:13px}
 .lstartsub{font-size:11px;color:#A8A296;margin-top:7px;line-height:1.55}
 .cardwhisper{font-size:9px;color:#B5AF9F;margin-top:14px;line-height:1.5}
+/* scheduled games */
+#schedpill{width:min(92%,360px);margin:14px auto 0;border-radius:16px;padding:12px 16px;text-align:left;
+  border:1px solid rgba(201,162,75,.45);background:linear-gradient(135deg,rgba(201,162,75,.16),rgba(201,162,75,.05));
+  font-family:var(--sans);color:var(--ivory);display:flex;align-items:center;gap:11px}
+#schedpill .pdot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px rgba(201,162,75,.8);flex:0 0 auto}
+#schedpill .pl1{font-size:12px;font-weight:600;letter-spacing:.05em;color:var(--gold-pale)}
+#schedpill .pl2{font-size:10.5px;color:rgba(251,247,236,.65);margin-top:2px}
+#schedpill .pn{margin-left:auto;font-size:9.5px;letter-spacing:.1em;font-weight:700;color:var(--gold);
+  border:1px solid rgba(201,162,75,.5);border-radius:10px;padding:4px 8px;white-space:nowrap}
+#cardnudge{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:14px}
+#cardnudge #cnmain{background:none;border:none;font-family:var(--sans);font-size:11.5px;letter-spacing:.05em;
+  color:rgba(251,247,236,.65);padding:6px 4px}
+#cardnudge #cnmain b{color:var(--gold-pale);font-weight:600;letter-spacing:.12em}
+#cardnudge #cnx{background:none;border:none;color:rgba(251,247,236,.35);font-size:12px;padding:6px 8px;font-family:var(--sans)}
+.gmrow{padding:13px 2px;border-bottom:1px solid #EFE9DB;text-align:left}
+.gmrow .top{display:flex;align-items:baseline;gap:8px}
+.gmrow .gnm{font-family:var(--serif);font-size:15px;color:var(--deep);font-weight:600}
+.gmrow .gwhen{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.08em;border-radius:10px;padding:4px 9px;white-space:nowrap}
+.gmrow.locked .gwhen{background:var(--gold);color:#fff}
+.gmrow.polling .gwhen{background:#EDE5D2;color:#8A6F2F}
+.gmrow .gwho{font-size:11px;color:#8A7F5F;margin-top:3px}
+.gmrow .grow2{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.gbtn{border:1px solid #D5CFC0;background:#fff;color:var(--deep);border-radius:12px;padding:8px 13px;font-size:10.5px;
+  font-weight:600;letter-spacing:.08em;font-family:var(--sans)}
+.gbtn.go{background:var(--coral);border-color:var(--coral);color:#fff}
+.gbtn:disabled{opacity:.4}
+.addsched{background:none;border:1px dashed #C9A24B;color:#A8893C;border-radius:14px;padding:12px 22px;font-size:11px;
+  font-weight:700;letter-spacing:.12em;font-family:var(--sans);margin-top:14px}
+.daysrow{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 6px;-webkit-overflow-scrolling:touch}
+.daysrow::-webkit-scrollbar{display:none}
+.dchip{flex:0 0 auto;border:1px solid #D5CFC0;background:#fff;border-radius:12px;padding:8px 12px;font-size:11px;
+  color:var(--deep);font-family:var(--sans);text-align:center;line-height:1.3}
+.dchip small{display:block;font-size:9px;color:#A8A296}
+.dchip.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
+.dchip.on small{color:rgba(232,217,174,.6)}
+.dchip:disabled{opacity:.3}
+.slotlist{margin-top:8px}
+.slotlist .sl{display:flex;align-items:center;font-size:11.5px;color:var(--deep);padding:7px 4px;border-bottom:1px solid #EFE9DB}
+.slotlist .sl button{margin-left:auto;background:none;border:none;color:#C25847;font-size:12px;font-family:var(--sans)}
+.frmlbl{display:block;font-size:10px;letter-spacing:.2em;color:#A8A296;font-weight:700;margin:16px 4px 7px;text-align:left}
+.frmin{width:100%;border:1px solid #D5CFC0;border-radius:12px;padding:12px;font-size:15px;background:#fff;
+  color:var(--ink);font-family:var(--sans);box-sizing:border-box}
+.sharebox{margin-top:14px;border:1px solid #EFE9DB;border-radius:14px;padding:14px;text-align:center;background:#fff}
+.sharebox .lnk{font-size:13px;color:var(--deep);font-weight:600;letter-spacing:.02em;word-break:break-all}
+/* poll voting (variant A) + host results (variant C) */
+.prow{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid #EAE7E0;text-align:left}
+.prow .pd{font-size:13px;color:var(--ink)}
+.prow .pd b{font-weight:600;color:var(--deep)}
+.prow .pdots{display:flex;gap:3px;align-items:center;margin-left:auto;margin-right:10px}
+.prow .pdot2{width:6px;height:6px;border-radius:50%;background:#D9D5CB}
+.prow .pdot2.on{background:var(--gold)}
+.prow .ptick{font-size:15px;color:#D9D5CB;width:22px;text-align:center}
+.prow.sel{background:linear-gradient(90deg,rgba(201,162,75,.1),transparent)}
+.prow.sel .ptick{color:#8A6F2F}
+.rrow{padding:11px 4px 13px;border-bottom:1px solid #EAE7E0;text-align:left}
+.rrow .top{display:flex;justify-content:space-between;align-items:baseline}
+.rrow .rd{font-size:13px;color:var(--ink)}
+.rrow .rd b{font-weight:600;color:var(--deep)}
+.rrow .rn{font-size:10.5px;color:#8A7F5F}
+.rrow .meter{height:3px;border-radius:2px;background:#EFECE5;margin-top:8px;overflow:hidden}
+.rrow .meter i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#C9A24B,#A8893C)}
+.rrow .lockrow{margin-top:9px}
 .pksect:first-child{margin-top:8px}
 .pkline .chpat{font-family:var(--sans);font-size:14px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .pkline .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
@@ -333,7 +395,9 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 #sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CFC9BC;margin:10px auto 4px}
 #sheetin{transition:transform .3s cubic-bezier(.32,.72,.28,1)}
 #sheetin.notrans{transition:none}
-#sheetin .grab,#sheettitle,#sheetin .sub{touch-action:none}
+#sheetin{touch-action:none}
+#cardlist{touch-action:pan-y}
+#cardctl .cbtn,#sheetin input{touch-action:auto}
 #sheetin h3{
   font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
   padding:4px 0 2px;
@@ -551,6 +615,8 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
       <button class="cbtn" id="ccmine">MY CARD</button>
       <button class="cbtn imp" id="ccimport">IMPORT…</button>
     </div>
+    <div id="cardlock" style="display:none;font-size:11px;color:#A08F63;margin:6px 0 2px">
+      the table is playing this card — changes unlock after the game</div>
     <div id="cardlist"></div>
   </div>
 </div>
@@ -578,6 +644,8 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
     <button class="abtn big" id="btnplay">TAKE A SEAT</button>
     <button class="abtn gold big" id="btnfriends">PLAY WITH FRIENDS</button>
     <div class="tlinks"><button id="btncard2">THE CARD</button><i>·</i><button id="btnhow">HOUSE RULES</button></div>
+    <button id="schedpill" style="display:none"></button>
+    <div id="cardnudge" style="display:none"><button id="cnmain">Have the 2026 card? <b>ADD YOURS</b></button><button id="cnx">✕</button></div>
   </div>
   <div id="matlabel">THE CHINOISERIE MATS</div>
   <div class="matrow" id="matrow"></div>
@@ -1175,7 +1243,7 @@ function newGame(){
   players[dealer].hand.push(wall.pop());
   players[0].hand=sortHand(players[0].hand);
   G={phase:'charleston',wall,players,dealer,turn:dealer,step:'discard',
-     chStep:0,chPhase:'pass',sel:new Set(),discards:[],winNow:null};
+     chStep:0,chPhase:'pass',chFull:CHFULL,sel:new Set(),discards:[],winNow:null};
   $('title').classList.add('hide');
   closeCall();closeModal();
   renderAll();
@@ -1240,8 +1308,8 @@ function doCharlestonPass(){
   renderAll();
   if(blindN)setStatus(`${blindN} tile${blindN>1?'s':''} passed through <b>blind</b>`);
   if(G.chStep===3){
-    if(CHFULL)later(blindN?900:0,beginChVote);
-    else startPlay();                     /* express — today's behavior */
+    if(G.chFull!==false)later(blindN?900:0,beginChVote);   /* snapshotted at the deal — menu changes apply to the NEXT game */
+    else startPlay();
   }else if(G.chStep<6){
     showMsg('PASS '+CHSEQ[G.chStep].dir);
     later(blindN?900:0,promptCharleston);
@@ -1841,14 +1909,15 @@ function openCallBar(t,opts,onPass){
   const bar=$('callbar');
   $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`+callAdvice(t);
   const bb=$('callbtns');bb.innerHTML='';
+  const advisePass=CALLV==='pass';
   for(const o of opts){
     const b=document.createElement('button');
-    b.className='abtn '+(o.cls||'');b.textContent=o.label;
+    b.className='abtn '+(advisePass&&o.cls!=='gold'?'ghost':(o.cls||''));b.textContent=o.label;
     b.onclick=()=>{clearTimeout(callTimer);o.fn()};
     bb.appendChild(b);
   }
   const pass=document.createElement('button');
-  pass.className='abtn ghost';pass.textContent='PASS';
+  pass.className='abtn '+(advisePass?'':'ghost');pass.textContent='PASS';
   pass.onclick=()=>{clearTimeout(callTimer);closeCall();onPass()};
   bb.appendChild(pass);
   bar.classList.add('open');
@@ -1879,7 +1948,9 @@ function callKeepsAlive(me,t,kSize){
   const p2={hand,exp:[...me.exp,{rep:tk,tiles:new Array(kSize).fill(0)}]};
   return handProgress(p2).some(x=>!x.dead);
 }
+let CALLV=null; /* 'call' | 'pass' | null — lets the call bar style its buttons to match the advice */
 function callAdvice(t){
+  CALLV=null;
   try{
     if(!HINTON||!hintsAllowed())return '';
     const me=G.players[0];
@@ -1887,22 +1958,30 @@ function callAdvice(t){
     const fits=topFits(me);
     if(!fits.length)return '';
     const sizes=callSizes(me,t);
+    const copies=(countsOf(me.hand).c[tk])||0;
     for(const bf of fits){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
       if(!grp)continue;
-      if(bf.hand.concealed)
-        return `<div class="calladv">“${bf.hand.name}” must stay concealed — <b>pass</b></div>`;
+      if(bf.hand.concealed){
+        CALLV='pass';
+        return `<div class="calladv"><b>PASS</b> — this hand must stay concealed</div>`;
+      }
       const kNeed=grp[1];
       if(sizes.includes(kNeed)&&callKeepsAlive(me,t,kNeed)){
         const away=Math.max(0,14-bf.score);
         const label=kNeed===3?'PUNG':kNeed===4?'KONG':'QUINT';
-        return `<div class="calladv"><b>${label}</b> fits “${bf.hand.name}” — ${away} away</div>`;
+        CALLV='call';
+        return `<div class="calladv"><b>${label}</b> fits your hand — ${away} away</div>`;
       }
-      if(!sizes.includes(kNeed))
-        return `<div class="calladv">“${bf.hand.name}” needs the <b>${kNeed===4?'kong':'quint'}</b> — <b>pass</b></div>`;
+      if(!sizes.includes(kNeed)){
+        CALLV='pass';
+        return `<div class="calladv"><b>PASS</b> — your hand needs a <b>${kNeed===4?'kong':'quint'}</b> of ${nameOf(t)}s and you hold ${copies===1?'only one':copies===2?'only two':copies}</div>`;
+      }
     }
-    if(!sizes.some(k=>callKeepsAlive(me,t,k)))
-      return `<div class="calladv">calling kills this hand — <b>pass</b></div>`;
+    if(!sizes.some(k=>callKeepsAlive(me,t,k))){
+      CALLV='pass';
+      return `<div class="calladv"><b>PASS</b> — calling would dead your hand</div>`;
+    }
     return `<div class="calladv">you don't need it</div>`;
   }catch(e){return ''}
 }
@@ -2126,14 +2205,22 @@ function renderActions(){
 }
 
 /* ---------- card sheet ---------- */
+function cardLocked(){
+  if(MP.active&&MP.view&&MP.view.phase&&MP.view.phase!=='ended')return true;
+  return !!(G&&(G.phase==='charleston'||G.phase==='play'));
+}
 function renderCardCtl(){
   $('sheettitle').textContent=activeCardName()==='custom'?(CUSTOM.title||'MY CARD'):'THE OOH LA CARD';
   $('ccclub').classList.toggle('on',activeCardName()==='club');
   $('ccmine').classList.toggle('on',activeCardName()==='custom');
-  $('ccmine').disabled=!CUSTOM;
+  const locked=cardLocked();
+  $('ccclub').disabled=locked;
+  $('ccmine').disabled=locked||!CUSTOM;
+  $('ccimport').disabled=locked;
+  $('cardlock').style.display=locked?'':'none';
 }
-$('ccclub').onclick=()=>{useCard('club');openSheet()};
-$('ccmine').onclick=()=>{if(CUSTOM){useCard('custom');openSheet()}};
+$('ccclub').onclick=()=>{if(cardLocked())return;useCard('club');openSheet()};
+$('ccmine').onclick=()=>{if(cardLocked())return;if(CUSTOM){useCard('custom');openSheet()}};
 function openImport(backToSheet,focus){
   if(maybeOfferPendingCard(true))return;
   const box=$('modalin');
@@ -2456,7 +2543,7 @@ function reviewCard(card,fails,backToSheet){
   };
   box.querySelector('#revretry').onclick=()=>openImport(backToSheet);
 }
-$('ccimport').onclick=()=>{
+$('ccimport').onclick=()=>{if(cardLocked())return;
   $('sheet').classList.remove('open');
   openImport(true);
 };
@@ -2501,6 +2588,305 @@ function openSheet(){
   });
   $('sheet').classList.add('open');
 }
+/* ---------- scheduled games (phase 2 client; backend live since r23) ---------- */
+function API(){return (typeof OLM_SERVER==='string'&&OLM_SERVER)?OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:'):''}
+let SCHEDS=[];try{SCHEDS=JSON.parse(localStorage.getItem('olmSched')||'[]')}catch(e){}
+function schedSave(){try{localStorage.setItem('olmSched',JSON.stringify(SCHEDS.slice(-20)))}catch(e){}}
+function schedAdd(rec){SCHEDS=SCHEDS.filter(x=>x.code!==rec.code);SCHEDS.push(rec);schedSave();renderPill()}
+function schedDrop(code){SCHEDS=SCHEDS.filter(x=>x.code!==code);schedSave();renderPill()}
+function schedToken(){
+  let t=null;try{t=localStorage.getItem('olmSchedTok')}catch(e){}
+  if(!t){t=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);try{localStorage.setItem('olmSchedTok',t)}catch(e){}}
+  return t;
+}
+const schedLink=rec=>location.origin+location.pathname.replace(/[^/]*$/,'')+ (rec.type==='p'?'?p=':'?g=')+rec.code;
+function fmtAt(at){
+  const d=new Date(at);
+  return d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+' · '
+    +d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+}
+function fmtIn(at){
+  const ms=at-Date.now();
+  if(ms<=0)return 'the table is open';
+  const m=Math.round(ms/60000);
+  if(m<60)return 'in '+m+' min';
+  const h=Math.floor(m/60);
+  if(h<24)return 'in '+h+'h '+(m%60)+'m';
+  return 'in '+Math.round(h/24)+' day'+(Math.round(h/24)>1?'s':'');
+}
+function schedUpcoming(){
+  const now=Date.now();
+  return SCHEDS.filter(x=>x.type==='p'?(now-(x.created||now)<14*864e5):(x.at&&x.at>now-3*3600e3))
+    .sort((a,b)=>(a.at||9e15)-(b.at||9e15));
+}
+function renderNudge(){
+  const el=$('cardnudge');if(!el)return;
+  let dis=false;try{dis=localStorage.getItem('olmNudge')==='1'}catch(e){}
+  el.style.display=(!CUSTOM&&!dis)?'flex':'none';
+}
+function renderPill(){
+  const el=$('schedpill');if(!el)return;
+  const up=schedUpcoming();
+  if(!up.length){el.style.display='none';return}
+  const g=up.find(x=>x.type==='g')||up[0];
+  el.style.display='flex';
+  el.innerHTML=`<span class="pdot"></span><span style="min-width:0">
+    <span class="pl1">${g.label||((g.hostName||'Your')+" table")}${g.type==='g'?' · '+fmtAt(g.at).split(' · ')[0]:''}</span><br>
+    <span class="pl2">${g.type==='g'?fmtAt(g.at).split(' · ')[1]+' · '+fmtIn(g.at):'finding a time · '+(g.votes||0)+' answered'}</span></span>
+    ${up.length>1?`<span class="pn">${up.length} GAMES</span>`:'<span class="pn">›</span>'}`;
+  el.onclick=openGamesSheet;
+}
+async function copyText(t,btn){
+  try{await navigator.clipboard.writeText(t);if(btn){const o=btn.textContent;btn.textContent='COPIED ✓';setTimeout(()=>btn.textContent=o,1400)}}
+  catch(e){prompt('Copy this link:',t)}
+}
+function shareLinkNative(t,txt){
+  if(navigator.share)navigator.share({title:'Ooh La Mahj',text:txt,url:t}).catch(()=>{});
+  else copyText(t);
+}
+function openGamesSheet(){
+  const box=$('modalin');
+  const up=schedUpcoming();
+  const rows=up.map(g=>{
+    const isPoll=g.type==='p';
+    const joinable=!isPoll&&g.at-Date.now()<60*60000;
+    return `<div class="gmrow ${isPoll?'polling':'locked'}">
+      <div class="top"><span class="gnm">${g.label||((g.hostName||'A friend')+"'s table")}</span>
+        <span class="gwhen">${isPoll?'FINDING A TIME':fmtAt(g.at).toUpperCase()}</span></div>
+      <div class="gwho">${isPoll?'friends are voting on times':(g.mine?'you are hosting':'hosted by '+(g.hostName||'a friend'))+' · '+fmtIn(g.at)}</div>
+      <div class="grow2">
+        ${isPoll?`<button class="gbtn go" data-poll="${g.code}">SEE THE POLL</button>`
+          :`<button class="gbtn go" data-join="${g.code}" ${joinable?'':'disabled'}>${joinable?'JOIN THE TABLE':'OPENS AN HOUR BEFORE'}</button>
+            <button class="gbtn" data-cal="${g.code}">CALENDAR</button>`}
+        <button class="gbtn" data-copy="${g.code}" data-type="${g.type}">COPY LINK</button>
+        <button class="gbtn" data-del="${g.code}" style="border:none;color:#C4BFB2">✕</button>
+      </div></div>`;
+  }).join('');
+  box.innerHTML=`<div class="mtop">YOUR TABLE CALENDAR</div><h2 style="font-size:22px">Upcoming games</h2>
+    ${rows||'<div class="msub" style="margin-top:14px">Nothing scheduled yet — plan one below.</div>'}
+    <div style="text-align:center"><button class="addsched" id="gadd">+ SCHEDULE A GAME</button></div>
+    <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gclose">CLOSE</button></div>`;
+  box.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(schedLink({type:b.dataset.type,code:b.dataset.copy}),b));
+  box.querySelectorAll('[data-cal]').forEach(b=>b.onclick=()=>{if(API())window.open(API()+'/cal/'+b.dataset.cal+'.ics','_blank')});
+  box.querySelectorAll('[data-poll]').forEach(b=>b.onclick=()=>openPollPage(b.dataset.poll));
+  box.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>schedJoinFlow(b.dataset.join));
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{schedDrop(b.dataset.del);openGamesSheet()});
+  box.querySelector('#gadd').onclick=openSchedCreate;
+  box.querySelector('#gclose').onclick=closeModal;
+  $('modal').classList.add('open');
+}
+const SCHED_TIMES=[[10,0],[11,0],[12,0],[13,0],[14,0],[16,0],[18,0],[19,0],[19,30],[20,0]];
+function openSchedCreate(){
+  const box=$('modalin');
+  let mode='fixed',dayIdx=0,timeIdx=8,slots=[];
+  const days=[];const d0=new Date();d0.setHours(0,0,0,0);
+  for(let i=0;i<14;i++){const d=new Date(d0.getTime()+i*864e5);days.push(d)}
+  const tLabel=([h,m])=>{const d=new Date();d.setHours(h,m,0,0);return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
+  const pickAt=()=>{const d=new Date(days[dayIdx].getTime());d.setHours(SCHED_TIMES[timeIdx][0],SCHED_TIMES[timeIdx][1],0,0);return d.getTime()}
+  const atOf=(di,ti)=>{const d=new Date(days[di].getTime());d.setHours(SCHED_TIMES[ti][0],SCHED_TIMES[ti][1],0,0);return d.getTime()}
+  const avail=(di,ti)=>atOf(di,ti)>Date.now()+10*60000;
+  const render=()=>{
+    if(!avail(dayIdx,timeIdx)){
+      const f=SCHED_TIMES.findIndex((_,i)=>avail(dayIdx,i));
+      if(f>=0)timeIdx=f;else{dayIdx=Math.min(13,dayIdx+1);timeIdx=0}
+    }
+    box.innerHTML=`<div class="mtop">NEW GAME</div><h2 style="font-size:22px">Schedule a game</h2>
+    <label class="frmlbl">NAME IT (OPTIONAL)</label>
+    <input class="frmin" id="glabel" maxlength="24" placeholder="e.g. Thursday girls" value="${box._label||''}">
+    <label class="frmlbl">HOW DO YOU WANT TO SET THE TIME?</label>
+    <div class="seg" style="margin:0;justify-content:flex-start">
+      <button class="sgi ${mode==='fixed'?'on':''}" id="mfixed">I KNOW THE TIME</button>
+      <button class="sgi ${mode==='poll'?'on':''}" id="mpoll">FIND A TIME</button>
+    </div>
+    <label class="frmlbl">${mode==='fixed'?'WHEN':'PROPOSE 2–5 TIMES'}</label>
+    <div class="daysrow">${days.map((d,i)=>`<button class="dchip ${i===dayIdx?'on':''}" data-d="${i}">
+      ${d.toLocaleDateString([],{weekday:'short'})}<small>${d.toLocaleDateString([],{month:'short',day:'numeric'})}</small></button>`).join('')}</div>
+    <div class="daysrow">${SCHED_TIMES.map((t,i)=>`<button class="dchip ${i===timeIdx?'on':''}" data-t="${i}" ${avail(dayIdx,i)?'':'disabled'}>${tLabel(t)}</button>`).join('')}</div>
+    ${mode==='poll'?`<div style="text-align:left"><button class="gbtn" id="addslot" style="margin-top:8px">+ ADD THIS TIME</button></div>
+      <div class="slotlist">${slots.map((at,i)=>`<div class="sl">${fmtAt(at)}<button data-x="${i}">✕</button></div>`).join('')}</div>`:''}
+    <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gcreate" ${mode==='poll'&&slots.length<2?'disabled':''}>
+      ${mode==='fixed'?'CREATE & GET THE LINK':'CREATE THE POLL'}</button></div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gback">BACK</button></div>`;
+    box.querySelector('#glabel').oninput=e=>{box._label=e.target.value};
+    box.querySelector('#mfixed').onclick=()=>{mode='fixed';render()};
+    box.querySelector('#mpoll').onclick=()=>{mode='poll';render()};
+    box.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{dayIdx=+b.dataset.d;render()});
+    box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{timeIdx=+b.dataset.t;render()});
+    const asl=box.querySelector('#addslot');
+    if(asl)asl.onclick=()=>{const at=pickAt();if(slots.length<5&&!slots.includes(at)){slots.push(at);slots.sort();render()}};
+    box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{slots.splice(+b.dataset.x,1);render()});
+    box.querySelector('#gback').onclick=openGamesSheet;
+    box.querySelector('#gcreate').onclick=async()=>{
+      if(!API()){setStatus('Multiplayer is not switched on');return}
+      const label=(box._label||'').trim();
+      const name=mpName()||'A friend';
+      let card=null;
+      try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
+      const cfg={pace:'relaxed',hints:true,charleston:CHFULL?'full':'express'};
+      box.querySelector('#gcreate').textContent='CREATING…';
+      try{
+        if(mode==='fixed'){
+          const r=await fetch(API()+'/api/sched',{method:'POST',body:JSON.stringify({token:schedToken(),name,at:pickAt(),config:cfg,card})}).then(x=>x.json());
+          if(r.err)throw r.err;
+          schedAdd({type:'g',code:r.code,at:r.at,label,mine:true,hostName:name,created:Date.now()});
+          openShareStep({type:'g',code:r.code,at:r.at,label});
+        }else{
+          const r=await fetch(API()+'/api/poll',{method:'POST',body:JSON.stringify({token:schedToken(),name,slots,config:cfg,card})}).then(x=>x.json());
+          if(r.err)throw r.err;
+          schedAdd({type:'p',code:r.id,label,mine:true,hostName:name,created:Date.now()});
+          openShareStep({type:'p',code:r.id,label});
+        }
+      }catch(e){box.querySelector('#gcreate').textContent='TRY AGAIN';setStatus(String(e))}
+    };
+  };
+  render();
+  $('modal').classList.add('open');
+}
+function openShareStep(rec){
+  const box=$('modalin');
+  const link=schedLink(rec);
+  const isPoll=rec.type==='p';
+  box.innerHTML=`<div class="mtop">${(rec.label||'YOUR GAME').toUpperCase()}</div>
+    <h2 style="font-size:22px">${isPoll?'Send the poll':'Send the invite'}</h2>
+    ${isPoll?'':`<div class="msub">${fmtAt(rec.at)}</div>`}
+    <div class="sharebox"><div class="lnk">${link.replace(/^https?:\/\//,'')}</div>
+      <div class="grow2" style="justify-content:center;margin-top:12px">
+        <button class="gbtn go" id="scopy">COPY LINK</button>
+        <button class="gbtn" id="sshare">SHARE…</button>
+        ${isPoll?'':`<button class="gbtn" id="scal">ADD TO CALENDAR</button>`}
+      </div></div>
+    <div class="lstartsub" style="margin-top:12px">${isPoll
+      ?'Friends vote on the times that work.<br>You lock the winner — then everyone gets the invite.'
+      :'Friends who open it can add it to their calendars.<br>The table itself opens an hour before game time.'}</div>
+    <div class="mbtns" style="margin-top:14px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="sdone">DONE</button></div>`;
+  box.querySelector('#scopy').onclick=e=>copyText(link,e.target);
+  box.querySelector('#sshare').onclick=()=>shareLinkNative(link,(rec.label||'Mah jongg')+' — join my table');
+  const sc=box.querySelector('#scal');
+  if(sc)sc.onclick=()=>window.open(API()+'/cal/'+rec.code+'.ics','_blank');
+  box.querySelector('#sdone').onclick=openGamesSheet;
+  $('modal').classList.add('open');
+}
+function schedJoinFlow(code){
+  const nm=mpName();
+  if(!nm){
+    const box=$('modalin');
+    box.innerHTML=`<div class="mtop">JOINING</div><h2 style="font-size:22px">What's your name?</h2>
+      <input class="frmin" id="jname" maxlength="14" placeholder="YOUR NAME" style="text-align:center;margin-top:10px">
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="jgo">TAKE MY SEAT</button></div>`;
+    box.querySelector('#jgo').onclick=()=>{
+      const n=box.querySelector('#jname').value.trim().slice(0,14);
+      if(!n)return;
+      MP.name=n;try{localStorage.setItem('olmName',n)}catch(e){}
+      schedJoinFlow(code);
+    };
+    $('modal').classList.add('open');
+    return;
+  }
+  closeModal();
+  MP.intended=true;
+  mpConnect(()=>mpSend({type:'schedjoin',code}));
+}
+async function openGamePage(code){
+  code=String(code||'').toUpperCase();
+  if(!API())return;
+  let r;try{r=await fetch(API()+'/api/schedinfo?code='+code).then(x=>x.json())}catch(e){r={err:'Could not reach the table'}}
+  const box=$('modalin');
+  if(r.err){
+    box.innerHTML=`<div class="mtop">HMM</div><h2 style="font-size:22px">${r.err}</h2>
+      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gc">CLOSE</button></div>`;
+    box.querySelector('#gc').onclick=closeModal;$('modal').classList.add('open');return;
+  }
+  const mine=SCHEDS.find(x=>x.code===code);
+  schedAdd({type:'g',code,at:r.at,label:mine&&mine.label||'',mine:!!(mine&&mine.mine),hostName:r.hostName,created:mine&&mine.created||Date.now()});
+  const joinable=r.live||r.at-Date.now()<60*60000;
+  box.innerHTML=`<div class="mtop">${((mine&&mine.label)||r.hostName+"'S TABLE").toUpperCase()}</div>
+    <h2 style="font-size:22px">${fmtAt(r.at)}</h2>
+    <div class="msub" id="gcount">${fmtIn(r.at)}</div>
+    <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gjoin" ${joinable?'':'disabled'}>${joinable?'TAKE MY SEAT':'THE TABLE OPENS AN HOUR BEFORE'}</button></div>
+    <div class="grow2" style="justify-content:center;margin-top:12px">
+      <button class="gbtn" id="gcal">ADD TO CALENDAR</button>
+      <button class="gbtn" id="gcopy">COPY LINK</button></div>
+    <div class="lstartsub" style="margin-top:12px">hosted by ${r.hostName} · seats not filled at the deal are played by the bots</div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gclose2">CLOSE</button></div>`;
+  box.querySelector('#gjoin').onclick=()=>schedJoinFlow(code);
+  box.querySelector('#gcal').onclick=()=>window.open(API()+'/cal/'+code+'.ics','_blank');
+  box.querySelector('#gcopy').onclick=e=>copyText(schedLink({type:'g',code}),e.target);
+  box.querySelector('#gclose2').onclick=closeModal;
+  const iv=setInterval(()=>{const el=$('gcount') ;if(!el){clearInterval(iv);return}el.textContent=fmtIn(r.at)},30000);
+  $('modal').classList.add('open');
+}
+async function openPollPage(id){
+  id=String(id||'').toUpperCase();
+  if(!API())return;
+  const tok=schedToken();
+  let r;try{r=await fetch(API()+'/api/pollinfo?id='+id+'&tok='+tok).then(x=>x.json())}catch(e){r={err:'Could not reach the table'}}
+  const box=$('modalin');
+  if(r.err&&!r.locked){
+    box.innerHTML=`<div class="mtop">HMM</div><h2 style="font-size:22px">${r.err}</h2>
+      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pc">CLOSE</button></div>`;
+    box.querySelector('#pc').onclick=closeModal;$('modal').classList.add('open');return;
+  }
+  if(r.locked){schedDrop(id);openGamePage(r.locked.code);return}
+  const mine=SCHEDS.find(x=>x.code===id);
+  schedAdd({type:'p',code:id,label:mine&&mine.label||'',mine:r.isHost,hostName:r.hostName,votes:r.votes.length,created:mine&&mine.created||Date.now()});
+  const tallies=r.slots.map((_,i)=>r.votes.filter(v=>v.ok.includes(i)).length);
+  if(r.isHost){
+    const best=Math.max(1,...tallies);
+    box.innerHTML=`<div class="mtop">YOUR POLL · ${r.votes.length} ANSWERED</div>
+      <h2 style="font-size:22px">${(mine&&mine.label)||'Find a time'}</h2>
+      ${r.slots.map((at,i)=>`<div class="rrow ${tallies[i]===best&&best>0?'win':''}">
+        <div class="top"><span class="rd"><b>${fmtAt(at)}</b></span><span class="rn">${tallies[i]===r.votes.length&&r.votes.length?'everyone':tallies[i]+' of '+r.votes.length}</span></div>
+        <div class="meter"><i style="width:${r.votes.length?Math.round(tallies[i]/r.votes.length*100):0}%"></i></div>
+        <div class="lockrow"><button class="gbtn ${tallies[i]===best?'go':''}" data-lock="${i}">LOCK IN THIS TIME</button></div></div>`).join('')}
+      <div class="grow2" style="justify-content:center;margin-top:14px"><button class="gbtn" id="pcopy">COPY POLL LINK</button></div>
+      <div class="mbtns" style="margin-top:12px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pclose">CLOSE</button></div>`;
+    box.querySelectorAll('[data-lock]').forEach(b=>b.onclick=async()=>{
+      b.textContent='LOCKING…';
+      try{
+        const rr=await fetch(API()+'/api/polllock',{method:'POST',body:JSON.stringify({id,token:tok,slot:+b.dataset.lock})}).then(x=>x.json());
+        if(rr.err)throw rr.err;
+        schedDrop(id);
+        schedAdd({type:'g',code:rr.code,at:rr.at,label:(mine&&mine.label)||'',mine:true,hostName:r.hostName,created:Date.now()});
+        openShareStep({type:'g',code:rr.code,at:rr.at,label:(mine&&mine.label)||''});
+      }catch(e){b.textContent='TRY AGAIN';setStatus(String(e))}
+    });
+    box.querySelector('#pcopy').onclick=e=>copyText(schedLink({type:'p',code:id}),e.target);
+    box.querySelector('#pclose').onclick=closeModal;
+  }else{
+    const sel=new Set(r.youVoted||[]);
+    const render=()=>{
+      box.innerHTML=`<div class="mtop">${r.hostName.toUpperCase()} ASKS</div>
+        <h2 style="font-size:22px">When can you play?</h2>
+        <div class="msub">Tap every time that works — you can change it later</div>
+        ${r.slots.map((at,i)=>`<div class="prow ${sel.has(i)?'sel':''}" data-i="${i}">
+          <span class="pd"><b>${fmtAt(at)}</b></span>
+          <span class="pdots">${r.votes.map(v=>`<span class="pdot2 ${v.ok.includes(i)?'on':''}"></span>`).join('')}</span>
+          <span class="ptick">${sel.has(i)?'✓':''}</span></div>`).join('')}
+        ${mpName()?'':`<input class="frmin" id="pname" maxlength="14" placeholder="YOUR FIRST NAME" style="margin-top:14px;text-align:center">`}
+        <div class="mbtns" style="margin-top:16px"><button class="abtn" id="psave">${r.youVoted?'UPDATE MY ANSWER':'SAVE'+(mpName()?" — I'M "+mpName().toUpperCase():'')}</button></div>
+        <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pclose">CLOSE</button></div>`;
+      box.querySelectorAll('.prow').forEach(el=>el.onclick=()=>{const i=+el.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);render()});
+      box.querySelector('#psave').onclick=async e=>{
+        let nm=mpName();
+        const pn=box.querySelector('#pname');
+        if(pn&&pn.value.trim()){nm=pn.value.trim().slice(0,14);MP.name=nm;try{localStorage.setItem('olmName',nm)}catch(x){}}
+        if(!nm){if(pn)pn.focus();return}
+        e.target.textContent='SAVING…';
+        try{
+          const rr=await fetch(API()+'/api/pollvote',{method:'POST',body:JSON.stringify({id,token:tok,name:nm,ok:[...sel]})}).then(x=>x.json());
+          if(rr.err)throw rr.err;
+          r=rr;schedAdd({type:'p',code:id,label:mine&&mine.label||'',hostName:r.hostName,votes:r.votes.length,created:mine&&mine.created||Date.now()});
+          render();
+          setStatus('Saved — '+r.hostName+' will lock the winning time');
+        }catch(x){e.target.textContent='TRY AGAIN';setStatus(String(x))}
+      };
+      box.querySelector('#pclose').onclick=closeModal;
+    };
+    render();
+  }
+  $('modal').classList.add('open');
+}
+
 /* ---------- in-game pull-down card: tap/drag the tab, or press-and-hold to peek ---------- */
 const PEEK={open:false,drag:null,holdT:null};
 function peekBounds(){
@@ -2618,6 +3004,8 @@ document.addEventListener('visibilitychange',()=>{
   };
 }
 $('btncard2').onclick=openSheet;
+$('cnmain').onclick=()=>{try{localStorage.setItem('olmNudge','1')}catch(e){};renderNudge();openImport(false,'photo')};
+$('cnx').onclick=()=>{try{localStorage.setItem('olmNudge','1')}catch(e){};renderNudge()};
 $('sheetdim').onclick=()=>$('sheet').classList.remove('open');
 /* swipe down on the card sheet to close it */
 {
@@ -2827,6 +3215,7 @@ function mpShowCallBar(m){
   const bar=$('callbar');
   $('callq').innerHTML=`${nameOf(m.tile)} was discarded — call it?`+callAdvice(m.tile);
   const bb=$('callbtns');bb.innerHTML='';
+  const advisePass=CALLV==='pass';
   const mkb=(label,choice,cls)=>{
     const b=document.createElement('button');
     b.className='abtn '+(cls||'');b.textContent=label;
@@ -2835,9 +3224,9 @@ function mpShowCallBar(m){
   };
   for(const o of m.options){
     if(o==='mahjong')mkb('MAH JONGG!','mahjong','gold');
-    else mkb(o.toUpperCase(),o,'');
+    else mkb(o.toUpperCase(),o,advisePass?'ghost':'');
   }
-  mkb('PASS','pass','ghost');
+  mkb('PASS','pass',advisePass?'':'ghost');
   bar.classList.add('open');
   clearTimeout(callTimer);
   const ms=m.ms||12000;
@@ -2992,6 +3381,7 @@ function openFriends(errMsg){
         </div>
         <div class="orpill" style="width:100%"><span>OR</span></div>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fsched">SCHEDULE A GAME</button>
         <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="fcancel">CANCEL</button>
       </div>`;
     errMsg='';
@@ -3025,6 +3415,7 @@ function openFriends(errMsg){
       mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints,charleston:charFull?'full':'express'}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
+    box.querySelector('#fsched').onclick=()=>{if(getName())openSchedCreate()};
     box.querySelector('#fcancel').onclick=closeModal;
   };
   const stepTwo=()=>{
@@ -3119,6 +3510,8 @@ function goTitle(){
   closeCall();closeModal();
   $('sheet').classList.remove('open');
   $('title').classList.remove('hide');
+  renderPill();
+  renderNudge();
   setTimeout(()=>maybeOfferPendingCard(),400);
 }
 $('btnmenu').onclick=()=>{
@@ -3134,7 +3527,7 @@ $('btnmenu').onclick=()=>{
     <button class="mnrow" id="mrules"><span class="lb">HOUSE RULES</span><span class="chevr">›</span></button>
     <div class="msect">HOW YOU PLAY</div>
     <div class="mnrow"><span class="lb">SOUND</span>${seg('msound',['ON','OFF'],SND?0:1)}</div>
-    ${MP.active?'':`<div class="mnrow"><span class="lb">CHARLESTON</span>${seg('mchar',['FULL','EXPRESS'],CHFULL?0:1)}</div>`}
+    ${MP.active?'':`<div class="mnrow"><span class="lb">CHARLESTON${G&&(G.phase==='charleston'||G.phase==='play')?'<span class="sb">applies to your next game</span>':''}</span>${seg('mchar',['FULL','EXPRESS'],CHFULL?0:1)}</div>`}
     ${MP.active?'':`<div class="mnrow"><span class="lb">THE BOTS<span class="sb" id="mbotdesc">${BOT_DESCS[BOTLVL]}</span></span>${seg('mbots',['BREEZY','CLUB','SHARK'],BOTLVL)}</div>`}
   </div>
   <div class="mbtns" style="margin-top:18px"><button class="abtn" id="mclose">RETURN TO GAME</button></div>
@@ -3335,7 +3728,11 @@ bootCard();
 (function(){
   let seen=false;
   try{seen=!!localStorage.getItem('olmSeen')}catch(e){}
-  if(!seen&&!CUSTOM)showWelcome();
+  renderPill();
+  renderNudge();
+  const dl=new URLSearchParams(location.search);
+  if(dl.get('g'))setTimeout(()=>openGamePage(dl.get('g')),300);
+  else if(dl.get('p'))setTimeout(()=>openPollPage(dl.get('p')),300);
   else{try{localStorage.setItem('olmSeen','1')}catch(e){}}
   const rj=readInProgress();
   if(rj){BGREAD.state='working';readPillSync();bgReadPoll(rj.job)}
