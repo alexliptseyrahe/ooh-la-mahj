@@ -187,7 +187,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 .tlinks{display:flex;justify-content:center;gap:14px;align-items:center;margin-top:20px}
 .sav.justin{animation:seatpop .9s cubic-bezier(.3,1.6,.4,1)}
 @keyframes seatpop{0%{transform:scale(.35);box-shadow:0 0 0 0 rgba(201,162,75,.75)}55%{transform:scale(1.18)}100%{transform:scale(1);box-shadow:0 0 0 14px rgba(201,162,75,0)}}
-.snm .justtag{color:#C9A24B;font-style:italic;font-size:9px}
+.snm .justtag{color:#C9A24B;font-style:italic;font-size:11px}
 .tlinks button{font-size:12.5px;letter-spacing:.18em;color:rgba(232,217,174,.75);background:none;border:none;padding:4px 2px;font-family:var(--sans)}
 .tlinks i{font-style:normal;color:rgba(201,162,75,.5);font-size:11px}
 .abtn:disabled{opacity:.4;pointer-events:none}
@@ -262,57 +262,58 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 body.peekopen #peekdim{opacity:1;pointer-events:auto}
 #peekwrap{position:fixed;left:6px;right:6px;z-index:35;display:none;overflow:hidden;pointer-events:none}
 #peekwrap.show{display:block}
-#peek{position:absolute;left:0;right:0;top:0;height:calc(100% - 40px);transform:translateY(-100%);
+#peek{position:absolute;left:0;right:0;top:0;height:calc(100% - 40px);transform:translateY(calc(-100% - 4px));
   transition:transform .32s cubic-bezier(.32,.72,.28,1);pointer-events:auto}
 #peek.notrans{transition:none}
 #peektab{position:absolute;left:50%;top:100%;transform:translateX(-50%);background:var(--paper);color:var(--deep);
-  border-radius:0 0 13px 13px;padding:7px 20px 9px;font-size:9px;letter-spacing:.22em;font-weight:700;
+  border-radius:0 0 13px 13px;padding:8px 22px 10px;font-size:10.5px;letter-spacing:.22em;font-weight:700;
   box-shadow:0 6px 16px rgba(0,0,0,.35);display:none;align-items:center;gap:7px;white-space:nowrap;
   touch-action:none;font-family:var(--sans);user-select:none;-webkit-user-select:none}
 #peek.open #peektab{display:flex}
 #peektab .chev{font-size:10px;color:var(--gold)}
 #peekbody{height:100%;background:var(--paper);color:var(--ink);border-radius:0 0 18px 18px;
-  box-shadow:0 12px 34px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden}
+  display:flex;flex-direction:column;overflow:hidden}
+#peek.open #peekbody{box-shadow:0 12px 34px rgba(0,0,0,.45)}
 #hdr #btncard.on{background:var(--gold);color:#0C3B2E;border-color:var(--gold)}
 #peekhead{padding:12px 16px 6px;text-align:center;border-bottom:1px solid #ECE8DF}
-#peekhead h3{margin:0;font-family:Georgia,serif;font-size:15px;color:var(--deep);font-weight:600}
-#peekhead p{margin:3px 0 0;font-size:8.5px;letter-spacing:.2em;color:#A8893C;font-weight:700}
+#peekhead h3{margin:0;font-family:Georgia,serif;font-size:17px;color:var(--deep);font-weight:600}
+#peekhead p{margin:3px 0 0;font-size:10px;letter-spacing:.16em;color:#A8893C;font-weight:700}
 #peeklines{flex:1;overflow-y:auto;padding:0 12px 14px;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .pkline{display:flex;align-items:center;gap:9px;padding:8px;border-bottom:1px solid #ECE8DF;border-radius:8px}
 .pkline .pkl{flex:1;min-width:0}
-.pkline .pkname{font-size:10px;letter-spacing:.06em;font-weight:600;color:#6B6250}
-.pksect{font-size:8.5px;letter-spacing:.26em;color:var(--coral);font-weight:700;margin:14px 6px 3px;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:4px}
-.pknote{font-size:9px;color:#A8A296;margin-top:2px;line-height:1.4}
+.pkline .pkname{font-size:12px;letter-spacing:.06em;font-weight:600;color:#6B6250}
+.pksect{font-size:10.5px;letter-spacing:.2em;color:var(--coral);font-weight:700;margin:14px 6px 3px;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:4px}
+.pknote{font-size:11px;color:#A8A296;margin-top:2px;line-height:1.4}
 /* quiet menu */
-.msect{font-size:9px;letter-spacing:.26em;color:var(--coral);font-weight:700;margin:16px 2px 2px;
+.msect{font-size:10.5px;letter-spacing:.2em;color:var(--coral);font-weight:700;margin:16px 2px 2px;
   border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:5px;text-align:left}
 .mnrow{display:flex;align-items:center;padding:13px 2px;border-bottom:1px solid #EFE9DB;width:100%;
   background:none;border-left:none;border-right:none;border-top:none;font-family:var(--sans);text-align:left;cursor:pointer}
-.mnrow .lb{font-size:12px;letter-spacing:.1em;color:var(--ink);font-weight:600}
-.mnrow .sb{display:block;font-size:9.5px;color:#A8A296;margin-top:2px;letter-spacing:.02em;font-weight:400}
+.mnrow .lb{font-size:13.5px;letter-spacing:.1em;color:var(--ink);font-weight:600}
+.mnrow .sb{display:block;font-size:11px;color:#A8A296;margin-top:2px;letter-spacing:.02em;font-weight:400}
 .mnrow .chevr{margin-left:auto;font-size:13px;color:#C4BFB2}
 .mnrow .seg{margin-left:auto;display:flex;gap:4px}
-.seg .sgi{font-size:9px;letter-spacing:.1em;font-weight:700;padding:6px 11px;border-radius:12px;
+.seg .sgi{font-size:10.5px;letter-spacing:.08em;font-weight:700;padding:7px 12px;border-radius:12px;
   border:1px solid #DAD4C6;color:#A8A296;background:none;font-family:var(--sans)}
 .seg .sgi.on{background:var(--deep);border-color:var(--deep);color:var(--gold-pale,#E8D9AE)}
-.mexit{background:none;border:none;font-family:var(--sans);font-size:10px;letter-spacing:.16em;color:#A8A296;padding:13px 0 2px;width:100%;text-align:center}
+.mexit{background:none;border:none;font-family:var(--sans);font-size:11.5px;letter-spacing:.16em;color:#A8A296;padding:13px 0 2px;width:100%;text-align:center}
 /* lobby redesign */
 .sav.botprev{background:#EDEAE2;color:#B9B2A2;border:1.5px dashed #D5CFC0}
 .snm i.newtag{color:#A8893C;font-style:italic}
-.sentchip{display:inline-block;font-size:9px;letter-spacing:.14em;font-weight:700;color:#3E7A4E;
+.sentchip{display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;color:#3E7A4E;
   background:rgba(62,122,78,.1);border-radius:10px;padding:5px 12px;margin-top:10px}
 .lobbysub{font-size:10.5px;color:#8A7F5F;line-height:1.55;margin-top:4px}
-.codewhisper{font-size:9.5px;color:#A8A296;margin-top:11px;letter-spacing:.03em}
-.codewhisper b{letter-spacing:.26em;color:#8A6F2F;font-size:11px}
-.lstartsub{font-size:9px;color:#A8A296;margin-top:7px;line-height:1.55}
+.codewhisper{font-size:11.5px;color:#A8A296;margin-top:11px;letter-spacing:.03em}
+.codewhisper b{letter-spacing:.26em;color:#8A6F2F;font-size:13px}
+.lstartsub{font-size:11px;color:#A8A296;margin-top:7px;line-height:1.55}
 .cardwhisper{font-size:9px;color:#B5AF9F;margin-top:14px;line-height:1.5}
 .pksect:first-child{margin-top:8px}
-.pkline .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.pkline .chpat{font-family:var(--sans);font-size:14px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .pkline .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
 .pkline .chpat i.cR{color:var(--red)} .pkline .chpat i.cG{color:var(--grn)} .pkline .chpat i.cB{color:var(--blu)}
 .pkline .chpat i.cN{color:#33413A} .pkline .chpat i.cF{color:var(--coral-dk)}
-.pkline .pkpts{font-size:9px;color:#A8A296;white-space:nowrap}
-.pkchip{font-size:8.5px;font-weight:700;letter-spacing:.08em;border-radius:10px;padding:4px 8px;white-space:nowrap}
+.pkline .pkpts{font-size:10.5px;color:#A8A296;white-space:nowrap}
+.pkchip{font-size:10px;font-weight:700;letter-spacing:.08em;border-radius:10px;padding:4px 8px;white-space:nowrap}
 .pkline.hot{background:linear-gradient(90deg,rgba(201,162,75,.16),rgba(201,162,75,.03));border-bottom-color:transparent}
 .pkline.hot .pkchip{background:var(--gold);color:#fff}
 .pkline.warm .pkchip{background:#EDE5D2;color:#8A6F2F}
@@ -337,7 +338,7 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
   font-family:var(--serif);font-weight:700;text-align:center;font-size:19px;letter-spacing:.18em;color:var(--deep);
   padding:4px 0 2px;
 }
-#sheetin .sub{text-align:center;font-size:10px;letter-spacing:.22em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
+#sheetin .sub{text-align:center;font-size:11px;letter-spacing:.16em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
 #cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
 .cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CFC9BC;border-radius:13px;padding:5px 13px;background:#fff}
@@ -389,7 +390,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 .revlist{max-height:200px;overflow-y:auto;text-align:left;border:1px solid #E7E3DA;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:13px;line-height:1.7;color:#3E4E45}
 .revlist b{color:var(--deep)}
 .revcat{font-size:10.5px;letter-spacing:.2em;color:var(--gold-dk);margin-top:6px}
-.ccat{font-size:10.5px;font-weight:600;letter-spacing:.26em;color:var(--gold-dk);margin:14px 0 6px}
+.ccat{font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--coral);margin:16px 0 4px;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:5px}
 .chand{
   background:#fff;border:1px solid #EAE7E0;border-radius:12px;padding:10px 12px;margin-bottom:8px;
   display:flex;flex-direction:column;gap:6px;
@@ -2927,7 +2928,7 @@ function renderLobby(v){
   const startCls=(friends.length||MP.shared)?'abtn':'abtn ghost';
   const startSub=friends.length
     ?(anyOpen?`${openBots.join(' & ')} play${openBots.length===1?'s':''} the open seat${openBots.length===1?'':'s'}`:'the table is full — deal when ready')
-    :'no need to wait — friends who join mid-game<br>take over a bot\'s seat with a chime';
+    :'open seats are played by the bots — friends can join anytime, even mid-game';
   const cardLine=(isHost
     ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
     :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`)
@@ -2935,16 +2936,14 @@ function renderLobby(v){
     +(v.config&&v.config.charleston==='express'?' · express Charleston':'');
   box.innerHTML=`<div class="mtop">YOUR TABLE</div>
     <h2 style="font-size:22px">Invite your players</h2>
-    ${MP.shared?'<div class="sentchip">INVITE SENT ✓</div>'
-      :'<div class="lobbysub">Seats you don\'t fill are played by the bots —<br>friends can join or take over anytime, even mid-game.</div>'}
-    <div class="seatrow" style="margin:18px 0 4px">${seatDots}</div>
-    <div class="mbtns" style="margin-top:12px"><button class="${MP.shared?'abtn ghost':'abtn'}" id="lshare" style="${MP.shared?'color:var(--deep);border-color:#C6C1B4':''}">${MP.shared?'SHARE TO MORE FRIENDS':'SHARE INVITE'}</button></div>
+    ${MP.shared?'<div class="sentchip">INVITE SENT ✓</div>':''}
+    <div class="seatrow" style="margin:20px 0 8px">${seatDots}</div>
+    <div class="mbtns" style="margin-top:14px"><button class="${MP.shared?'abtn ghost':'abtn'}" id="lshare" style="${MP.shared?'color:var(--deep);border-color:#C6C1B4':''}">${MP.shared?'SHARE TO MORE FRIENDS':'SHARE INVITE'}</button></div>
     <div class="codewhisper">joining by phone? they can type <b>${v.code}</b></div>
-    <div class="mbtns" style="margin-top:16px">${isHost
+    <div class="mbtns" style="margin-top:20px">${isHost
       ?`<button class="${startCls}" id="lstart" ${startCls.includes('ghost')?'style="color:var(--deep);border-color:#C6C1B4"':''}>${startLabel}</button>`
       :`<div class="msub">waiting for ${hostName} to start…</div>`}</div>
     ${isHost?`<div class="lstartsub">${startSub}</div>`:''}
-    <div class="cardwhisper">${cardLine}</div>
     <button class="mexit" id="lleave">${isHost?'CLOSE TABLE':'LEAVE'}</button>`;
   box.querySelector('#lshare').onclick=()=>{
     shareInvite(box.querySelector('#lshare'));
