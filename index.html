@@ -283,6 +283,29 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 .pkline .pkname{font-size:10px;letter-spacing:.06em;font-weight:600;color:#6B6250}
 .pksect{font-size:8.5px;letter-spacing:.26em;color:var(--coral);font-weight:700;margin:14px 6px 3px;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:4px}
 .pknote{font-size:9px;color:#A8A296;margin-top:2px;line-height:1.4}
+/* quiet menu */
+.msect{font-size:9px;letter-spacing:.26em;color:var(--coral);font-weight:700;margin:16px 2px 2px;
+  border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:5px;text-align:left}
+.mnrow{display:flex;align-items:center;padding:13px 2px;border-bottom:1px solid #EFE9DB;width:100%;
+  background:none;border-left:none;border-right:none;border-top:none;font-family:var(--sans);text-align:left;cursor:pointer}
+.mnrow .lb{font-size:12px;letter-spacing:.1em;color:var(--ink);font-weight:600}
+.mnrow .sb{display:block;font-size:9.5px;color:#A8A296;margin-top:2px;letter-spacing:.02em;font-weight:400}
+.mnrow .chevr{margin-left:auto;font-size:13px;color:#C4BFB2}
+.mnrow .seg{margin-left:auto;display:flex;gap:4px}
+.seg .sgi{font-size:9px;letter-spacing:.1em;font-weight:700;padding:6px 11px;border-radius:12px;
+  border:1px solid #DAD4C6;color:#A8A296;background:none;font-family:var(--sans)}
+.seg .sgi.on{background:var(--deep);border-color:var(--deep);color:var(--gold-pale,#E8D9AE)}
+.mexit{background:none;border:none;font-family:var(--sans);font-size:10px;letter-spacing:.16em;color:#A8A296;padding:13px 0 2px;width:100%;text-align:center}
+/* lobby redesign */
+.sav.botprev{background:#EDEAE2;color:#B9B2A2;border:1.5px dashed #D5CFC0}
+.snm i.newtag{color:#A8893C;font-style:italic}
+.sentchip{display:inline-block;font-size:9px;letter-spacing:.14em;font-weight:700;color:#3E7A4E;
+  background:rgba(62,122,78,.1);border-radius:10px;padding:5px 12px;margin-top:10px}
+.lobbysub{font-size:10.5px;color:#8A7F5F;line-height:1.55;margin-top:4px}
+.codewhisper{font-size:9.5px;color:#A8A296;margin-top:11px;letter-spacing:.03em}
+.codewhisper b{letter-spacing:.26em;color:#8A6F2F;font-size:11px}
+.lstartsub{font-size:9px;color:#A8A296;margin-top:7px;line-height:1.55}
+.cardwhisper{font-size:9px;color:#B5AF9F;margin-top:14px;line-height:1.5}
 .pksect:first-child{margin-top:8px}
 .pkline .chpat{font-family:var(--sans);font-size:13px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .pkline .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
@@ -2570,6 +2593,10 @@ function peekClose(silent){
   pt.addEventListener('pointercancel',()=>{if(td){$('peek').classList.remove('notrans');$('peek').style.transform='translateY(0)';td=null}});
   $('peekdim').addEventListener('pointerdown',()=>peekClose());
   window.addEventListener('resize',()=>{if($('peekwrap').classList.contains('show'))peekBounds()});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&MP.lobbyPop){MP.lobbyPop=false;sfx('seat');olmHaptic('call');
+    if(MP.view&&MP.view.phase==='lobby')renderLobby(MP.view)}
+});
 }
 /* header CARD button: tap toggles the pull-down in game (hold to peek); opens card manager elsewhere */
 {
@@ -2854,44 +2881,76 @@ function renderLobby(v){
   const box=$('modalin');
   const isHost=v.you.seat===0;
   const hostName=v.seats[0]?v.seats[0].name:'the host';
-  const seats=v.seats.map((s,i)=>{
-    if(!s)return `<div style="color:#A08F63">Seat ${i+1} — <i>open (a bot will fill it)</i></div>`;
-    return `<div><b>${s.name}</b>${s.isYou?' (you)':''}${s.connected?'':' · reconnecting…'}</div>`;
-  }).join('');
-  const cardLine=isHost
-    ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
-    :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`;
-  /* who just sat down? (fresh lobby seeds silently; after that, new friends get a pop + chime) */
-  if(MP.lobbyCode!==v.code){MP.lobbyCode=v.code;MP.lobbySeen=new Set(v.seats.map((sx,i)=>sx&&sx.kind==='human'?i+':'+sx.name:null).filter(Boolean))}
+  const MPBOTS=['Evelyn','Dinah','Bitsy','Norma'];
+  /* who just sat down? (fresh lobby seeds silently; new friends pop + chime, tag lingers 45s;
+     replays on return if it happened while the app was hidden) */
+  if(MP.lobbyCode!==v.code){
+    MP.lobbyCode=v.code;
+    MP.lobbySeen=new Set(v.seats.map((sx,i)=>sx&&sx.kind==='human'?i+':'+sx.name:null).filter(Boolean));
+    MP.lobbyNew=new Map();
+    MP.shared=false;
+  }
+  if(!MP.lobbyNew)MP.lobbyNew=new Map();
   const fresh=new Set();
   v.seats.forEach((sx,i)=>{
     if(sx&&sx.kind==='human'&&!sx.isYou){
       const k=i+':'+sx.name;
-      if(!MP.lobbySeen.has(k)){fresh.add(i);MP.lobbySeen.add(k)}
+      if(!MP.lobbySeen.has(k)){fresh.add(i);MP.lobbySeen.add(k);MP.lobbyNew.set(i,Date.now())}
+      else if(MP.lobbyNew.has(i)&&Date.now()-MP.lobbyNew.get(i)<45000)fresh.add(i);
+      else MP.lobbyNew.delete(i);
     }
   });
   const seatDots=v.seats.map((sx,i)=>{
-    if(!sx)return `<div class="seat"><div class="sav open">+</div><div class="snm">open</div></div>`;
+    if(!sx){
+      const bn=MPBOTS[i]||'a bot';
+      return `<div class="seat"><div class="sav botprev">${bn.slice(0,2).toUpperCase()}</div>
+        <div class="snm">${bn}<br><i>bot · seat open</i></div></div>`;
+    }
     const ini=(sx.name||'?').trim().slice(0,2).toUpperCase();
     const cls=sx.isYou?'you':(sx.kind==='bot'?'bot':'friend');
     const isNew=fresh.has(i);
     const nm=sx.isYou?`${sx.name}<br><i>you</i>`
-      :sx.name+(isNew?'<br><i class="justtag">takes a seat!</i>':(sx.connected===false?'<br><i>reconnecting…</i>':''));
-    return `<div class="seat"><div class="sav ${cls}${isNew?' justin':''}">${ini}</div><div class="snm">${nm}</div></div>`;
+      :sx.name+(isNew?'<br><i class="newtag">takes a seat!</i>':(sx.connected===false?'<br><i>reconnecting…</i>':''));
+    return `<div class="seat"><div class="sav ${cls}${isNew?' justin':''}"${isNew?' style="box-shadow:0 0 0 5px rgba(201,162,75,.25)"':''}>${ini}</div><div class="snm">${nm}</div></div>`;
   }).join('');
-  if(fresh.size)sfx('seat');
-  const anyOpen=v.seats.some(sx=>!sx);
-  const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'')
-    +(anyOpen?'<br>Seats still open at the deal are played by the bots.':'');
-  box.innerHTML=`<div class="mtop">YOUR TABLE — CODE</div>
-    <h2 class="lcode">${v.code}</h2>
-    <div class="mbtns" style="margin:14px 0 0"><button class="abtn gold" id="lshare">SHARE INVITE</button></div>
-    <div class="seatrow" style="margin:22px 0 18px">${seatDots}</div>
-    <div class="lobbycard" style="margin:0 0 6px">${info}</div>
-    <div class="mbtns" style="margin-top:14px">${isHost?'<button class="abtn" id="lstart">START GAME</button>':'<div class="msub">waiting for the host to start…</div>'}
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lleave">LEAVE</button></div>`;
-  box.querySelectorAll('.sav.open').forEach(el=>{el.style.cursor='pointer';el.onclick=()=>box.querySelector('#lshare').click()});
-  box.querySelector('#lshare').onclick=()=>shareInvite(box.querySelector('#lshare'));
+  {const justNow=[...fresh].some(i=>Date.now()-(MP.lobbyNew.get(i)||0)<1500);
+   if(justNow){
+     if(document.hidden)MP.lobbyPop=true;
+     else{sfx('seat');olmHaptic('call')}
+   }}
+  const friends=v.seats.filter(sx=>sx&&sx.kind==='human'&&!sx.isYou).map(sx=>sx.name);
+  const openBots=v.seats.map((sx,i)=>sx?null:(MPBOTS[i]||'a bot')).filter(Boolean);
+  const anyOpen=openBots.length>0;
+  const startLabel=friends.length
+    ?`START GAME — YOU & ${friends.map(n=>n.toUpperCase()).join(' & ')}`
+    :(MP.shared?'START GAME':'START WITH THE BOTS');
+  const startCls=(friends.length||MP.shared)?'abtn':'abtn ghost';
+  const startSub=friends.length
+    ?(anyOpen?`${openBots.join(' & ')} play${openBots.length===1?'s':''} the open seat${openBots.length===1?'':'s'}`:'the table is full — deal when ready')
+    :'no need to wait — friends who join mid-game<br>take over a bot\'s seat with a chime';
+  const cardLine=(isHost
+    ?`Playing <b>${v.cardTitle}</b> — your card rules the table`
+    :`Playing <b>${v.cardTitle}</b> — ${hostName}'s card rules the table`)
+    +(v.config&&v.config.hints===false?' · no hints (house rules)':'')
+    +(v.config&&v.config.charleston==='express'?' · express Charleston':'');
+  box.innerHTML=`<div class="mtop">YOUR TABLE</div>
+    <h2 style="font-size:22px">Invite your players</h2>
+    ${MP.shared?'<div class="sentchip">INVITE SENT ✓</div>'
+      :'<div class="lobbysub">Seats you don\'t fill are played by the bots —<br>friends can join or take over anytime, even mid-game.</div>'}
+    <div class="seatrow" style="margin:18px 0 4px">${seatDots}</div>
+    <div class="mbtns" style="margin-top:12px"><button class="${MP.shared?'abtn ghost':'abtn'}" id="lshare" style="${MP.shared?'color:var(--deep);border-color:#C6C1B4':''}">${MP.shared?'SHARE TO MORE FRIENDS':'SHARE INVITE'}</button></div>
+    <div class="codewhisper">joining by phone? they can type <b>${v.code}</b></div>
+    <div class="mbtns" style="margin-top:16px">${isHost
+      ?`<button class="${startCls}" id="lstart" ${startCls.includes('ghost')?'style="color:var(--deep);border-color:#C6C1B4"':''}>${startLabel}</button>`
+      :`<div class="msub">waiting for ${hostName} to start…</div>`}</div>
+    ${isHost?`<div class="lstartsub">${startSub}</div>`:''}
+    <div class="cardwhisper">${cardLine}</div>
+    <button class="mexit" id="lleave">${isHost?'CLOSE TABLE':'LEAVE'}</button>`;
+  box.querySelector('#lshare').onclick=()=>{
+    shareInvite(box.querySelector('#lshare'));
+    MP.shared=true;
+    setTimeout(()=>{if(MP.view&&MP.view.phase==='lobby')renderLobby(MP.view)},1600);
+  };
   const st=box.querySelector('#lstart');
   if(st)st.onclick=()=>mpSend({type:'start'});
   box.querySelector('#lleave').onclick=()=>mpSend({type:'leave'});
@@ -3065,48 +3124,49 @@ function goTitle(){
 }
 $('btnmenu').onclick=()=>{
   const box=$('modalin');
-  const top=MP.active
-    ?`<button class="abtn gold" id="mshare">SHARE INVITE — SEAT A FRIEND</button>
-      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mleavet">LEAVE TABLE</button>`
-    :`<button class="abtn gold" id="mtitle">EXIT GAME</button>`;
+  const cardTitle=activeCardName()==='custom'?((CUSTOM&&CUSTOM.title)||'MY CARD'):'THE OOH LA CARD';
+  const seg=(id,opts,cur)=>`<span class="seg" id="${id}">${opts.map((o,i)=>
+    `<button class="sgi${i===cur?' on':''}" data-i="${i}">${o}</button>`).join('')}</span>`;
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:24px">Menu</h2>
-  <div class="mbtns" style="margin-top:16px;flex-direction:column;align-items:center;gap:11px">
-    ${top}
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mcard">MY CARD — SWITCH OR IMPORT</button>
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="msound">SOUND: ${SND?'ON':'OFF'}</button>
-    ${MP.active?'':`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mchar">CHARLESTON: ${CHFULL?'FULL':'EXPRESS'}</button>`}
-    ${MP.active?'':`<div style="width:100%;max-width:280px;text-align:left">
-      <div style="font-size:10px;letter-spacing:.24em;color:#A8A296;margin:4px 0 6px;text-align:center">THE BOTS</div>
-      ${[0,1,2].map(i=>`<button class="bopt${i===BOTLVL?' on':''}" data-lvl="${i}">
-        <span class="btxt"><span class="bnm">${BOTLVL_NAMES[i]}</span><span class="bds">${BOT_DESCS[i]}</span></span>
-        <span class="bck"></span></button>`).join('')}
-    </div>`}
-    <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="mrules">HOUSE RULES</button>
-    <button class="abtn" id="mclose">RETURN TO GAME</button>
-  </div>`;
-  box.querySelector('#msound').onclick=()=>{
-    SND=!SND;
-    try{localStorage.setItem('olmSnd',SND?'1':'0')}catch(e){}
-    box.querySelector('#msound').textContent='SOUND: '+(SND?'ON':'OFF');
-    if(SND)sfx('tap');
+  <div style="text-align:left">
+    <div class="msect">THIS TABLE</div>
+    ${MP.active?`<button class="mnrow" id="mshare"><span class="lb">SHARE INVITE</span><span class="chevr">›</span></button>`:''}
+    <button class="mnrow" id="mcard"><span class="lb">MY CARD<span class="sb">${cardTitle} · switch or import</span></span><span class="chevr">›</span></button>
+    <button class="mnrow" id="mrules"><span class="lb">HOUSE RULES</span><span class="chevr">›</span></button>
+    <div class="msect">HOW YOU PLAY</div>
+    <div class="mnrow"><span class="lb">SOUND</span>${seg('msound',['ON','OFF'],SND?0:1)}</div>
+    ${MP.active?'':`<div class="mnrow"><span class="lb">CHARLESTON</span>${seg('mchar',['FULL','EXPRESS'],CHFULL?0:1)}</div>`}
+    ${MP.active?'':`<div class="mnrow"><span class="lb">THE BOTS<span class="sb" id="mbotdesc">${BOT_DESCS[BOTLVL]}</span></span>${seg('mbots',['BREEZY','CLUB','SHARK'],BOTLVL)}</div>`}
+  </div>
+  <div class="mbtns" style="margin-top:18px"><button class="abtn" id="mclose">RETURN TO GAME</button></div>
+  ${MP.active?`<button class="mexit" id="mleavet">LEAVE TABLE</button>`:`<button class="mexit" id="mtitle">EXIT GAME</button>`}`;
+  const wireSeg=(id,fn)=>{
+    const el=box.querySelector('#'+id);
+    if(!el)return;
+    el.querySelectorAll('.sgi').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      el.querySelectorAll('.sgi').forEach(x=>x.classList.toggle('on',x===b));
+      fn(+b.dataset.i);
+    });
   };
+  wireSeg('msound',i=>{
+    SND=i===0;
+    try{localStorage.setItem('olmSnd',SND?'1':'0')}catch(e){}
+    if(SND)sfx('tap');
+  });
+  wireSeg('mchar',i=>{
+    CHFULL=i===0;
+    try{localStorage.setItem('olmChar',CHFULL?'full':'express')}catch(e){}
+    sfx('tap');
+  });
+  wireSeg('mbots',i=>{
+    BOTLVL=i;
+    try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
+    const d=box.querySelector('#mbotdesc');if(d)d.textContent=BOT_DESCS[BOTLVL];
+    sfx('tap');
+  });
   const mcd=box.querySelector('#mcard');
   if(mcd)mcd.onclick=()=>{closeModal();openSheet()};
-  const mc=box.querySelector('#mchar');
-  if(mc)mc.onclick=()=>{
-    CHFULL=!CHFULL;
-    try{localStorage.setItem('olmChar',CHFULL?'full':'express')}catch(e){}
-    mc.textContent='CHARLESTON: '+(CHFULL?'FULL':'EXPRESS');
-    sfx('tap');
-  };
-  box.querySelectorAll('.bopt').forEach(b=>{
-    b.onclick=()=>{
-      BOTLVL=+b.dataset.lvl;
-      try{localStorage.setItem('olmBots',String(BOTLVL))}catch(e){}
-      box.querySelectorAll('.bopt').forEach(x=>x.classList.toggle('on',+x.dataset.lvl===BOTLVL));
-      sfx('tap');
-    };
-  });
   const ms=box.querySelector('#mshare');
   if(ms)ms.onclick=()=>shareInvite(ms);
   const lt=box.querySelector('#mleavet');
