@@ -1203,6 +1203,8 @@ function doJokerSwap(){
 }
 function discardSelected(){
   if(G.sel.size!==1)return;
+  {const selT=(MP.active&&MP.view?MP.view.you.rack:G.players[0].hand).find(x=>G.sel.has(x.id));
+   if(selT&&selT.s==='J'){setStatus('Jokers are far too precious to discard, darling');G.sel.clear();renderRack();renderActions();return}}
   if(MP.active){
     mpSend({type:'discard',id:[...G.sel][0]});
     G.sel.clear();
@@ -1859,6 +1861,7 @@ function tapTile(t){
     sfx('tap');
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
+    if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else{G.sel.clear();G.sel.add(t.id)}
     sfx('tap');
@@ -2042,8 +2045,8 @@ function renderReadSheet(){
   RSKEY=(st||'')+'|'+(BGREAD.stage||'');
   const flag='<span id="rsflag" style="display:none"></span>';
   if(st==='matched'){
-    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">That's your 2026 card</h2>
-      <div class="msub">Your photos check out — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands are':'your card is'} ready.</div>
+    box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><div class="okcirc">✓</div><h2 style="font-size:23px">Your 2026 card is in</h2>
+      <div class="msub">Loaded from your photos — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands':'your card is'} ready to play.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsplay">PLAY WITH MY CARD</button></div>`;
     box.querySelector('#rsplay').onclick=()=>{BGREAD.state=null;readPillSync();closeModal();showMsg('CARD READY')};
     return;
@@ -2070,7 +2073,7 @@ function renderReadSheet(){
     return;
   }
   box.innerHTML=`${flag}<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Checking your photos…</h2>
-    <div class="spin"></div><div class="msub">Matching them against your 2026 card.</div>`;
+    <div class="spin"></div><div class="msub">Reading your photos…</div>`;
 }
 function openReadSheet(){renderReadSheet();$('modal').classList.add('open')}
 function readSheetTick(){
@@ -2275,7 +2278,7 @@ $('btnhow').onclick=()=>{
   const box=$('modalin');
   box.innerHTML=`<div class="mtop">HOUSE RULES</div><h2 style="font-size:24px">How We Play</h2>
   <div class="rules" style="margin-top:12px">
-  <p><b>The goal.</b> Be first to make a 14-tile hand that exactly matches a line on the Ooh La Card (tap CARD anytime — it shows how close you are).</p>
+  <p><b>The goal.</b> Be first to make a 14-tile hand from the card in play — the Ooh La Card, or your own card once you've added it (tap CARD anytime; it shows every hand and how close you are).</p>
   <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. Never pass a joker.</p>
   <p><b>Your turn.</b> Draw a tile, discard a tile. Tap a tile, then DISCARD.</p>
   <p><b>Calling.</b> When someone discards a tile you need for a group of 3+ (pung, kong, quint), you may call it — the group is then exposed. Pairs may never be called.</p>
@@ -2332,9 +2335,21 @@ function mpOnMsg(m){
   switch(m.type){
     case 'view':{
       if(!MP.intended)return;
+      const prevPhase=MP.view?MP.view.phase:null;
       MP.view=m;
-      if(m.phase==='lobby')renderLobby(m);
-      else{closeModal();mpRenderGame(m)}
+      if(m.phase==='lobby'){MP.endSeen=false;renderLobby(m)}
+      else if(m.phase==='ended'){
+        mpRenderGame(m);
+        /* late joiners & reconnects: the 'end' broadcast is long gone, so the view carries it */
+        if(m.over&&!MP.endSeen){MP.endSeen=true;mpShowEnd(m.over)}
+      }
+      else{
+        MP.endSeen=false;
+        /* only force-close the modal when the game is actually starting (leaving the lobby) —
+           NOT on every turn, which was closing the menu mid-game */
+        if(prevPhase==='lobby'||prevPhase==null||prevPhase==='ended')closeModal();
+        mpRenderGame(m);
+      }
       break;
     }
     case 'callwin':{
@@ -2353,7 +2368,7 @@ function mpOnMsg(m){
       if(m.kind==='takeover'){stFlash(`<b>${m.name}</b> joins the table!`);showMsg(m.name.toUpperCase()+' JOINS')}
       break;
     }
-    case 'end':{if(!MP.intended)return;mpShowEnd(m);break}
+    case 'end':{if(!MP.intended)return;MP.endSeen=true;mpShowEnd(m);break}
     case 'err':{setStatus(m.msg||'Hmm, that did not work');if(MP.view&&MP.view.phase==='lobby')renderLobby(MP.view);else if(!MP.view){closeModal();openFriends(m.msg)}break}
     case 'left':{MP.active=false;MP.intended=false;MP.view=null;goTitle();break}
   }
@@ -2491,7 +2506,9 @@ function renderLobby(v){
     const nm=sx.isYou?`${sx.name}<br><i>you</i>`:sx.name+(sx.connected===false?'<br><i>reconnecting…</i>':'');
     return `<div class="seat"><div class="sav ${cls}">${ini}</div><div class="snm">${nm}</div></div>`;
   }).join('');
-  const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'');
+  const anyOpen=v.seats.some(sx=>!sx);
+  const info=cardLine+(v.config&&v.config.hints===false?' &nbsp;·&nbsp; no hints (house rules)':'')
+    +(anyOpen?'<br>Seats still open at the deal are played by the bots.':'');
   box.innerHTML=`<div class="mtop">YOUR TABLE — CODE</div>
     <h2 class="lcode">${v.code}</h2>
     <div class="mbtns" style="margin:14px 0 0"><button class="abtn gold" id="lshare">SHARE INVITE</button></div>

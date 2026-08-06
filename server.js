@@ -312,6 +312,7 @@ function viewFor(T, seatIdx) {
   }
   return {
     type: 'view', code: T.code, phase: T.phase, chStep: T.chStep,
+    over: T.phase === 'ended' ? (T.endInfo || null) : undefined,
     turn: T.turn, step: T.step, wall: T.wall.length, dealer: T.dealer,
     discards: T.discards.map(d => ({ t: pubTile(d.t), by: d.by })),
     config: T.config, cardTitle: T.cardMeta.title,
@@ -536,13 +537,15 @@ function endWin(T, i, win) {
   T.phase = 'ended'; T.seq++; clearTimers(T);
   const tiles = finalTiles(T.seats[i]);
   const jokerless = !tiles.some(t => t.s === 'J');
-  broadcast(T, { type: 'end', result: 'win', seat: i, name: T.seats[i].name,
-    hand: win.hand.name, cat: win.hand.cat, pts: win.hand.pts * (jokerless ? 2 : 1), jokerless, tiles });
+  T.endInfo = { result: 'win', seat: i, name: T.seats[i].name,
+    hand: win.hand.name, cat: win.hand.cat, pts: win.hand.pts * (jokerless ? 2 : 1), jokerless, tiles };
+  broadcast(T, Object.assign({ type: 'end' }, T.endInfo));
 }
 function endWallGame(T) {
   STATS.ends.wall++; dayRec().walls++;
   pushResult({ r: 'wall' });
   T.phase = 'ended'; T.seq++; clearTimers(T);
+  T.endInfo = { result: 'wall' };
   broadcast(T, { type: 'end', result: 'wall' });
 }
 
@@ -634,6 +637,7 @@ function handleMsg(p, m) {
       const s = T.seats[seat];
       const t = s.rack.find(x => x.id === m.id);
       if (!t) return;
+      if (t.s === 'J') return send(p.token, { type: 'err', msg: 'Jokers may never be discarded at this table' });
       clearTimeout(T.timers.turn);
       doDiscard(T, seat, t);
       break;
@@ -709,7 +713,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r21';
+const LAB_VERSION = 'r22';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -1204,7 +1208,7 @@ async function runReadJob(job, photos) {
     if (!matched && !fullReadAllowed()) throw new Error('The deep reader has reached its daily limit — try again tomorrow (known cards still match instantly)');
     if (matched) {
       job.status = 'done'; job.stage = 'done';
-      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'photos verified against your ' + matched.year + ' card' }],
+      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'your ' + matched.year + ' card, loaded from your photos' }],
         model: usage.model, ms: Date.now() - t0, matched: matched.key };
       STATS.reads++; STATS.matched++; dayRec().reads++;
       console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
@@ -1228,7 +1232,7 @@ async function runReadJob(job, photos) {
           need, extra: sc.extra, ms: Date.now() - t0 });
         if (served) {
           job.status = 'done'; job.stage = 'done';
-          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'photos read in full and verified line-by-line against your ' + KC.year + ' card' }],
+          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'your ' + KC.year + ' card, loaded in full from your photos' }],
             model: usage.model, ms: Date.now() - t0, matched: KC.key };
           STATS.reads++; STATS.matched++; dayRec().reads++;
           console.log(JSON.stringify({ ev: 'card_read', matched: KC.key + ' (mid-tier)', ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
