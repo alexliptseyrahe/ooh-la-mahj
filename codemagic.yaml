@@ -38,6 +38,7 @@ workflows:
           cd app/ios/App/App
           plutil -replace NSCameraUsageDescription -string "Ooh La Mahj uses the camera so you can photograph your mah jongg card and play with your own hands." Info.plist
           plutil -replace NSPhotoLibraryUsageDescription -string "Ooh La Mahj can read photos of your mah jongg card from your library so you can play with your own hands." Info.plist
+          plutil -replace ITSAppUsesNonExemptEncryption -bool NO Info.plist
       - name: Set build number
         script: |
           cd app/ios/App
