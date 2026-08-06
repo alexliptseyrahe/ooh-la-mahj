@@ -220,7 +220,7 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 
 /* ---------- title screen ---------- */
 #title{
-  position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow-y:auto;
   background-color:var(--deep);
   background-image:
     repeating-linear-gradient(45deg, transparent 0 16px, rgba(255,255,255,.03) 16px 17px),
@@ -317,6 +317,13 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 #schedpill .pn{margin-left:auto;font-size:9.5px;letter-spacing:.1em;font-weight:700;color:var(--gold);
   border:1px solid rgba(201,162,75,.5);border-radius:10px;padding:4px 8px;white-space:nowrap}
 #cardnudge{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:14px}
+/* when the pill is present, the title compresses so nothing falls off small screens */
+body.haspill .crest{width:88px!important;height:88px!important;margin-bottom:8px!important}
+body.haspill #title .est{margin:8px 0 16px!important}
+body.haspill #title .tbtns{gap:11px}
+body.haspill #schedpill{margin-top:10px}
+body.haspill #matlabel{margin-top:20px}
+body.haspill #cardnudge{margin-top:8px}
 #cardnudge #cnmain{background:none;border:none;font-family:var(--sans);font-size:11.5px;letter-spacing:.05em;
   color:rgba(251,247,236,.65);padding:6px 4px}
 #cardnudge #cnmain b{color:var(--gold-pale);font-weight:600;letter-spacing:.12em}
@@ -392,7 +399,8 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
   max-height:82dvh;display:flex;flex-direction:column;
   box-shadow:0 -8px 30px rgba(0,0,0,.4);
 }
-#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#CFC9BC;margin:10px auto 4px}
+#sheetin .grab{flex:none;width:44px;height:4px;border-radius:2px;background:#D8D3C6;margin:10px auto 4px}
+#modalin::before{content:'';display:block;width:44px;height:4px;border-radius:2px;background:#D8D3C6;margin:2px auto 10px}
 #sheetin{transition:transform .3s cubic-bezier(.32,.72,.28,1)}
 #sheetin.notrans{transition:none}
 #sheetin{touch-action:none}
@@ -405,8 +413,9 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 #sheetin .sub{text-align:center;font-size:11px;letter-spacing:.16em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
 #cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
-.cbtn{font-size:11px;font-weight:600;letter-spacing:.16em;color:#6B6248;border:1px solid #CFC9BC;border-radius:13px;padding:5px 13px;background:#fff}
+.cbtn{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#A8A296;border:1px solid #DAD4C6;border-radius:12px;padding:7px 12px;background:none;font-family:var(--sans)}
 .cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
+.cbtn:disabled{opacity:.45}
 .cbtn.imp{color:var(--coral-dk);border-color:var(--coral)}
 .cbtn:disabled{opacity:.35}
 #imparea{width:100%;height:90px;border:1px solid #CFC9BC;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FCFBF9;color:var(--ink)}
@@ -2627,11 +2636,12 @@ function renderNudge(){
 function renderPill(){
   const el=$('schedpill');if(!el)return;
   const up=schedUpcoming();
+  document.body.classList.toggle('haspill',up.length>0);
   if(!up.length){el.style.display='none';return}
   const g=up.find(x=>x.type==='g')||up[0];
   el.style.display='flex';
   el.innerHTML=`<span class="pdot"></span><span style="min-width:0">
-    <span class="pl1">${g.label||((g.hostName||'Your')+" table")}${g.type==='g'?' · '+fmtAt(g.at).split(' · ')[0]:''}</span><br>
+    <span class="pl1">${g.label||(g.hostName?g.hostName+"’s table":"Your table")}${g.type==='g'?' · '+fmtAt(g.at).split(' · ')[0]:''}</span><br>
     <span class="pl2">${g.type==='g'?fmtAt(g.at).split(' · ')[1]+' · '+fmtIn(g.at):'finding a time · '+(g.votes||0)+' answered'}</span></span>
     ${up.length>1?`<span class="pn">${up.length} GAMES</span>`:'<span class="pn">›</span>'}`;
   el.onclick=openGamesSheet;
@@ -2651,7 +2661,7 @@ function openGamesSheet(){
     const isPoll=g.type==='p';
     const joinable=!isPoll&&g.at-Date.now()<60*60000;
     return `<div class="gmrow ${isPoll?'polling':'locked'}">
-      <div class="top"><span class="gnm">${g.label||((g.hostName||'A friend')+"'s table")}</span>
+      <div class="top"><span class="gnm">${g.label||((g.hostName||'A friend')+"’s table")}</span>
         <span class="gwhen">${isPoll?'FINDING A TIME':fmtAt(g.at).toUpperCase()}</span></div>
       <div class="gwho">${isPoll?'friends are voting on times':(g.mine?'you are hosting':'hosted by '+(g.hostName||'a friend'))+' · '+fmtIn(g.at)}</div>
       <div class="grow2">
@@ -2759,8 +2769,11 @@ function openShareStep(rec){
       ?'Friends vote on the times that work.<br>You lock the winner — then everyone gets the invite.'
       :'Friends who open it can add it to their calendars.<br>The table itself opens an hour before game time.'}</div>
     <div class="mbtns" style="margin-top:14px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="sdone">DONE</button></div>`;
+  const stext=isPoll
+    ?`When can you play mah jongg${rec.label?` (${rec.label})`:''}? Tap to vote on the times that work — takes ten seconds:`
+    :`You’re invited to mah jongg${rec.label?` — ${rec.label}`:''}! ${fmtAt(rec.at)}. Tap for your seat and the calendar invite:`;
   box.querySelector('#scopy').onclick=e=>copyText(link,e.target);
-  box.querySelector('#sshare').onclick=()=>shareLinkNative(link,(rec.label||'Mah jongg')+' — join my table');
+  box.querySelector('#sshare').onclick=()=>shareLinkNative(link,stext);
   const sc=box.querySelector('#scal');
   if(sc)sc.onclick=()=>window.open(API()+'/cal/'+rec.code+'.ics','_blank');
   box.querySelector('#sdone').onclick=openGamesSheet;
@@ -2799,7 +2812,7 @@ async function openGamePage(code){
   const mine=SCHEDS.find(x=>x.code===code);
   schedAdd({type:'g',code,at:r.at,label:mine&&mine.label||'',mine:!!(mine&&mine.mine),hostName:r.hostName,created:mine&&mine.created||Date.now()});
   const joinable=r.live||r.at-Date.now()<60*60000;
-  box.innerHTML=`<div class="mtop">${((mine&&mine.label)||r.hostName+"'S TABLE").toUpperCase()}</div>
+  box.innerHTML=`<div class="mtop">${((mine&&mine.label)||r.hostName+"’s table").toUpperCase()}</div>
     <h2 style="font-size:22px">${fmtAt(r.at)}</h2>
     <div class="msub" id="gcount">${fmtIn(r.at)}</div>
     <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gjoin" ${joinable?'':'disabled'}>${joinable?'TAKE MY SEAT':'THE TABLE OPENS AN HOUR BEFORE'}</button></div>
