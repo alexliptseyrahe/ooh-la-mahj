@@ -384,9 +384,9 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
   border:1px solid rgba(201,162,75,.45);background:linear-gradient(135deg,rgba(201,162,75,.16),rgba(201,162,75,.05));
   font-family:var(--sans);color:var(--ivory);display:flex;align-items:center;gap:11px}
 #schedpill .pdot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px rgba(201,162,75,.8);flex:0 0 auto}
-#schedpill .pl1{font-size:12px;font-weight:600;letter-spacing:.05em;color:var(--gold-pale)}
-#schedpill .pl2{font-size:10.5px;color:rgba(251,247,236,.65);margin-top:2px}
-#schedpill .pn{margin-left:auto;font-size:9.5px;letter-spacing:.1em;font-weight:700;color:var(--gold);
+#schedpill .pl1{font-size:13.5px;font-weight:600;letter-spacing:.05em;color:var(--gold-pale)}
+#schedpill .pl2{font-size:11.5px;color:rgba(251,247,236,.65);margin-top:2px}
+#schedpill .pn{margin-left:auto;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--gold);
   border:1px solid rgba(201,162,75,.5);border-radius:10px;padding:4px 8px;white-space:nowrap}
 #cardnudge{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:14px}
 /* when the pill is present, the title compresses so nothing falls off small screens */
@@ -400,54 +400,95 @@ body.haspill #cardnudge{margin-top:8px}
   color:rgba(251,247,236,.65);padding:6px 4px}
 #cardnudge #cnmain b{color:var(--gold-pale);font-weight:600;letter-spacing:.12em}
 #cardnudge #cnx{background:none;border:none;color:rgba(251,247,236,.35);font-size:12px;padding:6px 8px;font-family:var(--sans)}
-.gmrow{padding:13px 2px;border-bottom:1px solid #EFE9DB;text-align:left}
-.gmrow .top{display:flex;align-items:baseline;gap:8px}
-.gmrow .gnm{font-family:var(--serif);font-size:15px;color:var(--deep);font-weight:600}
-.gmrow .gwhen{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.08em;border-radius:10px;padding:4px 9px;white-space:nowrap}
-.gmrow.locked .gwhen{background:var(--gold);color:#fff}
-.gmrow.polling .gwhen{background:#EDE5D2;color:#8A6F2F}
-.gmrow .gwho{font-size:11px;color:#8A7F5F;margin-top:3px}
-.gmrow .grow2{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
-.gbtn{border:1px solid #D5CFC0;background:#fff;color:var(--deep);border-radius:12px;padding:8px 13px;font-size:10.5px;
-  font-weight:600;letter-spacing:.08em;font-family:var(--sans)}
-.gbtn.go{background:var(--coral);border-color:var(--coral);color:#fff}
-.gbtn:disabled{opacity:.4}
-.addsched{background:none;border:1px dashed #C9A24B;color:#A8893C;border-radius:14px;padding:12px 22px;font-size:11px;
-  font-weight:700;letter-spacing:.12em;font-family:var(--sans);margin-top:14px}
-.daysrow{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 6px;-webkit-overflow-scrolling:touch}
-.daysrow::-webkit-scrollbar{display:none}
-.dchip{flex:0 0 auto;border:1px solid #D5CFC0;background:#fff;border-radius:12px;padding:8px 12px;font-size:11px;
-  color:var(--deep);font-family:var(--sans);text-align:center;line-height:1.3}
-.dchip small{display:block;font-size:9px;color:#A8A296}
-.dchip.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
-.dchip.on small{color:rgba(232,217,174,.6)}
-.dchip:disabled{opacity:.3}
-.slotlist{margin-top:8px}
-.slotlist .sl{display:flex;align-items:center;font-size:11.5px;color:var(--deep);padding:7px 4px;border-bottom:1px solid #EFE9DB}
-.slotlist .sl button{margin-left:auto;background:none;border:none;color:#C25847;font-size:12px;font-family:var(--sans)}
-.frmlbl{display:block;font-size:10px;letter-spacing:.2em;color:#A8A296;font-weight:700;margin:16px 4px 7px;text-align:left}
-.frmin{width:100%;border:1px solid #D5CFC0;border-radius:12px;padding:12px;font-size:15px;background:#fff;
-  color:var(--ink);font-family:var(--sans);box-sizing:border-box}
-.sharebox{margin-top:14px;border:1px solid #EFE9DB;border-radius:14px;padding:14px;text-align:center;background:#fff}
-.sharebox .lnk{font-size:13px;color:var(--deep);font-weight:600;letter-spacing:.02em;word-break:break-all}
 /* poll voting (variant A) + host results (variant C) */
-.prow{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid #EAE7E0;text-align:left}
-.prow .pd{font-size:13px;color:var(--ink)}
-.prow .pd b{font-weight:600;color:var(--deep)}
-.prow .pdots{display:flex;gap:3px;align-items:center;margin-left:auto;margin-right:10px}
-.prow .pdot2{width:6px;height:6px;border-radius:50%;background:#D9D5CB}
-.prow .pdot2.on{background:var(--gold)}
-.prow .ptick{font-size:15px;color:#D9D5CB;width:22px;text-align:center}
-.prow.sel{background:linear-gradient(90deg,rgba(201,162,75,.1),transparent)}
-.prow.sel .ptick{color:#8A6F2F}
-.rrow{padding:11px 4px 13px;border-bottom:1px solid #EAE7E0;text-align:left}
-.rrow .top{display:flex;justify-content:space-between;align-items:baseline}
-.rrow .rd{font-size:13px;color:var(--ink)}
-.rrow .rd b{font-weight:600;color:var(--deep)}
-.rrow .rn{font-size:10.5px;color:#8A7F5F}
-.rrow .meter{height:3px;border-radius:2px;background:#EFECE5;margin-top:8px;overflow:hidden}
-.rrow .meter i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#C9A24B,#A8893C)}
-.rrow .lockrow{margin-top:9px}
+/* ---- scheduling v3: readable type, 44px targets, the menu's own quiet language ---- */
+.sh2{font-size:28px}
+.abtn.tall{min-height:54px;font-size:14px}
+.abtn.ghost.tall{min-height:50px;font-size:13px}
+.qlbl{display:block;font-size:10.5px;letter-spacing:.2em;color:var(--coral);font-weight:700;
+  margin:20px 2px 6px;text-align:left;border-bottom:1px solid rgba(226,114,91,.18);padding-bottom:5px}
+.qin{width:100%;border:1px solid #E2DCCE;border-radius:14px;padding:15px 16px;font-size:16px;background:#fff;
+  color:var(--ink);font-family:var(--sans);box-sizing:border-box;min-height:54px}
+.qin::placeholder{color:#9A948A}
+.qcard{background:#fff;border:1px solid #ECE7DB;border-radius:16px;overflow:hidden;text-align:left}
+.qrow{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:12px 15px;box-sizing:border-box;
+  border:none;border-bottom:1px solid #F1ECE1;background:none;font-family:var(--sans);text-align:left}
+.qrow:last-child{border-bottom:none}
+.qrow .lb{font-size:16px;color:var(--ink);font-weight:500}
+.qrow .sb{display:block;font-size:12.5px;color:#767061;margin-top:2px;font-weight:400;line-height:1.35}
+.qrow .rt{margin-left:auto;font-size:15px;color:var(--deep);font-weight:600;white-space:nowrap}
+.qrow .chevr{margin-left:auto;font-size:17px;color:#8A857A;line-height:1}
+.qrow.on{background:linear-gradient(90deg,rgba(226,114,91,.09),rgba(226,114,91,.02))}
+.qrow.on .lb{color:var(--deep);font-weight:600}
+.qsolo{border:1px solid #ECE7DB;border-radius:16px;min-height:60px}
+.wkrow{display:flex;align-items:center;gap:5px;margin-top:10px}
+.wkrow .nav{width:34px;height:56px;border-radius:12px;font-size:21px;color:#767061;flex:0 0 auto;
+  background:none;border:none;font-family:var(--sans)}
+.wkrow .nav:disabled{opacity:.22}
+.wkgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;flex:1;min-width:0}
+.wkday{border-radius:12px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;background:none;border:1px solid transparent;font-family:var(--sans)}
+.wkday .dw{font-size:10.5px;letter-spacing:.04em;color:#767061;font-weight:600}
+.wkday .dn{font-size:17px;color:var(--ink);font-weight:500}
+.wkday.on{background:var(--deep)}
+.wkday.on .dw{color:rgba(232,217,174,.7)}
+.wkday.on .dn{color:var(--gold-pale);font-weight:600}
+.wkday:disabled{opacity:.26}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.tcell{min-height:48px;border-radius:13px;border:1px solid #E2DCCE;background:#fff;font-size:15px;
+  color:var(--ink);font-family:var(--sans)}
+.tcell.on{background:var(--deep);border-color:var(--deep);color:var(--gold-pale);font-weight:600}
+.tcell:disabled{opacity:.3}
+.confpill{display:inline-flex;align-items:center;gap:9px;background:#F1EFE9;border-radius:14px;padding:12px 18px;
+  margin-top:14px;font-size:15px;color:var(--deep);font-weight:600}
+.confpill i{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:0 0 auto}
+.linkslab{display:flex;align-items:center;gap:8px;background:#F1EFE9;border-radius:14px;
+  padding:2px 4px 2px 16px;margin-top:14px;text-align:left}
+.linkslab .u{font-size:14.5px;color:var(--deep);font-weight:600;word-break:break-all;line-height:1.35;min-width:0}
+.linkslab button{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.14em;color:#A03E2A;
+  padding:16px 12px;background:none;border:none;font-family:var(--sans);white-space:nowrap;flex:0 0 auto}
+.seatdots{display:flex;gap:5px;margin-left:auto;flex:0 0 auto}
+.seatdots i{width:9px;height:9px;border-radius:50%;background:#E0DACC;display:block}
+.seatdots i.on{background:var(--gold)}
+.gcard{background:#F1EFE9;border-radius:18px;padding:15px 16px 13px;text-align:left;margin-top:12px}
+.gcard .gt{display:flex;align-items:center;gap:9px}
+.gcard .gn{font-family:var(--serif);font-size:20px;color:var(--deep);font-weight:600;line-height:1.15}
+.gcard .tag{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.1em;border-radius:11px;
+  padding:5px 10px;background:#94741F;color:#fff;white-space:nowrap}
+.gcard .tag.mut{background:#E6DDC6;color:#6E5520}
+.gcard .gd{font-size:15px;color:var(--ink);margin-top:7px;font-weight:500}
+.gcard .gw{font-size:13px;color:#6E6859;margin-top:3px;line-height:1.4}
+.gcard .act{display:flex;gap:8px;margin-top:13px;align-items:center}
+.gcard .act .go{flex:1;background:var(--coral);color:#fff;border-radius:14px;min-height:48px;font-size:12.5px;
+  font-weight:700;letter-spacing:.1em;border:none;font-family:var(--sans);padding:0 8px}
+.gcard .act .go:disabled{background:#E4E0D6;color:#6E6859;opacity:1}
+.gcard .act .go.quiet{background:#fff;border:1px solid #E4DFD2;color:#7E7869}
+.gcard .act .go.danger{background:#B23A2F}
+.gcard .act .ic{min-width:62px;height:48px;padding:0 12px;border-radius:14px;background:#fff;border:1px solid #E4DFD2;
+  font-size:11px;font-weight:700;letter-spacing:.12em;color:#7E7869;font-family:var(--sans);flex:0 0 auto}
+.addbig{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:56px;margin-top:14px;
+  border-radius:16px;border:1px dashed #C9B486;background:none;color:#8A6F2F;font-size:13.5px;font-weight:600;
+  letter-spacing:.08em;font-family:var(--sans);box-sizing:border-box}
+.vrow{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:12px 15px;border:none;
+  border-bottom:1px solid #F1ECE1;text-align:left;background:none;font-family:var(--sans);box-sizing:border-box}
+.vrow:last-child{border-bottom:none}
+.vrow .pd{font-size:16px;color:var(--ink);font-weight:500}
+.vrow .pw{display:block;font-size:13px;color:#767061;margin-top:3px}
+.vrow .tick{margin-left:auto;width:26px;height:26px;border-radius:50%;border:1.5px solid #DCD6C8;
+  flex:0 0 auto;position:relative}
+.vrow.sel{background:linear-gradient(90deg,rgba(201,162,75,.12),rgba(201,162,75,.02))}
+.vrow.sel .tick{background:var(--gold);border-color:var(--gold)}
+.vrow.sel .tick:after{content:'\2713';position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.vmeter{display:block;height:5px;border-radius:3px;background:#E9E5DC;margin-top:7px;overflow:hidden;max-width:150px}
+.vmeter i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#C9A24B,#A8893C)}
+.slotrow{display:flex;align-items:center;min-height:52px;padding:6px 4px 6px 15px;border-bottom:1px solid #F1ECE1;
+  font-size:15px;color:var(--deep);font-weight:500}
+.slotrow:last-child{border-bottom:none}
+.slotrow button{margin-left:auto;background:none;border:none;color:#C25847;font-size:11px;font-family:var(--sans);
+  padding:16px 14px;font-weight:700;letter-spacing:.12em}
+.schfoot{font-size:13px;color:#6E6859;line-height:1.55;margin-top:14px}
+.schwarn{font-size:13px;line-height:1.5;color:#B3705E;text-align:left;padding:8px 2px 0}
 .pksect:first-child{margin-top:8px}
 .pkline .chpat{font-family:var(--sans);font-size:14px;letter-spacing:.06em;color:#4A5A50;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .pkline .chpat i{font-style:normal;padding:2px 6px;border-radius:5px;background:#F1EFEA;font-weight:500}
@@ -627,6 +668,8 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
 #modalin .mpts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--coral-dk);margin:6px 0 16px}
 #modalin .mbtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;flex-direction:column;align-items:stretch}
 #modalin .mbtns .abtn{width:100%;box-sizing:border-box}
+/* on paper, a ghost button must be ink — never ivory */
+#modalin .abtn.ghost{color:var(--deep);border-color:#C6C1B4}
 #modalin .rules{text-align:left;font-size:13px;line-height:1.65;color:#3E4E45}
 #modalin .rules b{color:var(--deep)}
 #modalin .rules p{margin-bottom:9px}
@@ -1213,6 +1256,14 @@ function validateCard(c){
   }
   return null;
 }
+/* The first game is a scripted lesson: a rigged deal, one named target line, and six
+   coached moments — all written against the Ooh La card. If she has imported her own
+   2026 card, that line may not exist on it at all, and she would be steered toward a
+   hand her card cannot make. So the tutorial borrows the Ooh La card and gives hers
+   straight back, without ever touching her saved preference. */
+let LEARNCARDWAS=null;
+function learnCardOn(){ if(!LEARNCARDWAS&&HANDS!==CLUB_HANDS)LEARNCARDWAS=HANDS; HANDS=CLUB_HANDS; }
+function learnCardOff(){ if(LEARNCARDWAS){HANDS=LEARNCARDWAS;LEARNCARDWAS=null} }
 function useCard(which){
   if(which==='custom'&&CUSTOM)HANDS=CUSTOM.hands;
   else{which='club';HANDS=CLUB_HANDS}
@@ -1354,6 +1405,7 @@ function later(ms,fn){const s=SEQ;setTimeout(()=>{if(s===SEQ&&G&&G.phase!=='over
 function newGame(){
   SEQ++;
   coachOff();
+  learnCardOff();
   killClones();
   _tid=0;
   sfx('shuffle');
@@ -1627,7 +1679,7 @@ function afterDiscard(by,t){
          for — and never one that would kill the hand outright. */
       const tk=key(t);
       const wants=new Set();
-      for(const f of topFits(me)) for(const [gk,gn] of f.rem) if(gk===tk&&gn>=3)wants.add(gn);
+      for(const f of hintFits(me)) for(const [gk,gn] of f.rem) if(gk===tk&&gn>=3)wants.add(gn);
       for(const k of [3,4,5]){
         const need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
         if(!(jNeed<=jk&&copies+jk>=need&&(realUse+jNeed===need)))continue;
@@ -2184,7 +2236,10 @@ let HINTBASE='',STREVERT=null;
 function setStatus(html){
   $('statusline').innerHTML=html;
   clearTimeout(STREVERT);
-  if(HINTBASE&&html!==HINTBASE)STREVERT=setTimeout(()=>{$('statusline').innerHTML=HINTBASE},2200);
+  if(HINTBASE&&html!==HINTBASE)STREVERT=setTimeout(()=>{
+    $('statusline').innerHTML=HINTBASE;
+    if(typeof coachReplace==='function')coachReplace();
+  },2200);
 }
 let msgTimer=null;
 function showMsg(txt){
@@ -2197,6 +2252,7 @@ function renderAll(){
   $('wallnum').textContent=G.wall.length;
   renderOpps();renderDiscards();renderExp();renderRack();renderActions();
   if(typeof renderPeekVis==='function')renderPeekVis();
+  if(typeof coachReplace==='function')coachReplace();
 }
 function renderOpps(){
   const box=$('opps');box.innerHTML='';
@@ -2263,13 +2319,15 @@ function renderRack(){
   const me=G.players[0];
   let hintKeep=null;
   if(HINTON&&hintsAllowed()&&(G.phase==='charleston'||G.phase==='play')){
-    const fits=topFits(me);
+    const fits=hintFits(me);
     const coachGhosting=learnOn()&&document.querySelector('#coach .cghost');
     if(fits.length&&!coachGhosting){
       if(HINTIDX>=fits.length)HINTIDX=0;
       hintKeep=keepIdsFor(me,fits[HINTIDX].rem);
       const bf=fits[HINTIDX];
-      HINTBASE=`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`;
+      HINTBASE=learnOn()
+        ? `Aiming for <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`
+        : `Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`;
     }else HINTBASE='';
   }else HINTBASE='';
   for(const t of me.hand){
@@ -2351,20 +2409,26 @@ function tapTile(t){
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
     if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
+    /* Judge the tap against what she was looking at when she made it, so the guard
+       runs BEFORE the coach advances and repaints the rack. It protects exactly the
+       tiles the hint has ringed: never one it dimmed, never once she has turned the
+       training wheels off, and never while the ghost overlay is already naming the
+       tile to throw. */
+    if(learnOn()&&HINTON&&hintsAllowed()&&!document.querySelector('#coach .cghost')){
+      const f=learnFit();
+      if(f){
+        const keep=keepIdsFor(G.players[0],f.rem);
+        const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keep.has(x.id));
+        if(junkLeft&&keep.has(t.id)){
+          setStatus('Keep that one — it belongs to your hand.');
+          sfx('tap');return;
+        }
+      }
+    }
     /* she'd rather get on with it than read — let the coach catch up */
     if(learnOn()&&G.learn.step<2){
       if(PEEK.open)peekClose(true);
       coachStep(2);
-    }
-    /* first game: the app won't let her dismantle her own hand — only the tiles
-       that belong to nothing can go, which is the lesson anyway */
-    if(learnOn()){
-      const keepK={};learnTargetNow().forEach(([k,n])=>keepK[k]=n);
-      const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keepK[key(x)]);
-      if(junkLeft&&keepK[key(t)]){
-        setStatus('Keep that one — it belongs to your hand.');
-        sfx('tap');return;
-      }
     }
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else{G.sel.clear();G.sel.add(t.id)}
@@ -2925,133 +2989,298 @@ function shareLinkNative(t,txt){
   if(navigator.share)navigator.share({title:'Ooh La Mahj',text:txt,url:t}).catch(()=>{});
   else copyText(t);
 }
+/* ---- shared formatters ---- */
+const attrEsc=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tOnly=at=>new Date(at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const dOnly=at=>new Date(at).toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});
+function fmtShort(at){
+  const ms=at-Date.now(); if(ms<=0)return 'OPEN';
+  const m=Math.round(ms/60000); if(m<60)return 'IN '+m+'M';
+  const h=Math.floor(m/60); if(h<24)return 'IN '+h+'H';
+  return 'IN '+Math.floor(h/24)+'D';
+}
+const midOf=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
+
+/* the three times nine tables out of ten actually want — never the same day twice */
+function schedQuick(){
+  const now=Date.now(), out=[];
+  const dayAt=(add,h,m)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+add);d.setHours(h,m,0,0);return d.getTime()};
+  const wd=t=>new Date(t).toLocaleDateString([],{weekday:'long'});
+  const sd=t=>new Date(t).toLocaleDateString([],{month:'short',day:'numeric'});
+  const clash=t=>out.some(o=>midOf(o.at)===midOf(t));
+  /* still time today? */
+  for(const [h,m] of [[14,0],[19,30]]){
+    const t=dayAt(0,h,m);
+    if(t>now+45*60000){out.push({at:t,lb:h<17?'This afternoon':'Tonight',sb:fmtIn(t)});break}
+  }
+  /* tomorrow evening */
+  const tm=dayAt(1,19,30);
+  if(!clash(tm))out.push({at:tm,lb:'Tomorrow',sb:wd(tm)+' evening'});
+  /* their usual game, learned from the last one they scheduled — otherwise the weekend */
+  const past=SCHEDS.filter(x=>x.type==='g'&&x.at).sort((a,b)=>b.at-a.at)[0];
+  const src=past?new Date(past.at):null;
+  const hh=src?src.getHours():14, mm=src?src.getMinutes():0;
+  let add=((src?src.getDay():6)-new Date().getDay()+7)%7; if(add===0)add=7;
+  while(clash(dayAt(add,hh,mm)))add+=7;
+  const t3=dayAt(add,hh,mm);
+  out.push({at:t3,lb:wd(t3),sb:sd(t3)+(past?' · your usual time':'')});
+  /* if it is already late, today dropped out — offer one more rather than only two */
+  if(out.length<3){
+    let a2=2; while(clash(dayAt(a2,19,30)))a2++;
+    const t4=dayAt(a2,19,30);
+    out.push({at:t4,lb:wd(t4),sb:sd(t4)});
+  }
+  return out.sort((a,b)=>a.at-b.at).slice(0,3);
+}
+
 function openGamesSheet(){
   const box=$('modalin');
   const up=schedUpcoming();
   const rows=up.map(g=>{
     const isPoll=g.type==='p';
     const joinable=!isPoll&&g.at-Date.now()<60*60000;
-    return `<div class="gmrow ${isPoll?'polling':'locked'}">
-      <div class="top"><span class="gnm">${g.label||((g.hostName||'A friend')+"’s table")}</span>
-        <span class="gwhen">${isPoll?'FINDING A TIME':fmtAt(g.at).toUpperCase()}</span></div>
-      <div class="gwho">${isPoll?'friends are voting on times':(g.mine?'you are hosting':'hosted by '+(g.hostName||'a friend'))+' · '+fmtIn(g.at)}</div>
-      <div class="grow2">
-        ${isPoll?`<button class="gbtn go" data-poll="${g.code}">SEE THE POLL</button>`
-          :`<button class="gbtn go" data-join="${g.code}" ${joinable?'':'disabled'}>${joinable?'JOIN THE TABLE':'OPENS AN HOUR BEFORE'}</button>
-            <button class="gbtn" data-cal="${g.code}">CALENDAR</button>`}
-        <button class="gbtn" data-copy="${g.code}" data-type="${g.type}">COPY LINK</button>
-        <button class="gbtn" data-del="${g.code}" style="border:none;color:#C4BFB2">✕</button>
+    const nm=g.label||((g.hostName||'A friend')+"’s table");
+    const opens=isPoll?'':tOnly(g.at-60*60000);
+    const who=isPoll
+      ? ((g.votes||0)?((g.votes)+' friend'+((g.votes)>1?'s have':' has')+' answered'+(g.mine?' · you can lock it in':'')):'waiting on the first answer')
+      : ((g.mine?'You’re hosting':'Hosted by '+(g.hostName||'a friend'))+' · '+fmtIn(g.at));
+    return `<div class="gcard" data-code="${g.code}">
+      <div class="gt"><span class="gn">${nm}</span>
+        <span class="tag${isPoll?' mut':''}">${isPoll?'VOTING':fmtShort(g.at)}</span></div>
+      <div class="gd">${isPoll?((g.nslots||'A few')+' times proposed'):fmtAt(g.at)}</div>
+      <div class="gw">${who}</div>
+      <div class="act">
+        ${isPoll?`<button class="go" data-poll="${g.code}">SEE THE POLL</button>`
+          :`<button class="go" data-join="${g.code}" ${joinable?'':'disabled'}>${joinable?'JOIN THE TABLE':'OPENS AT '+opens}</button>`}
+        <button class="ic" data-copy="${g.code}" data-type="${g.type}">SHARE</button>
+        ${isPoll?'':`<button class="ic" data-cal="${g.code}">CAL</button>`}
       </div></div>`;
   }).join('');
-  box.innerHTML=`<div class="mtop">YOUR TABLE CALENDAR</div><h2 style="font-size:22px">Upcoming games</h2>
+  box.innerHTML=`<div class="mtop">YOUR TABLE CALENDAR</div><h2 class="sh2">Upcoming games</h2>
     ${rows||'<div class="msub" style="margin-top:14px">Nothing scheduled yet — plan one below.</div>'}
-    <div style="text-align:center"><button class="addsched" id="gadd">+ SCHEDULE A GAME</button></div>
-    <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gclose">CLOSE</button></div>`;
-  box.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(schedLink({type:b.dataset.type,code:b.dataset.copy}),b));
+    <button class="addbig" id="gadd">+&nbsp;&nbsp;SCHEDULE A GAME</button>
+    ${rows?'<div class="schfoot">Press and hold a game to take it off your list.</div>':''}
+    <div class="mbtns" style="margin-top:16px"><button class="abtn ghost tall" id="gclose">CLOSE</button></div>`;
+  box.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
+    const rec={type:b.dataset.type,code:b.dataset.copy};
+    const g=SCHEDS.find(x=>x.code===rec.code)||{};
+    shareLinkNative(schedLink(rec),schedInviteText(rec.type==='p'?{type:'p',label:g.label}:{type:'g',at:g.at,label:g.label}));
+  });
   box.querySelectorAll('[data-cal]').forEach(b=>b.onclick=()=>{if(API())window.open(API()+'/cal/'+b.dataset.cal+'.ics','_blank')});
   box.querySelectorAll('[data-poll]').forEach(b=>b.onclick=()=>openPollPage(b.dataset.poll));
   box.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>schedJoinFlow(b.dataset.join));
-  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{schedDrop(b.dataset.del);openGamesSheet()});
-  box.querySelector('#gadd').onclick=openSchedCreate;
+  box.querySelector('#gadd').onclick=newSchedFlow;
   box.querySelector('#gclose').onclick=closeModal;
+  /* removing a game is a deliberate press-and-hold, never a stray tap beside JOIN */
+  box.querySelectorAll('.gcard').forEach(c=>{
+    let tm=null;
+    const stop=()=>{if(tm){clearTimeout(tm);tm=null}};
+    const start=()=>{stop();tm=setTimeout(()=>{tm=null;askSchedRemove(c.dataset.code)},600)};
+    c.addEventListener('touchstart',start,{passive:true});
+    ['touchend','touchmove','touchcancel','mouseup','mouseleave'].forEach(e=>c.addEventListener(e,stop));
+    c.addEventListener('mousedown',start);
+  });
   $('modal').classList.add('open');
 }
-const SCHED_TIMES=[[10,0],[11,0],[12,0],[13,0],[14,0],[16,0],[18,0],[19,0],[19,30],[20,0]];
+function askSchedRemove(code){
+  const c=$('modalin').querySelector('.gcard[data-code="'+code+'"]');
+  if(!c)return;
+  const act=c.querySelector('.act');
+  act.innerHTML=`<button class="go danger" data-yes="1">REMOVE FROM MY LIST</button><button class="ic" data-no="1">KEEP</button>`;
+  act.querySelector('[data-yes]').onclick=()=>{schedDrop(code);openGamesSheet()};
+  act.querySelector('[data-no]').onclick=()=>openGamesSheet();
+}
+
+const SCHED_TIMES=[[10,0],[11,0],[12,0],[13,0],[14,0],[15,0],[16,0],[18,0],[19,0],[19,30],[20,0],[21,0]];
+const tLabel=([h,m])=>{const d=new Date();d.setHours(h,m,0,0);return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})};
+let SCH={label:'',at:0,slots:[]};
+function newSchedFlow(){SCH={label:'',at:0,slots:[]};openSchedCreate()}
+
+function schedDupe(label){
+  label=(label||'').trim();
+  return !!(label&&schedUpcoming().some(x=>(x.label||'').trim().toLowerCase()===label.toLowerCase()));
+}
+function schedInviteText(rec){
+  return rec.type==='p'
+    ? `When can you play mah jongg${rec.label?` (${rec.label})`:''}? Tap to tick the times that work — takes ten seconds:`
+    : `You’re invited to mah jongg${rec.label?` — ${rec.label}`:''}! ${fmtAt(rec.at)}. Tap for your seat and the calendar invite:`;
+}
+
+/* ---- one table, one time ---- */
 function openSchedCreate(){
   const box=$('modalin');
-  let mode='fixed',dayIdx=0,timeIdx=8,slots=[];
-  const days=[];const d0=new Date();d0.setHours(0,0,0,0);
-  for(let i=0;i<14;i++){const d=new Date(d0.getTime()+i*864e5);days.push(d)}
-  const tLabel=([h,m])=>{const d=new Date();d.setHours(h,m,0,0);return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
-  const pickAt=()=>{const d=new Date(days[dayIdx].getTime());d.setHours(SCHED_TIMES[timeIdx][0],SCHED_TIMES[timeIdx][1],0,0);return d.getTime()}
-  const atOf=(di,ti)=>{const d=new Date(days[di].getTime());d.setHours(SCHED_TIMES[ti][0],SCHED_TIMES[ti][1],0,0);return d.getTime()}
-  const avail=(di,ti)=>atOf(di,ti)>Date.now()+10*60000;
-  const render=()=>{
-    if(!avail(dayIdx,timeIdx)){
-      const f=SCHED_TIMES.findIndex((_,i)=>avail(dayIdx,i));
-      if(f>=0)timeIdx=f;else{dayIdx=Math.min(13,dayIdx+1);timeIdx=0}
-    }
-    box.innerHTML=`<div class="mtop">NEW GAME</div><h2 style="font-size:22px">Schedule a game</h2>
-    <label class="frmlbl">NAME IT (OPTIONAL)</label>
-    <input class="frmin" id="glabel" maxlength="24" placeholder="e.g. Thursday girls" value="${box._label||''}">
-    <div id="gdupe" style="display:none;font-size:10.5px;line-height:1.5;color:#B3705E;text-align:left;padding:6px 2px 0"></div>
-    <label class="frmlbl">HOW DO YOU WANT TO SET THE TIME?</label>
-    <div class="seg" style="margin:0;justify-content:flex-start">
-      <button class="sgi ${mode==='fixed'?'on':''}" id="mfixed">I KNOW THE TIME</button>
-      <button class="sgi ${mode==='poll'?'on':''}" id="mpoll">FIND A TIME</button>
+  const picks=schedQuick();
+  if(!SCH.at)SCH.at=picks[0].at;
+  const custom=!picks.some(p=>p.at===SCH.at);
+  box.innerHTML=`<div class="mtop">NEW GAME</div><h2 class="sh2">Schedule a game</h2>
+    <label class="qlbl">WHAT TO CALL IT</label>
+    <input class="qin" id="glabel" maxlength="24" placeholder="Thursday girls" value="${attrEsc(SCH.label)}">
+    <div id="gdupe" class="schwarn" style="display:none"></div>
+    <label class="qlbl">WHEN</label>
+    <div class="qcard">
+      ${picks.map(p=>`<button class="qrow ${SCH.at===p.at?'on':''}" data-at="${p.at}">
+        <span><span class="lb">${p.lb}</span><span class="sb">${p.sb}</span></span>
+        <span class="rt">${tOnly(p.at)}</span></button>`).join('')}
+      <button class="qrow ${custom?'on':''}" id="gmore">
+        <span><span class="lb">${custom?dOnly(SCH.at):'Another day or time'}</span>
+          ${custom?'<span class="sb">tap to change</span>':''}</span>
+        ${custom?`<span class="rt">${tOnly(SCH.at)}</span>`:'<span class="chevr">›</span>'}</button>
     </div>
-    <label class="frmlbl">${mode==='fixed'?'WHEN':'PROPOSE 2–5 TIMES'}</label>
-    <div class="daysrow">${days.map((d,i)=>`<button class="dchip ${i===dayIdx?'on':''}" data-d="${i}">
-      ${d.toLocaleDateString([],{weekday:'short'})}<small>${d.toLocaleDateString([],{month:'short',day:'numeric'})}</small></button>`).join('')}</div>
-    <div class="daysrow">${SCHED_TIMES.map((t,i)=>`<button class="dchip ${i===timeIdx?'on':''}" data-t="${i}" ${avail(dayIdx,i)?'':'disabled'}>${tLabel(t)}</button>`).join('')}</div>
-    ${mode==='poll'?`<div style="text-align:left"><button class="gbtn" id="addslot" style="margin-top:8px">+ ADD THIS TIME</button></div>
-      <div class="slotlist">${slots.map((at,i)=>`<div class="sl">${fmtAt(at)}<button data-x="${i}">✕</button></div>`).join('')}</div>`:''}
-    <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gcreate" ${mode==='poll'&&slots.length<2?'disabled':''}>
-      ${mode==='fixed'?'CREATE & GET THE LINK':'CREATE THE POLL'}</button></div>
-    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gback">BACK</button></div>`;
-    box.querySelector('#glabel').oninput=e=>{box._label=e.target.value;
-      const w=box.querySelector('#gdupe');if(w)w.style.display='none'};
-    box.querySelector('#mfixed').onclick=()=>{mode='fixed';render()};
-    box.querySelector('#mpoll').onclick=()=>{mode='poll';render()};
-    box.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{dayIdx=+b.dataset.d;render()});
-    box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{timeIdx=+b.dataset.t;render()});
-    const asl=box.querySelector('#addslot');
-    if(asl)asl.onclick=()=>{const at=pickAt();if(slots.length<5&&!slots.includes(at)){slots.push(at);slots.sort();render()}};
-    box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{slots.splice(+b.dataset.x,1);render()});
-    box.querySelector('#gback').onclick=openGamesSheet;
-    box.querySelector('#gcreate').onclick=async()=>{
-      if(!API()){setStatus('Multiplayer is not switched on');return}
-      const label=(box._label||'').trim();
-      /* one name, one table — a second "Thursday girls" makes the list unreadable */
-      if(label&&schedUpcoming().some(x=>(x.label||'').trim().toLowerCase()===label.toLowerCase())){
-        const w=box.querySelector('#gdupe');
-        if(w){w.textContent=`You already have a table called “${label}” — give this one its own name.`;w.style.display='block'}
-        box.querySelector('#glabel').focus();
-        return;
-      }
-      const name=mpName()||'A friend';
-      let card=null;
-      try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      const cfg={pace:'relaxed',hints:true,charleston:'full'};   /* friend tables always play the full Charleston */
-      box.querySelector('#gcreate').textContent='CREATING…';
-      try{
-        if(mode==='fixed'){
-          const r=await fetch(API()+'/api/sched',{method:'POST',body:JSON.stringify({token:schedToken(),name,at:pickAt(),config:cfg,card})}).then(x=>x.json());
-          if(r.err)throw r.err;
-          schedAdd({type:'g',code:r.code,at:r.at,label,mine:true,hostName:name,created:Date.now()});
-          openShareStep({type:'g',code:r.code,at:r.at,label});
-        }else{
-          const r=await fetch(API()+'/api/poll',{method:'POST',body:JSON.stringify({token:schedToken(),name,slots,config:cfg,card})}).then(x=>x.json());
-          if(r.err)throw r.err;
-          schedAdd({type:'p',code:r.id,label,mine:true,hostName:name,created:Date.now()});
-          openShareStep({type:'p',code:r.id,label});
-        }
-      }catch(e){box.querySelector('#gcreate').textContent='TRY AGAIN';setStatus(String(e))}
-    };
+    <label class="qlbl">CAN’T ALL AGREE ON A TIME?</label>
+    <button class="qrow qsolo" id="gpoll" style="background:#fff">
+      <span><span class="lb">Let friends vote instead</span>
+      <span class="sb">propose 2–5 times, lock in the winner</span></span><span class="chevr">›</span></button>
+    <div class="mbtns" style="margin-top:20px"><button class="abtn tall" id="gcreate">CREATE &amp; GET THE LINK</button></div>
+    <div class="mbtns"><button class="abtn ghost tall" id="gback">BACK</button></div>`;
+  const lab=box.querySelector('#glabel');
+  lab.oninput=e=>{SCH.label=e.target.value;box.querySelector('#gdupe').style.display='none'};
+  box.querySelectorAll('[data-at]').forEach(b=>b.onclick=()=>{SCH.at=+b.dataset.at;openSchedCreate()});
+  box.querySelector('#gmore').onclick=()=>openSchedWhen({
+    init:SCH.at,title:'Pick a time',cta:'USE THIS TIME',
+    onPick:at=>{SCH.at=at;openSchedCreate()},onBack:openSchedCreate});
+  box.querySelector('#gpoll').onclick=()=>openPollCreate();
+  box.querySelector('#gback').onclick=openGamesSheet;
+  box.querySelector('#gcreate').onclick=async e=>{
+    if(!API()){setStatus('Multiplayer is not switched on');return}
+    if(schedDupe(SCH.label)){
+      const w=box.querySelector('#gdupe');
+      w.textContent=`You already have a table called “${SCH.label.trim()}” — give this one its own name.`;
+      w.style.display='block';lab.focus();return;
+    }
+    if(SCH.at<Date.now()+5*60000){setStatus('That time has already passed');return}
+    const name=mpName()||'A friend';
+    let card=null;
+    try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(x){}
+    const cfg={pace:'relaxed',hints:true,charleston:'full'};
+    e.target.textContent='CREATING…';
+    try{
+      const r=await fetch(API()+'/api/sched',{method:'POST',body:JSON.stringify({token:schedToken(),name,at:SCH.at,config:cfg,card})}).then(x=>x.json());
+      if(r.err)throw r.err;
+      const label=SCH.label.trim();
+      schedAdd({type:'g',code:r.code,at:r.at,label,mine:true,hostName:name,created:Date.now()});
+      openShareStep({type:'g',code:r.code,at:r.at,label});
+    }catch(x){e.target.textContent='TRY AGAIN';setStatus(String(x))}
+  };
+  $('modal').classList.add('open');
+}
+
+/* ---- the calendar: a whole week at a glance, nothing scrolling sideways ---- */
+function openSchedWhen(o){
+  const box=$('modalin');
+  const today=midOf(Date.now());
+  const atOf=(dm,i)=>{const d=new Date(dm);d.setHours(SCHED_TIMES[i][0],SCHED_TIMES[i][1],0,0);return d.getTime()};
+  const ok=t=>t>Date.now()+10*60000;
+  const dayLegal=dm=>SCHED_TIMES.some((_,i)=>ok(atOf(dm,i)));
+  let day=o.init?midOf(o.init):today;
+  if(!dayLegal(day)){const d=new Date(day);d.setDate(d.getDate()+1);day=midOf(d.getTime())}
+  let ti=-1;
+  if(o.init){const t=SCHED_TIMES.findIndex(([h,m])=>{const d=new Date(o.init);return d.getHours()===h&&d.getMinutes()===m});if(t>=0&&ok(atOf(day,t)))ti=t}
+  let week=Math.floor(Math.round((day-today)/864e5)/7);
+  const render=()=>{
+    const days=[];
+    for(let i=0;i<7;i++){const d=new Date(today);d.setDate(d.getDate()+week*7+i);days.push(d)}
+    /* the time grid always belongs to a day you can see */
+    if(!days.some(d=>midOf(d.getTime())===day)){
+      const first=days.map(d=>midOf(d.getTime())).find(dayLegal);
+      day=first||midOf(days[0].getTime()); ti=-1;
+    }
+    if(ti<0||!ok(atOf(day,ti)))ti=SCHED_TIMES.findIndex((_,i)=>ok(atOf(day,i)));
+    const sel=ti>=0?atOf(day,ti):0;
+    const m1=days[0].toLocaleDateString([],{month:'long'}), m2=days[6].toLocaleDateString([],{month:'long'});
+    box.innerHTML=`<div class="mtop">${o.top||'NEW GAME'}</div><h2 class="sh2">${o.title}</h2>
+      <label class="qlbl">${(m1===m2?m1:m1+' – '+m2).toUpperCase()}</label>
+      <div class="wkrow">
+        <button class="nav" id="wprev" ${week<=0?'disabled':''}>‹</button>
+        <div class="wkgrid">${days.map(d=>{const dm=midOf(d.getTime());
+          return `<button class="wkday ${dm===day?'on':''}" data-dm="${dm}" ${dayLegal(dm)?'':'disabled'}>
+            <span class="dw">${d.toLocaleDateString([],{weekday:'short'}).slice(0,3).toUpperCase()}</span>
+            <span class="dn">${d.getDate()}</span></button>`}).join('')}</div>
+        <button class="nav" id="wnext" ${week>=5?'disabled':''}>›</button>
+      </div>
+      <label class="qlbl">TIME</label>
+      <div class="tgrid">${SCHED_TIMES.map((t,i)=>
+        `<button class="tcell ${i===ti?'on':''}" data-t="${i}" ${ok(atOf(day,i))?'':'disabled'}>${tLabel(t)}</button>`).join('')}</div>
+      ${sel?`<div class="confpill"><i></i>${fmtAt(sel)}</div>`:''}
+      <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="wuse" ${sel?'':'disabled'}>${o.cta}</button></div>
+      <div class="mbtns"><button class="abtn ghost tall" id="wback">BACK</button></div>`;
+    box.querySelector('#wprev').onclick=()=>{if(week>0){week--;render()}};
+    box.querySelector('#wnext').onclick=()=>{if(week<5){week++;render()}};
+    box.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{day=+b.dataset.dm;render()});
+    box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ti=+b.dataset.t;render()});
+    box.querySelector('#wuse').onclick=()=>{if(sel)o.onPick(sel)};
+    box.querySelector('#wback').onclick=o.onBack;
   };
   render();
   $('modal').classList.add('open');
 }
+
+/* ---- or let everyone vote ---- */
+function openPollCreate(){
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">NEW POLL</div><h2 class="sh2">Find a time</h2>
+    <label class="qlbl">WHAT TO CALL IT</label>
+    <input class="qin" id="plabel" maxlength="24" placeholder="Thursday girls" value="${attrEsc(SCH.label)}">
+    <div id="gdupe" class="schwarn" style="display:none"></div>
+    <label class="qlbl">TIMES YOU’D PLAY</label>
+    ${SCH.slots.length?`<div class="qcard">${SCH.slots.map((at,i)=>
+        `<div class="slotrow">${fmtAt(at)}<button data-x="${i}">REMOVE</button></div>`).join('')}</div>`
+      :'<div class="schfoot" style="margin-top:4px">Propose two to five times. Friends tick the ones that work, and you lock in the winner.</div>'}
+    ${SCH.slots.length<5?'<button class="addbig" id="paddslot">+&nbsp;&nbsp;ADD A TIME</button>':''}
+    <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="pcreate" ${SCH.slots.length<2?'disabled':''}>CREATE THE POLL</button></div>
+    <div class="mbtns"><button class="abtn ghost tall" id="pback">BACK</button></div>`;
+  const lab=box.querySelector('#plabel');
+  lab.oninput=e=>{SCH.label=e.target.value;box.querySelector('#gdupe').style.display='none'};
+  box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{SCH.slots.splice(+b.dataset.x,1);openPollCreate()});
+  const add=box.querySelector('#paddslot');
+  if(add)add.onclick=()=>openSchedWhen({top:'NEW POLL',title:'Add a time',cta:'ADD THIS TIME',
+    init:SCH.slots.length?0:SCH.at,
+    onPick:at=>{if(!SCH.slots.includes(at))SCH.slots.push(at);SCH.slots.sort((a,b)=>a-b);openPollCreate()},
+    onBack:openPollCreate});
+  box.querySelector('#pback').onclick=openSchedCreate;
+  box.querySelector('#pcreate').onclick=async e=>{
+    if(!API()){setStatus('Multiplayer is not switched on');return}
+    if(schedDupe(SCH.label)){
+      const w=box.querySelector('#gdupe');
+      w.textContent=`You already have a table called “${SCH.label.trim()}” — give this one its own name.`;
+      w.style.display='block';lab.focus();return;
+    }
+    const name=mpName()||'A friend';
+    let card=null;
+    try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(x){}
+    const cfg={pace:'relaxed',hints:true,charleston:'full'};
+    e.target.textContent='CREATING…';
+    try{
+      const r=await fetch(API()+'/api/poll',{method:'POST',body:JSON.stringify({token:schedToken(),name,slots:SCH.slots,config:cfg,card})}).then(x=>x.json());
+      if(r.err)throw r.err;
+      const label=SCH.label.trim();
+      schedAdd({type:'p',code:r.id,label,mine:true,hostName:name,nslots:SCH.slots.length,created:Date.now()});
+      openShareStep({type:'p',code:r.id,label});
+    }catch(x){e.target.textContent='TRY AGAIN';setStatus(String(x))}
+  };
+  $('modal').classList.add('open');
+}
+
+/* ---- the viral moment: one obvious thing to do ---- */
 function openShareStep(rec){
   const box=$('modalin');
   const link=schedLink(rec);
   const isPoll=rec.type==='p';
-  box.innerHTML=`<div class="mtop">${(rec.label||'YOUR GAME').toUpperCase()}</div>
-    <h2 style="font-size:22px">${isPoll?'Send the poll':'Send the invite'}</h2>
-    ${isPoll?'':`<div class="msub">${fmtAt(rec.at)}</div>`}
-    <div class="sharebox"><div class="lnk">${link.replace(/^https?:\/\//,'')}</div>
-      <div class="grow2" style="justify-content:center;margin-top:12px">
-        <button class="gbtn go" id="scopy">COPY LINK</button>
-        <button class="gbtn" id="sshare">SHARE…</button>
-        ${isPoll?'':`<button class="gbtn" id="scal">ADD TO CALENDAR</button>`}
-      </div></div>
-    <div class="lstartsub" style="margin-top:12px">${isPoll
-      ?'Friends vote on the times that work.<br>You lock the winner — then everyone gets the invite.'
-      :'Friends who open it can add it to their calendars.<br>The table itself opens an hour before game time.'}</div>
-    <div class="mbtns" style="margin-top:14px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="sdone">DONE</button></div>`;
-  const stext=isPoll
-    ?`When can you play mah jongg${rec.label?` (${rec.label})`:''}? Tap to vote on the times that work — takes ten seconds:`
-    :`You’re invited to mah jongg${rec.label?` — ${rec.label}`:''}! ${fmtAt(rec.at)}. Tap for your seat and the calendar invite:`;
+  box.innerHTML=`<div class="mtop">${attrEsc((rec.label||(isPoll?'your poll':'your game')).toUpperCase())}</div>
+    <h2 class="sh2">${isPoll?'Send the poll':'Invite your friends'}</h2>
+    ${isPoll?'':`<div class="confpill"><i></i>${fmtAt(rec.at)}</div>`}
+    <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="sshare">${isPoll?'SEND THE POLL':'SEND THE INVITE'}</button></div>
+    <div class="linkslab"><span class="u">${link.replace(/^https?:\/\//,'')}</span><button id="scopy">COPY</button></div>
+    ${isPoll?'':`<div class="qcard" style="margin-top:12px">
+      <button class="qrow" id="scal"><span><span class="lb">Add to my calendar</span>
+        <span class="sb">30 minutes · ${fmtAt(rec.at)}</span></span><span class="chevr">›</span></button>
+      <div class="qrow"><span><span class="lb" style="color:#7E7869">3 seats still open</span>
+        <span class="sb">any seat still empty at the deal is played by a bot</span></span>
+        <span class="seatdots"><i class="on"></i><i></i><i></i><i></i></span></div></div>`}
+    <div class="schfoot">${isPoll
+      ?'Friends tick the times that work. You lock in the winner — then everyone gets the invite.'
+      :'The table opens an hour before game time — everyone who taps the link lands right in it.'}</div>
+    <div class="mbtns" style="margin-top:16px"><button class="abtn ghost tall" id="sdone">DONE</button></div>`;
+  const stext=schedInviteText(rec);
   box.querySelector('#scopy').onclick=e=>copyText(link,e.target);
   box.querySelector('#sshare').onclick=()=>shareLinkNative(link,stext);
   const sc=box.querySelector('#scal');
@@ -3063,9 +3292,10 @@ function schedJoinFlow(code){
   const nm=mpName();
   if(!nm){
     const box=$('modalin');
-    box.innerHTML=`<div class="mtop">JOINING</div><h2 style="font-size:22px">What's your name?</h2>
-      <input class="frmin" id="jname" maxlength="14" placeholder="YOUR NAME" style="text-align:center;margin-top:10px">
-      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="jgo">TAKE MY SEAT</button></div>`;
+    box.innerHTML=`<div class="mtop">JOINING</div><h2 class="sh2">What’s your name?</h2>
+      <div class="msub">It’s what your friends will see at the table.</div>
+      <input class="qin" id="jname" maxlength="14" placeholder="Your first name" style="text-align:center;margin-top:12px">
+      <div class="mbtns" style="margin-top:16px"><button class="abtn tall" id="jgo">TAKE MY SEAT</button></div>`;
     box.querySelector('#jgo').onclick=()=>{
       const n=box.querySelector('#jname').value.trim().slice(0,14);
       if(!n)return;
@@ -3085,27 +3315,32 @@ async function openGamePage(code){
   let r;try{r=await fetch(API()+'/api/schedinfo?code='+code).then(x=>x.json())}catch(e){r={err:'Could not reach the table'}}
   const box=$('modalin');
   if(r.err){
-    box.innerHTML=`<div class="mtop">HMM</div><h2 style="font-size:22px">${r.err}</h2>
-      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gc">CLOSE</button></div>`;
+    box.innerHTML=`<div class="mtop">HMM</div><h2 class="sh2">${r.err}</h2>
+      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost tall" id="gc">CLOSE</button></div>`;
     box.querySelector('#gc').onclick=closeModal;$('modal').classList.add('open');return;
   }
   const mine=SCHEDS.find(x=>x.code===code);
   schedAdd({type:'g',code,at:r.at,label:mine&&mine.label||'',mine:!!(mine&&mine.mine),hostName:r.hostName,created:mine&&mine.created||Date.now()});
   const joinable=r.live||r.at-Date.now()<60*60000;
-  box.innerHTML=`<div class="mtop">${((mine&&mine.label)||r.hostName+"’s table").toUpperCase()}</div>
-    <h2 style="font-size:22px">${fmtAt(r.at)}</h2>
+  box.innerHTML=`<div class="mtop">YOU’RE INVITED</div>
+    <h2 class="sh2">${attrEsc((mine&&mine.label)||(r.hostName+'’s table'))}</h2>
+    <div class="confpill"><i></i>${fmtAt(r.at)}</div>
     <div class="msub" id="gcount">${fmtIn(r.at)}</div>
-    <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gjoin" ${joinable?'':'disabled'}>${joinable?'TAKE MY SEAT':'THE TABLE OPENS AN HOUR BEFORE'}</button></div>
-    <div class="grow2" style="justify-content:center;margin-top:12px">
-      <button class="gbtn" id="gcal">ADD TO CALENDAR</button>
-      <button class="gbtn" id="gcopy">COPY LINK</button></div>
-    <div class="lstartsub" style="margin-top:12px">hosted by ${r.hostName} · seats not filled at the deal are played by the bots</div>
-    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gclose2">CLOSE</button></div>`;
+    <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="gjoin" ${joinable?'':'disabled'}>${joinable?'TAKE MY SEAT':'OPENS AT '+tOnly(r.at-60*60000)}</button></div>
+    <div class="qcard" style="margin-top:14px">
+      <button class="qrow" id="gcal"><span><span class="lb">Add to my calendar</span>
+        <span class="sb">30 minutes · ${fmtAt(r.at)}</span></span><span class="chevr">›</span></button>
+      <button class="qrow" id="gcopy"><span><span class="lb">Share the invite</span>
+        <span class="sb">send it on to another friend</span></span><span class="chevr">›</span></button>
+    </div>
+    <div class="schfoot">Hosted by ${attrEsc(r.hostName)}. The table opens an hour before game time, and any seat still empty at the deal is played by a bot.</div>
+    <div class="mbtns" style="margin-top:16px"><button class="abtn ghost tall" id="gclose2">CLOSE</button></div>`;
   box.querySelector('#gjoin').onclick=()=>schedJoinFlow(code);
   box.querySelector('#gcal').onclick=()=>window.open(API()+'/cal/'+code+'.ics','_blank');
-  box.querySelector('#gcopy').onclick=e=>copyText(schedLink({type:'g',code}),e.target);
+  box.querySelector('#gcopy').onclick=()=>shareLinkNative(schedLink({type:'g',code}),
+    schedInviteText({type:'g',at:r.at,label:(mine&&mine.label)||''}));
   box.querySelector('#gclose2').onclick=closeModal;
-  const iv=setInterval(()=>{const el=$('gcount') ;if(!el){clearInterval(iv);return}el.textContent=fmtIn(r.at)},30000);
+  const iv=setInterval(()=>{const el=$('gcount');if(!el){clearInterval(iv);return}el.textContent=fmtIn(r.at)},30000);
   $('modal').classList.add('open');
 }
 async function openPollPage(id){
@@ -3115,24 +3350,34 @@ async function openPollPage(id){
   let r;try{r=await fetch(API()+'/api/pollinfo?id='+id+'&tok='+tok).then(x=>x.json())}catch(e){r={err:'Could not reach the table'}}
   const box=$('modalin');
   if(r.err&&!r.locked){
-    box.innerHTML=`<div class="mtop">HMM</div><h2 style="font-size:22px">${r.err}</h2>
-      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pc">CLOSE</button></div>`;
+    box.innerHTML=`<div class="mtop">HMM</div><h2 class="sh2">${r.err}</h2>
+      <div class="mbtns" style="margin-top:16px"><button class="abtn ghost tall" id="pc">CLOSE</button></div>`;
     box.querySelector('#pc').onclick=closeModal;$('modal').classList.add('open');return;
   }
   if(r.locked){schedDrop(id);openGamePage(r.locked.code);return}
   const mine=SCHEDS.find(x=>x.code===id);
-  schedAdd({type:'p',code:id,label:mine&&mine.label||'',mine:r.isHost,hostName:r.hostName,votes:r.votes.length,created:mine&&mine.created||Date.now()});
+  schedAdd({type:'p',code:id,label:mine&&mine.label||'',mine:r.isHost,hostName:r.hostName,
+    votes:r.votes.length,nslots:r.slots.length,created:mine&&mine.created||Date.now()});
   const tallies=r.slots.map((_,i)=>r.votes.filter(v=>v.ok.includes(i)).length);
+  let tot=r.votes.length;
+  const pctOf=i=>tot?Math.round(tallies[i]/tot*100):0;
   if(r.isHost){
-    const best=Math.max(1,...tallies);
-    box.innerHTML=`<div class="mtop">YOUR POLL · ${r.votes.length} ANSWERED</div>
-      <h2 style="font-size:22px">${(mine&&mine.label)||'Find a time'}</h2>
-      ${r.slots.map((at,i)=>`<div class="rrow ${tallies[i]===best&&best>0?'win':''}">
-        <div class="top"><span class="rd"><b>${fmtAt(at)}</b></span><span class="rn">${tallies[i]===r.votes.length&&r.votes.length?'everyone':tallies[i]+' of '+r.votes.length}</span></div>
-        <div class="meter"><i style="width:${r.votes.length?Math.round(tallies[i]/r.votes.length*100):0}%"></i></div>
-        <div class="lockrow"><button class="gbtn ${tallies[i]===best?'go':''}" data-lock="${i}">LOCK IN THIS TIME</button></div></div>`).join('')}
-      <div class="grow2" style="justify-content:center;margin-top:14px"><button class="gbtn" id="pcopy">COPY POLL LINK</button></div>
-      <div class="mbtns" style="margin-top:12px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pclose">CLOSE</button></div>`;
+    const best=Math.max(0,...tallies);
+    box.innerHTML=`<div class="mtop">YOUR POLL · ${tot} ANSWERED</div>
+      <h2 class="sh2">${attrEsc((mine&&mine.label)||'Find a time')}</h2>
+      ${tot?'':'<div class="msub">Nobody has answered yet — share the link again below.</div>'}
+      ${r.slots.map((at,i)=>{
+        const win=best>0&&tallies[i]===best;
+        return `<div class="gcard">
+          <div class="gt"><span class="gn" style="font-size:19px">${dOnly(at)}</span>
+            <span class="tag${win?'':' mut'}">${tot&&tallies[i]===tot?'EVERYONE':tallies[i]+' OF '+tot}</span></div>
+          <div class="gd">${tOnly(at)}</div>
+          <div class="vmeter" style="max-width:none"><i style="width:${pctOf(i)}%"></i></div>
+          <div class="act"><button class="go ${win?'':'quiet'}" data-lock="${i}">LOCK IN THIS TIME</button></div>
+        </div>`}).join('')}
+      <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="pshare">SEND THE POLL AGAIN</button></div>
+      <div class="schfoot">Locking a time turns the poll into a real table and sends everyone the invite.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn ghost tall" id="pclose">CLOSE</button></div>`;
     box.querySelectorAll('[data-lock]').forEach(b=>b.onclick=async()=>{
       b.textContent='LOCKING…';
       try{
@@ -3143,22 +3388,29 @@ async function openPollPage(id){
         openShareStep({type:'g',code:rr.code,at:rr.at,label:(mine&&mine.label)||''});
       }catch(e){b.textContent='TRY AGAIN';setStatus(String(e))}
     });
-    box.querySelector('#pcopy').onclick=e=>copyText(schedLink({type:'p',code:id}),e.target);
+    box.querySelector('#pshare').onclick=()=>shareLinkNative(schedLink({type:'p',code:id}),
+      schedInviteText({type:'p',label:(mine&&mine.label)||''}));
     box.querySelector('#pclose').onclick=closeModal;
   }else{
     const sel=new Set(r.youVoted||[]);
     const render=()=>{
-      box.innerHTML=`<div class="mtop">${r.hostName.toUpperCase()} ASKS</div>
-        <h2 style="font-size:22px">When can you play?</h2>
-        <div class="msub">Tap every time that works — you can change it later</div>
-        ${r.slots.map((at,i)=>`<div class="prow ${sel.has(i)?'sel':''}" data-i="${i}">
-          <span class="pd"><b>${fmtAt(at)}</b></span>
-          <span class="pdots">${r.votes.map(v=>`<span class="pdot2 ${v.ok.includes(i)?'on':''}"></span>`).join('')}</span>
-          <span class="ptick">${sel.has(i)?'✓':''}</span></div>`).join('')}
-        ${mpName()?'':`<input class="frmin" id="pname" maxlength="14" placeholder="YOUR FIRST NAME" style="margin-top:14px;text-align:center">`}
-        <div class="mbtns" style="margin-top:16px"><button class="abtn" id="psave">${r.youVoted?'UPDATE MY ANSWER':'SAVE'+(mpName()?" — I'M "+mpName().toUpperCase():'')}</button></div>
-        <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="pclose">CLOSE</button></div>`;
-      box.querySelectorAll('.prow').forEach(el=>el.onclick=()=>{const i=+el.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);render()});
+      box.innerHTML=`<div class="mtop">${attrEsc(r.hostName.toUpperCase())} ASKS</div>
+        <h2 class="sh2">When can you play?</h2>
+        <div class="msub">Tap every time that works.</div>
+        <div class="qcard" style="margin-top:16px">
+        ${r.slots.map((at,i)=>{
+          const n=tallies[i];
+          const word=!tot?'be the first to answer':(n===tot&&n>0?'everyone so far':(n?n+' of '+tot+' can make it':'nobody yet'));
+          return `<button class="vrow ${sel.has(i)?'sel':''}" data-i="${i}">
+            <span><span class="pd">${dOnly(at)}</span><span class="pw">${tOnly(at)} · ${word}</span>
+            <span class="vmeter"><i style="width:${pctOf(i)}%"></i></span></span>
+            <span class="tick"></span></button>`}).join('')}
+        </div>
+        ${mpName()?'':'<input class="qin" id="pname" maxlength="14" placeholder="YOUR FIRST NAME" style="margin-top:14px;text-align:center">'}
+        <div class="mbtns" style="margin-top:18px"><button class="abtn tall" id="psave">${r.youVoted?'UPDATE MY ANSWER':'SAVE'+(mpName()?' — I’M '+mpName().toUpperCase():'')}</button></div>
+        <div class="schfoot">${attrEsc(r.hostName)} locks in the winning time, then everyone gets the invite.</div>
+        <div class="mbtns" style="margin-top:14px"><button class="abtn ghost tall" id="pclose">CLOSE</button></div>`;
+      box.querySelectorAll('.vrow').forEach(el=>el.onclick=()=>{const i=+el.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);render()});
       box.querySelector('#psave').onclick=async e=>{
         let nm=mpName();
         const pn=box.querySelector('#pname');
@@ -3168,7 +3420,11 @@ async function openPollPage(id){
         try{
           const rr=await fetch(API()+'/api/pollvote',{method:'POST',body:JSON.stringify({id,token:tok,name:nm,ok:[...sel]})}).then(x=>x.json());
           if(rr.err)throw rr.err;
-          r=rr;schedAdd({type:'p',code:id,label:mine&&mine.label||'',hostName:r.hostName,votes:r.votes.length,created:mine&&mine.created||Date.now()});
+          r=rr;
+          for(let i=0;i<r.slots.length;i++)tallies[i]=r.votes.filter(v=>v.ok.includes(i)).length;
+          tot=r.votes.length;
+          schedAdd({type:'p',code:id,label:mine&&mine.label||'',hostName:r.hostName,votes:r.votes.length,
+            nslots:r.slots.length,created:mine&&mine.created||Date.now()});
           render();
           setStatus('Saved — '+r.hostName+' will lock the winning time');
         }catch(x){e.target.textContent='TRY AGAIN';setStatus(String(x))}
@@ -3376,6 +3632,7 @@ function mpName(){
 }
 function mpSend(m){if(MP.ws&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(m))}
 function mpConnect(then){
+  learnCardOff();
   if(MP.ws&&MP.ws.readyState===1){if(then)then();return}
   const ws=new WebSocket(OLM_SERVER+'?t='+encodeURIComponent(mpToken()));
   MP.ws=ws;
@@ -3716,7 +3973,7 @@ function openFriends(errMsg){
       mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints,charleston:'full'}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
-    box.querySelector('#fsched').onclick=()=>{if(getName())openSchedCreate()};
+    box.querySelector('#fsched').onclick=()=>{if(getName())newSchedFlow()};
     box.querySelector('#fcancel').onclick=closeModal;
   };
   const stepTwo=()=>{
@@ -3886,14 +4143,26 @@ function coachMark(el,cls,pad){
   $('coach').appendChild(d);
   return d;
 }
+/* The overlay is absolutely positioned from measured rects, so it must re-measure
+   whenever the table moves under it. It does move: the hint line in #statusline
+   wraps to two lines 2.2s after the deal, which lifts the whole rack. */
+let COACHSPEC=null, COACHRO=null, COACHMARKS=[];
 function coachShow(o){
-  const c=$('coach');c.classList.add('on');
+  COACHSPEC=o;
+  $('coach').classList.add('on');
+  coachPlace();
+  coachWatch();
+}
+function coachPlace(){
+  const o=COACHSPEC; if(!o)return;
+  const c=$('coach'); if(!c.classList.contains('on'))return;
   coachClear();
   const marks=[];
   (o.spot||[]).forEach(el=>{const m=coachMark(el,'cspot',6);if(m)marks.push(el)});
   (o.ghost||[]).forEach(el=>coachMark(el,'cghost',4));
   (o.ring||[]).forEach(x=>{const el=Array.isArray(x)?x[0]:x;
     const m=coachMark(el,'cring'+(Array.isArray(x)&&x[1]?' '+x[1]:''),4);if(m)marks.push(el)});
+  COACHMARKS=marks;
   const chip=$('coachchip');
   chip.classList.toggle('oncard',!!o.oncard);
   chip.querySelector('.tx').innerHTML=o.text+(o.aside?`<i>${o.aside}</i>`:'');
@@ -3903,8 +4172,8 @@ function coachShow(o){
   const dots=$('coachdots');
   dots.innerHTML=(o.step==null?'':[0,1,2,3,4,5].map(i=>`<i class="${i===o.step?'on':''}"></i>`).join(''));
   /* sit clear of everything it is pointing at, and clear of her rack */
-  chip.style.top='0px';
   requestAnimationFrame(()=>{
+    if(!$('coach').classList.contains('on'))return;
     const H=window.innerHeight,ch=chip.offsetHeight||64;
     const hdr=rectOf($('hdr'));
     const rack=$('me')?rectOf($('me')):{y:H,h:0};
@@ -3934,6 +4203,21 @@ function coachShow(o){
     dots.style.top=Math.max(hdr.y+hdr.h+4,top-15)+'px';
   });
 }
+/* re-place on anything that can shift the table: text wrapping, the call bar
+   opening, rotation, the on-screen keyboard */
+function coachReplace(){ if(COACHSPEC&&$('coach').classList.contains('on'))coachPlace(); }
+function coachWatch(){
+  if(COACHRO)return;
+  if(typeof ResizeObserver==='function'){
+    COACHRO=new ResizeObserver(()=>coachReplace());
+    ['statusline','me','rack','hdr','opps','actions','callbar','discards'].forEach(id=>{
+      const el=$(id); if(el)COACHRO.observe(el);
+    });
+  }
+  addEventListener('resize',coachReplace);
+  addEventListener('orientationchange',()=>later(120,coachReplace));
+  if(window.visualViewport)visualViewport.addEventListener('resize',coachReplace);
+}
 /* the coach never blocks the tap it is asking for */
 function coachPassthrough(){ $('coach').classList.add('on'); }
 
@@ -3946,6 +4230,7 @@ const LEARN_TARGET=[['C6',4],['B2',3],['D2',3],['G0',4]];   /* Sunrise 2026 */
 function startLearnGame(){
   closeModal();
   SEQ++;killClones();
+  learnCardOn();
   HINTON=true;HINTIDX=0;LEARNWIN=false;   /* a first game plays with hints on */
   $('btnhint').classList.add('on');
   const deck=makeDeck();
@@ -3977,20 +4262,40 @@ function startLearnGame(){
   setStatus('');
   later(400,()=>coachStep(0));
 }
-/* The aim is Sunrise 2026 — but if she exposes something that line can't hold, the
-   tutorial follows HER rather than stranding her chasing a hand she can no longer make. */
-function learnTargetNow(){
-  const me=G.players[0];
-  const rem=LEARN_TARGET.map(x=>[x[0],x[1]]);
-  let fits=true;
-  for(const e of me.exp){
-    const i=rem.findIndex(([k,n])=>k===e.rep&&n===e.tiles.length);
-    if(i<0){fits=false;break}
-    rem.splice(i,1);
+/* find a specific printed line and score it against her hand, exactly as topFits does */
+function fitFor(p,want){
+  const {c,jk}=countsOf(p.hand), ec=expCount(p), hasExp=p.exp.length>0;
+  const sig=v=>v.map(g=>g[0]+':'+g[1]).sort().join('|');
+  const target=sig(want);
+  for(const h of HANDS){
+    if(h.concealed&&hasExp)continue;
+    for(const v of h.variants){
+      if(sig(v)!==target)continue;
+      const rem=lockGroups(p,v);
+      if(!rem)continue;
+      return {hand:h,variant:v,rem,score:ec+scoreVariant(c,jk,rem)};
+    }
   }
-  if(fits)return LEARN_TARGET;
-  const f=topFits(me)[0];
+  return null;
+}
+/* THE single authority for the first game. The hint highlight, the sort, the call
+   filter and the discard guard all read this one line — so what is ringed is exactly
+   what she may not throw, and what is dim is exactly what she may.
+   Aim: Sunrise 2026. If she exposes something that line can't hold, follow HER
+   instead of stranding her chasing a hand she can no longer make. */
+function learnFit(){
+  if(!G||!G.players)return null;
+  const me=G.players[0];
+  return fitFor(me,LEARN_TARGET)||topFits(me)[0]||null;
+}
+function learnTargetNow(){
+  const f=learnFit();
   return (f&&f.variant&&f.variant.length)?f.variant:LEARN_TARGET;
+}
+/* every hint surface asks this, never topFits directly */
+function hintFits(p){
+  if(learnOn()&&p===G.players[0]){const f=learnFit();return f?[f]:[]}
+  return topFits(p);
 }
 /* is this call part of the hand we're steering her toward? */
 function learnWantsCall(t,k){
@@ -4095,9 +4400,10 @@ function coachFinish(){
     return;
   }
   const want=learnNeed();
-  const keepK={};for(const [k,n] of learnTargetNow())keepK[k]=n;
+  const f=learnFit();
+  const keep=f?keepIdsFor(me,f.rem):new Set();
   const tiles=[...$('rack').querySelectorAll('.tile')];
-  const junkI=me.hand.findIndex(t=>t.s!=='J'&&!keepK[key(t)]);
+  const junkI=me.hand.findIndex(t=>t.s!=='J'&&!keep.has(t.id));
   if(junkI<0){coachClear();$('coach').classList.remove('on');return}
   coachShow({step:5,ring:[tiles[junkI]],ghost:tiles.filter((_,i)=>i!==junkI),
     text:'Let this one go.',aside:want.length===1?'One tile from home.':`${want.length} to go.`});
@@ -4203,6 +4509,7 @@ try{
 function goTitle(){
   SEQ++;
   coachOff();
+  learnCardOff();
   killClones();
   MP.active=false;MP.intended=false;MP.view=null;MP.chSubmitted=false;
   if(G)G.phase='over';
@@ -4276,7 +4583,7 @@ $('btnsort').onclick=()=>{
   if(HINTON&&hintsAllowed()){
     /* hint showing → arrange the rack in the target hand's own shape:
        keepers left in pattern order, jokers staged, discardables right */
-    const fits=topFits(me);
+    const fits=hintFits(me);
     if(fits.length){
       const bf=fits[Math.min(HINTIDX,fits.length-1)];
       const keep=keepIdsFor(me,bf.rem);
@@ -4325,7 +4632,7 @@ function describeVariant(v){
 $('btnhint').onclick=()=>{
   if(!G||G.phase==='over')return;
   if(!hintsAllowed()){setStatus('The host has turned hints off for this table');return}
-  const fits=topFits(G.players[0]);
+  const fits=hintFits(G.players[0]);
   if(!fits.length){
     HINTON=false;$('btnhint').classList.remove('on');
     setStatus('No line on the card fits your exposures — <b>this hand is dead</b>. Play defense, darling.');
@@ -4337,7 +4644,7 @@ $('btnhint').onclick=()=>{
   if(PEEK.open)renderPeekLines();
   if(HINTON){
     const bf=fits[HINTIDX];
-    setStatus(`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`);
+    setStatus(HINTBASE||`Hint ${HINTIDX+1}/${fits.length}: <b>${describeVariant(bf.variant)}</b> — ${Math.max(0,14-bf.score)} to go`);
   }else setStatus('Hints off');
   renderRack();
 };
