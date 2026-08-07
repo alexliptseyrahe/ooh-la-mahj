@@ -949,10 +949,10 @@ async function labCallAI(content, opts) {
   const modes = [THINK_MODE].concat(['adaptive','enabled','none'].filter(m => m !== THINK_MODE));
   let lastErr = null;
   for (const mode of (opts.think === false ? ['none'] : modes)) {
-    const body = { model, max_tokens: 24000, messages: [{ role: 'user', content }] };
+    const body = { model, max_tokens: opts.maxTokens || 24000, messages: [{ role: 'user', content }] };
     if (mode === 'adaptive') { body.thinking = { type: 'adaptive' }; body.output_config = { effort: opts.effort || 'high' }; }
     else if (mode === 'enabled') { body.thinking = { type: 'enabled', budget_tokens: 8000 }; }
-    else { if (!NO_TEMP) body.temperature = 0; body.max_tokens = 16000; }
+    else { if (!NO_TEMP) body.temperature = 0; body.max_tokens = opts.maxTokens || 16000; }
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -970,8 +970,13 @@ async function labCallAI(content, opts) {
   }
   throw new Error(lastErr || 'AI call failed');
 }
+let MOCK_VERIFY = process.env.MOCK_VERIFY ? JSON.parse(process.env.MOCK_VERIFY)
+  : { isCard: true, year: '2026', sections: ['YEAR — 2026','CONSECUTIVE RUNS','PUNGS & DRAGONS','SINGLES & PAIRS'] };
 function mockAI(content) {
   const t = content[0].text;
+  /* the cheap ownership check */
+  if (t.includes('"isCard"') && t.includes('"sections"'))
+    return { text: JSON.stringify(MOCK_VERIFY), usage: { input_tokens: 600, output_tokens: 90 }, model: 'mock-cheap' };
   const mockLines = [
     { text: '222 000 2222 6666', colors: '222 green, 000 black, 2222 red, 6666 red', ann: '(Any 2 Suits)', val: 'X25', cat: '2026' },
     { text: 'FFF 2026 222 6666', colors: 'FFF black, 2026 green, 222 red, 6666 black', ann: '(Any 3 Suits)', val: 'X25', cat: '2026' },
@@ -1275,9 +1280,32 @@ async function labPickFast() {
   if (!FAST_MODEL) FAST_MODEL = 'claude-sonnet-4-5';
   return FAST_MODEL;
 }
+/* the ownership check is a cheap question, so it runs on the cheapest model there is */
+let CHEAP_MODEL = process.env.CHEAP_MODEL || '';
+async function labPickCheap() {
+  if (CHEAP_MODEL) return CHEAP_MODEL;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+      headers: { 'x-api-key': OLM_API_KEY, 'anthropic-version': '2023-06-01' } });
+    if (r.ok) {
+      const ids = ((await r.json()).data || []).map(m => m.id);
+      const pick = f => ids.filter(i => i.includes(f)).sort().reverse()[0];
+      CHEAP_MODEL = pick('haiku') || pick('sonnet') || null;
+    }
+  } catch (e) {}
+  if (!CHEAP_MODEL) CHEAP_MODEL = 'claude-haiku-4-5';
+  return CHEAP_MODEL;
+}
 const KNOWN_CARDS = [];
 async function loadKnownCards() {
   if (KNOWN_CARDS.length) return KNOWN_CARDS;
+  if (MOCK_AI) {
+    KNOWN_CARDS.push({ key: 'mock-2026', year: '2026', cats: ['YEAR — 2026','CONSECUTIVE RUNS','PUNGS & DRAGONS','SINGLES & PAIRS'],
+      anchors: [], card: { title: 'MOCK 2026 CARD', hands: [
+        { name: '222 000 2222 6666', cat: 'YEAR — 2026', pts: 25, concealed: false, note: '', disp: [['222 000 2222 6666','cN']],
+          variants: [[['C2',3],['C0',3],['B2',4],['B6',4]]] }] } });
+    return KNOWN_CARDS;
+  }
   try {
     const fx = await loadFixture('2026', ADMIN_KEY, null, 'set2026.enc');
     const card = fx.golden;
@@ -1293,44 +1321,53 @@ async function loadKnownCards() {
    Pass -> the verified card is served in seconds. Fail -> full read pipeline. */
 const MATCHLOG = [];  /* last two dozen match/verify attempts, with the reason each one passed or failed */
 function matchNote(e) { MATCHLOG.push(e); if (MATCHLOG.length > 24) MATCHLOG.shift(); console.log(JSON.stringify(Object.assign({ ev: 'card_match' }, e))); }
-async function matchAttempt(K, photos, usage, model, tryN) {
+/* Ownership check, not a transcription. One small photo, the cheapest model, and the
+   easiest question on the card: the year and the section headings, which are the largest
+   type printed on it. Deliberately fuzzy — being unsure is answered by asking her, which
+   is free, rather than by escalating to a full read, which is not. */
+async function verifyCard(K, thumb, usage) {
   const t0 = Date.now();
-  const prompt = `These photos are supposed to show panel(s) of a printed scoring card for American mah jongg, photographed by its owner. Report ONLY JSON, no commentary:
-{"isCard":<true ONLY if the photos clearly show a printed mah jongg scoring card with rows of hands; false for anything else>,"year":"<the 4-digit year printed on the card, or null if not visible>","org":"<the issuing organization name printed on the card, or null>","sections":["<every section header text you can see across the photos>"],"lines":{"<section header>":"<the tile groups of the FIRST printed hand row under that section, exactly as printed, first version only if the row has an -or->"}}
-Fill "lines" for whichever of these sections are visible: ${JSON.stringify(K.anchors.map(a => a.cat))}.`;
-  const r = await labCallAI([{ type: 'text', text: prompt }].concat(photos.map(IMG)), { think: false, model });
+  const prompt = `This photo should show part of a printed American mah jongg scoring card. Answer ONLY with JSON, no commentary:
+{"isCard":<true only if this is clearly a printed mah jongg scoring card with rows of hands>,"year":"<the 4-digit year printed on it, or null>","sections":["<each section heading you can read, as printed>"]}
+Section headings are the large coloured words above each group of rows. List every one you can read; do not guess.`;
+  const r = await labCallAI([{ type: 'text', text: prompt }, IMG(thumb)],
+    { think: false, model: await labPickCheap(), maxTokens: 400 });
   usage.in += (r.usage.input_tokens || 0); usage.out += (r.usage.output_tokens || 0); usage.model = r.model;
-  const j = labParseLoose(r.text, false);
-  const yearOk = String(j.year || '').includes(K.year);
-  const secs = (j.sections || []).map(s => normName(s));
-  const catHits = K.cats.filter(c => secs.some(s => s === normName(c) || s.includes(normName(c)) || normName(c).includes(s))).length;
-  let anchorHits = 0;
-  for (const a of K.anchors) {
-    const lk = Object.keys(j.lines || {}).find(k => normName(k) === normName(a.cat));
-    const got = lk ? j.lines[lk] : null;
-    if (got && normName(String(got).split(/-?or-?/i)[0]) === normName(a.name)) anchorHits++;
-  }
-  /* verification stays real: right year, plus solid section-header + anchor-line evidence */
-  const ok = yearOk && ((catHits >= 3 && anchorHits >= 1) || (catHits >= 2 && anchorHits >= 2));
+  let j = {};
+  try { j = JSON.parse((r.text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (e) {}
   const isCard = j.isCard !== false;
-  matchNote({ t: new Date().toISOString(), tier: 'fast', tryN, ok, isCard, yearOk, year: j.year || null,
-    catHits, anchorHits, model: r.model, ms: Date.now() - t0 });
-  return { ok, isCard };
+  const yearOk = String(j.year || '').includes(K.year);
+  const secs = (j.sections || []).map(x => normName(x)).filter(Boolean);
+  const catHits = K.cats.filter(c => secs.some(x => x === normName(c) || x.includes(normName(c)) || normName(c).includes(x))).length;
+  /* yes: the year plus real structural agreement. unsure: promising but thin — ask her.
+     no: not a card at all, or plainly a different card. */
+  let verdict = 'no';
+  if (isCard && yearOk && catHits >= 3) verdict = 'yes';
+  else if (isCard && (yearOk || catHits >= 3)) verdict = 'unsure';
+  else if (isCard) verdict = 'other';
+  matchNote({ t: new Date().toISOString(), tier: 'verify', verdict, isCard, yearOk, year: j.year || null,
+    catHits, sections: secs.slice(0, 8), model: r.model, tin: r.usage.input_tokens || 0, ms: Date.now() - t0 });
+  return { verdict, year: j.year || null, sections: (j.sections || []).slice(0, 6), catHits };
 }
-async function matchKnownCard(photos, usage) {
-  const known = await loadKnownCards();
-  if (!known.length) return null;
-  const K = known[0];
-  let a;
-  try { a = await matchAttempt(K, photos, usage, await labPickFast(), 1); }
-  catch (e) { matchNote({ t: new Date().toISOString(), tier: 'fast', tryN: 1, ok: false, err: e.message }); a = { ok: false, isCard: true }; }
-  if (!a.ok && a.isCard) {
-    /* one more look with the top model before giving up on the instant path */
-    try { const b = await matchAttempt(K, photos, usage, null, 2); if (b.ok) a = b; else a.isCard = b.isCard; }
-    catch (e) { matchNote({ t: new Date().toISOString(), tier: 'fast', tryN: 2, ok: false, err: e.message }); }
-  }
-  return { K: a.ok ? K : null, isCard: a.isCard };
+/* Rung 1: photos we have already judged. A retake of the same card, or a second try
+   after a wobbly connection, must never cost a second API call. */
+/* lazy: DATA_DIR is declared further down, so this must not read it at module load */
+let _FPS = null;
+function FPSmap() { if (!_FPS) _FPS = new Map(Object.entries(loadJson('cardfp.json', {}))); return _FPS; }
+const persistFps = () => saveJson('cardfp.json', Object.fromEntries(FPSmap()));
+function fpOf(photos) {
+  const h = require('crypto').createHash('sha256');
+  for (const p of photos) h.update(String(p).slice(0, 4096)).update('|').update(String(p.length));
+  return h.digest('hex');
 }
+function fpGet(fp) { const e = FPSmap().get(fp); return e && (Date.now() - e.t < 120 * 864e5) ? e.v : null; }
+function fpSet(fp, v) {
+  const M = FPSmap();
+  M.set(fp, { v, t: Date.now() });
+  if (M.size > 5000) { const k = M.keys().next().value; M.delete(k); }
+  persistFps();
+}
+
 /* expensive deep reads get their own tight daily budget */
 const FULLS = { day: '', n: 0 };
 const FULL_PER_DAY = +process.env.FULL_PER_DAY || 5;
@@ -1361,53 +1398,56 @@ async function retryFailedPanels(panels, photos, usage) {
   }
   return panels;
 }
-async function runReadJob(job, photos) {
+async function runReadJob(job, photos, opts) {
+  opts = opts || {};
   const usage = { in: 0, out: 0, model: '?' };
   const t0 = Date.now();
   job.stage = 'checking'; job.done = 0; job.of = photos.length;
   try {
-    /* stage 0: is this a card we already have a verified reading of? (~8s) */
-    let matched = null, isCard = true;
-    if (!MOCK_AI) {
-      try { const m = await matchKnownCard(photos, usage); matched = m.K; isCard = m.isCard; }
-      catch (e) { console.log(JSON.stringify({ ev: 'match_err', m: e.message })); }
-    }
-    if (!matched && !isCard) throw new Error("These photos don't look like a mah jongg scoring card — retake with the card flat, filling the frame");
-    if (!matched && !fullReadAllowed()) throw new Error('The deep reader has reached its daily limit — try again tomorrow (known cards still match instantly)');
-    if (matched) {
+    const KC = (await loadKnownCards())[0] || null;
+    const serveKnown = (K, note) => {
       job.status = 'done'; job.stage = 'done';
-      job.result = { card: matched.card, flags: [], panels: [{ matched: matched.key, note: 'your ' + matched.year + ' card, loaded from your photos' }],
-        model: usage.model, ms: Date.now() - t0, matched: matched.key };
+      job.result = { card: K.card, flags: [], panels: [{ matched: K.key, note }],
+        model: usage.model, ms: Date.now() - t0, matched: K.key };
       STATS.reads++; STATS.matched++; dayRec().reads++;
-      console.log(JSON.stringify({ ev: 'card_read', matched: matched.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
+      console.log(JSON.stringify({ ev: 'card_read', matched: K.key, ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
+    };
+
+    /* rung 1 — seen these exact photos before? costs nothing at all */
+    if (job.fp && KC) {
+      const prior = fpGet(job.fp);
+      if (prior === 'yes') { console.log(JSON.stringify({ ev: 'verify_cached', fp: job.fp.slice(0, 12) })); return serveKnown(KC, 'your ' + KC.year + ' card — recognised from your photos'); }
+    }
+
+    /* rung 3 — one small photo, cheapest model, easiest question on the card.
+       She confirmed "no, mine is different", so skip straight to the real read. */
+    if (!opts.deep) {
+      if (!KC) throw new Error('The card checker is not available right now — try again shortly');
+      const thumb = job.thumb || photos[0];
+      let v;
+      try { v = await verifyCard(KC, thumb, usage); }
+      catch (e) {
+        console.log(JSON.stringify({ ev: 'verify_err', m: e.message }));
+        throw new Error("We couldn't check that photo — try again in a moment");
+      }
+      if (v.verdict === 'yes') {
+        if (job.fp) fpSet(job.fp, 'yes');
+        return serveKnown(KC, 'your ' + KC.year + ' card, unlocked from your photos');
+      }
+      if (v.verdict === 'no') {
+        throw new Error("That doesn't look like a mah jongg card — retake it flat, filling the frame, with the year in shot");
+      }
+      /* rung 4 — unsure, or a card we don't know. Ask her; never guess expensively. */
+      job.status = 'confirm'; job.stage = 'confirm';
+      job.confirm = { year: v.year, sections: v.sections, known: KC.year, catHits: v.catHits, other: v.verdict === 'other' };
+      STATS.reads++; dayRec().reads++;
+      console.log(JSON.stringify({ ev: 'card_confirm', verdict: v.verdict, year: v.year, catHits: v.catHits,
+        ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
       return;
     }
-    /* stage 1: middle tier (~1 min) — one full read of the photos, then a line-by-line
-       comparison against the known card. Agreement is the strongest verification we
-       have; if it agrees, serve the stored card. Disagreement -> the careful read. */
-    const KC = MOCK_AI ? null : (await loadKnownCards())[0] || null;
-    if (KC) {
-      job.stage = 'reading'; job.done = 0;
-      const mp = await Promise.all(photos.map(p =>
-        runPanel(p, STRATS.M, usage).catch(e => ({ error: e.message })).then(r => { job.done++; return r; })));
-      const mh = [];
-      for (const p of mp) if (!p.error && p.result) mh.push(...p.result.hands);
-      if (mh.length) {
-        const sc = scoreCard(mh, KC.card);
-        const need = Math.floor(KC.card.hands.length * 0.87);
-        const served = sc.exact >= need && sc.extra <= 4;
-        matchNote({ t: new Date().toISOString(), tier: 'mid', ok: served, exact: sc.exact, of: KC.card.hands.length,
-          need, extra: sc.extra, ms: Date.now() - t0 });
-        if (served) {
-          job.status = 'done'; job.stage = 'done';
-          job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'your ' + KC.year + ' card, loaded in full from your photos' }],
-            model: usage.model, ms: Date.now() - t0, matched: KC.key };
-          STATS.reads++; STATS.matched++; dayRec().reads++;
-          console.log(JSON.stringify({ ev: 'card_read', matched: KC.key + ' (mid-tier)', ms: Date.now() - t0, tin: usage.in, tout: usage.out }));
-          return;
-        }
-      }
-    }
+
+    /* rung 5 — a genuinely unknown card. Rare, budgeted, and explicitly asked for. */
+    if (!fullReadAllowed()) throw new Error('The full reader has reached its daily limit — try again tomorrow');
     /* stage 2: the careful read — verify pass, retries, consensus */
     job.stage = 'deep'; job.done = 0;
     let panels = await Promise.all(photos.map(p =>
@@ -1591,10 +1631,35 @@ const server = http.createServer(async (req, res) => {
     const lim = readAllowed(tok);
     if (lim) return send200({ err: lim });
     const id = 'r' + (++JOBSEQ);
-    const job = { status: 'running', started: Date.now() };
+    const thumb = (typeof body.thumb === 'string' && body.thumb.length > 500 && body.thumb.length < 2 * 1024 * 1024) ? body.thumb : null;
+    const job = { status: 'running', started: Date.now(), fp: fpOf(photos), thumb, photos, tok };
     JOBS.set(id, job);
-    runReadJob(job, photos);
+    runReadJob(job, photos, { deep: false });
     return send200({ job: id });
+  }
+  /* She answered the "is this your card?" question. YES costs nothing at all —
+     the photo already showed the right year or the right sections. NO is the only
+     door to a full read, and it is the door almost nobody opens. */
+  if (u.pathname === '/api/cardconfirm' && req.method === 'POST') {
+    let body; try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return send200({ err: 'Bad request' }); }
+    const job = JOBS.get(String(body.job || ''));
+    if (!job || job.status !== 'confirm') return send200({ err: 'That check has expired — take the photos again' });
+    const KC = (await loadKnownCards())[0] || null;
+    if (String(body.answer) === 'yes') {
+      if (!KC) return send200({ err: 'The card is not available right now' });
+      if (job.fp) fpSet(job.fp, 'yes');
+      job.status = 'done'; job.stage = 'done';
+      job.result = { card: KC.card, flags: [], panels: [{ matched: KC.key, note: 'your ' + KC.year + ' card, unlocked from your photos' }],
+        model: 'confirmed', ms: 0, matched: KC.key };
+      STATS.matched++;
+      console.log(JSON.stringify({ ev: 'card_confirmed', by: 'user' }));
+      return send200({ ok: 1 });
+    }
+    if (!fullReadAllowed()) return send200({ err: 'The full reader has reached its daily limit — try again tomorrow' });
+    job.status = 'running'; job.stage = 'deep';
+    runReadJob(job, job.photos || [], { deep: true });
+    console.log(JSON.stringify({ ev: 'card_deep_requested' }));
+    return send200({ ok: 1, deep: 1 });
   }
   if (u.pathname === '/api/readjob') {
     const id = String(u.searchParams.get('id') || '');
@@ -1602,7 +1667,8 @@ const server = http.createServer(async (req, res) => {
     const job = JOBS.get(id);
     if (!job) return send200({ err: 'no such job' });
     return send200({ status: job.status, secs: Math.round((Date.now() - job.started) / 1000),
-      stage: job.stage || null, done: job.done || 0, of: job.of || 0, result: job.result || null });
+      stage: job.stage || null, done: job.done || 0, of: job.of || 0, result: job.result || null,
+      confirm: job.confirm || null });
   }
   if (u.pathname === '/admin/eval') {
     if (u.searchParams.get('k') !== ADMIN_KEY) return send200({ err: 'bad key' });
@@ -1713,7 +1779,7 @@ ${tile('CARD READS', STATS.reads, STATS.matched + ' instant-matched')}
       const fx = await loadFixture('2026', ADMIN_KEY, u.searchParams.get('base') || null, u.searchParams.get('file') || 'set2026.enc');
       const usage = { in: 0, out: 0, model: '?' };
       const t0 = Date.now();
-      const m = await matchKnownCard(fx.photos, usage);
+      const m = { K: null, isCard: true };  /* lab match path retired — see verifyCard */
       return send200({ matched: m.K ? m.K.key : null, isCard: m.isCard, hands: m.K ? m.K.card.hands.length : 0, ms: Date.now() - t0, tokens: usage });
     } catch (e) { return send200({ err: e.message }); }
   }
