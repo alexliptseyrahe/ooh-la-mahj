@@ -1538,7 +1538,16 @@ function playerDiscardPhase(){
   G.winNow=checkWin(me);
   G.sel.clear();
   renderRack();renderActions();
-  if(learnOn()&&G.learn.step>=5)later(60,coachFinish);
+  if(learnOn()){
+    /* a first game must never become unwinnable and silent about it */
+    if(me.exp.length&&!topFits(me).length){
+      later(60,()=>coachShow({text:'That call closed off every line on the card.',
+        aside:'It happens — even to people who have played for years. Let me deal you another.',
+        next:()=>{coachOff();startLearnGame()},nextLabel:'DEAL AGAIN ›'}));
+      return;
+    }
+    if(G.learn.step>=5)later(60,coachFinish);
+  }
   if(!G.winNow){
     if(me.exp.length&&!topFits(me).length)
       setStatus('Your turn — <b>hand is dead</b> (no card line fits your exposures). Discard safely.');
@@ -1607,10 +1616,19 @@ function afterDiscard(by,t){
     if(win)opts.push({label:'MAH JONGG!',cls:'gold',fn:()=>playerCallWin(t,win)});
     const callable=copies>=2||(copies>=1&&jk>=1)||jk>=2;
     if(callable){
+      /* Two jokers technically make ANY tile pung-able, which used to pop the call bar
+         on every single discard. Only offer a size some living hand is actually asking
+         for — and never one that would kill the hand outright. */
+      const tk=key(t);
+      const wants=new Set();
+      for(const f of topFits(me)) for(const [gk,gn] of f.rem) if(gk===tk&&gn>=3)wants.add(gn);
       for(const k of [3,4,5]){
         const need=k-1,realUse=Math.min(copies,need),jNeed=need-realUse;
-        if(jNeed<=jk&&copies+jk>=need&&(realUse+jNeed===need))
-          opts.push({label:k===3?'PUNG':k===4?'KONG':'QUINT',cls:'',fn:()=>playerCallExpose(t,k)});
+        if(!(jNeed<=jk&&copies+jk>=need&&(realUse+jNeed===need)))continue;
+        if(!wants.has(k))continue;
+        if(!callKeepsAlive(me,t,k))continue;
+        if(learnOn()&&!learnWantsCall(t,k))continue;   /* the first game teaches one call */
+        opts.push({label:k===3?'PUNG':k===4?'KONG':'QUINT',cls:'',fn:()=>playerCallExpose(t,k)});
       }
     }
     if(opts.length){openCallBar(t,opts,()=>botClaims(by,t));if(learnOn())later(120,()=>learnAfter('callbar'));return}
@@ -2334,7 +2352,7 @@ function tapTile(t){
     /* first game: the app won't let her dismantle her own hand — only the tiles
        that belong to nothing can go, which is the lesson anyway */
     if(learnOn()){
-      const keepK={};LEARN_TARGET.forEach(([k,n])=>keepK[k]=n);
+      const keepK={};learnTargetNow().forEach(([k,n])=>keepK[k]=n);
       const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keepK[key(x)]);
       if(junkLeft&&keepK[key(t)]){
         setStatus('Keep that one — it belongs to your hand.');
@@ -3965,6 +3983,26 @@ function startLearnGame(){
   setStatus('');
   later(400,()=>coachStep(0));
 }
+/* The aim is Sunrise 2026 — but if she exposes something that line can't hold, the
+   tutorial follows HER rather than stranding her chasing a hand she can no longer make. */
+function learnTargetNow(){
+  const me=G.players[0];
+  const rem=LEARN_TARGET.map(x=>[x[0],x[1]]);
+  let fits=true;
+  for(const e of me.exp){
+    const i=rem.findIndex(([k,n])=>k===e.rep&&n===e.tiles.length);
+    if(i<0){fits=false;break}
+    rem.splice(i,1);
+  }
+  if(fits)return LEARN_TARGET;
+  const f=topFits(me)[0];
+  return (f&&f.variant&&f.variant.length)?f.variant:LEARN_TARGET;
+}
+/* is this call part of the hand we're steering her toward? */
+function learnWantsCall(t,k){
+  const tk=key(t);
+  return learnTargetNow().some(([gk,gn])=>gk===tk&&gn===k);
+}
 /* what the target hand still wants, as tile keys */
 function learnNeed(){
   const me=G.players[0];
@@ -3972,7 +4010,7 @@ function learnNeed(){
   for(const t of me.hand){if(t.s==='J')jk++;else have[key(t)]=(have[key(t)]||0)+1}
   for(const e of me.exp)for(const t of e.tiles){if(t.s!=='J')have[key(t)]=(have[key(t)]||0)+1}
   const want=[];
-  for(const [k,n] of LEARN_TARGET){
+  for(const [k,n] of learnTargetNow()){
     let short=n-(have[k]||0);
     while(short-->0)want.push(k);
   }
@@ -4062,7 +4100,7 @@ function coachFinish(){
     return;
   }
   const want=learnNeed();
-  const keepK={};for(const [k,n] of LEARN_TARGET)keepK[k]=n;
+  const keepK={};for(const [k,n] of learnTargetNow())keepK[k]=n;
   const tiles=[...$('rack').querySelectorAll('.tile')];
   const junkI=me.hand.findIndex(t=>t.s!=='J'&&!keepK[key(t)]);
   if(junkI<0){coachClear();$('coach').classList.remove('on');return}
