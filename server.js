@@ -293,6 +293,22 @@ function makeTable(hostP, cardJson, config, forceCode, schedAt) {
 }
 function seatOf(T, token) { return T.seats.findIndex(s => s && s.token === token); }
 function humanSeats(T) { return T.seats.map((s, i) => s && s.kind === 'human' ? i : -1).filter(i => i >= 0); }
+/* people who are actually sitting there, awake, waiting on each other */
+function liveHumans(T) { return humanSeats(T).filter(i => T.seats[i].connected && !T.seats[i].botSub); }
+/* The Charleston clock exists only so one distracted player can't freeze a table of
+   friends. Alone with the bots there is nobody to keep waiting, so it doesn't run at
+   all — the app must never make her passes for her. */
+function chClock(T, name, ms, fn) {
+  if (liveHumans(T).length <= 1) { T.chDue = null; return; }
+  T.chDue = Date.now() + ms;
+  later(T, name, ms, () => {
+    T.chDue = null;
+    /* everyone else left or dropped while the clock ran — she's alone now, so it
+       is nobody's turn to be kept waiting and we do not touch her tiles */
+    if (liveHumans(T).length <= 1) return broadcast(T);
+    fn();
+  });
+}
 function seatDriver(T, i) { const s = T.seats[i]; return s.kind === 'bot' || s.botSub ? 'bot' : 'human'; }
 function clearTimers(T) { for (const k in T.timers) { clearTimeout(T.timers[k]); delete T.timers[k]; } }
 function later(T, name, ms, fn) {
@@ -314,6 +330,7 @@ function viewFor(T, seatIdx) {
   }
   return {
     type: 'view', code: T.code, phase: T.phase, chStep: T.chStep, chPhase: T.chPhase || 'pass',
+    chLeft: (T.phase === 'charleston' && T.chDue) ? Math.max(0, T.chDue - Date.now()) : undefined,
     over: T.phase === 'ended' ? (T.endInfo || null) : undefined,
     schedAt: T.schedAt || undefined,
     turn: T.turn, step: T.step, wall: T.wall.length, dealer: T.dealer,
@@ -370,14 +387,15 @@ function startGame(T) {
   armCharleston(T);
 }
 function armCharleston(T) {
-  // bots decide instantly; humans get 60s before auto-pass
-  later(T, 'charleston', 60000, () => {
+  // bots decide instantly; at a table of friends a stalled seat is filled in after 100s
+  chClock(T, 'charleston', 100000, () => {
     for (const i of humanSeats(T)) {
       const s = T.seats[i];
       if (!s.chPass) s.chPass = botPassTiles(T, s).map(t => t.id);
     }
     tryResolveCharleston(T);
   });
+  broadcast(T);              // carries the deadline (if any) out to the table
   tryResolveCharleston(T);   // resolves immediately when no connected humans still owe a pass
 }
 function resolveCh(T) {
@@ -437,7 +455,7 @@ function beginChVote(T) {
   T.chPhase = 'vote';
   for (const s of T.seats) s.chVote = null;
   for (let i = 0; i < 4; i++) if (seatDriver(T, i) === 'bot') T.seats[i].chVote = botVoteContinue(T, T.seats[i]);
-  later(T, 'charleston', 25000, () => {
+  chClock(T, 'charleston', 45000, () => {
     for (const i of humanSeats(T)) { const s = T.seats[i]; if (s.chVote == null) s.chVote = false; }
     tryResolveVote(T);
   });
@@ -465,7 +483,7 @@ function beginCourtesy(T) {
   T.chPhase = 'courtesy';
   for (const s of T.seats) s.chOffer = null;
   for (let i = 0; i < 4; i++) if (seatDriver(T, i) === 'bot') T.seats[i].chOffer = botCourtesyOffer(T, T.seats[i]);
-  later(T, 'charleston', 25000, () => {
+  chClock(T, 'charleston', 45000, () => {
     for (const i of humanSeats(T)) { const s = T.seats[i]; if (s.chOffer == null) s.chOffer = []; }
     tryResolveCourtesy(T);
   });
@@ -495,6 +513,7 @@ function tryResolveCourtesy(T) {
   beginPlay(T);
 }
 function beginPlay(T) {
+  T.chDue = null;
   T.phase = 'play'; T.turn = T.dealer; T.step = 'discard';
   broadcast(T, eventMsg('gameon', { dealer: T.dealer }));
   driveTurn(T);
@@ -862,7 +881,7 @@ setInterval(() => {
 
 /* ================= CARD READER LAB ================= */
 const { webcrypto: wcrypto } = require('crypto');
-const LAB_VERSION = 'r24';
+const LAB_VERSION = 'r25';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'FLAMINGO';
 const OLM_API_KEY = process.env.OLM_API_KEY || '';
 const SITE_BASE = process.env.SITE_BASE || 'https://kliptseyrahe.github.io/ooh-la-mahj';
@@ -1458,7 +1477,7 @@ function icsFor(code, at, hostName) {
   const link = 'https://oohlamahj.com/?g=' + code;
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ooh La Mahj//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'BEGIN:VEVENT', 'UID:' + code + '@oohlamahj.com', 'DTSTAMP:' + dt(Date.now()),
-    'DTSTART:' + dt(at), 'DTEND:' + dt(at + 2 * 3600e3),
+    'DTSTART:' + dt(at), 'DTEND:' + dt(at + 30 * 60000),
     'SUMMARY:Mahj — ' + icsEsc(hostName) + "'s table",
     'DESCRIPTION:Tap to sit down: ' + link, 'URL:' + link,
     'BEGIN:VALARM', 'TRIGGER:-PT10M', 'ACTION:DISPLAY', 'DESCRIPTION:Mahj starts in 10 minutes', 'END:VALARM',
@@ -1476,6 +1495,11 @@ function pollInfo(p, tok) {
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const send200 = o => { res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(o)); };
+  /* public, keyless, safe to open on a phone — the one-tap way to confirm a deploy landed */
+  if (u.pathname === '/api/health') {
+    return send200({ ok: true, version: LAB_VERSION,
+      upMinutes: Math.round((Date.now() - STATS.boot) / 60000), liveTables: tables.size });
+  }
   if (u.pathname === '/robots.txt') {
     res.writeHead(200, { 'content-type': 'text/plain' });
     return res.end('User-agent: *\nAllow: /\n');
