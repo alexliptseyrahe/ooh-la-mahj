@@ -270,12 +270,13 @@ body.peekopen #peekdim{opacity:1;pointer-events:auto}
 #peek{position:absolute;left:0;right:0;top:0;height:calc(100% - 40px);transform:translateY(calc(-100% - 4px));
   transition:transform .32s cubic-bezier(.32,.72,.28,1);pointer-events:auto}
 #peek.notrans{transition:none}
-#peektab{position:absolute;left:50%;top:100%;transform:translateX(-50%);background:var(--paper);color:var(--deep);
-  border-radius:0 0 13px 13px;padding:8px 22px 10px;font-size:10.5px;letter-spacing:.22em;font-weight:700;
-  box-shadow:0 6px 16px rgba(0,0,0,.35);display:none;align-items:center;gap:7px;white-space:nowrap;
-  touch-action:none;font-family:var(--sans);user-select:none;-webkit-user-select:none}
+/* the close tab speaks the same language as every other sheet: the one grey grab bar */
+#peektab{position:absolute;left:50%;top:100%;transform:translateX(-50%);background:var(--paper);
+  border-radius:0 0 14px 14px;padding:9px 30px 11px;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;
+  touch-action:none;user-select:none;-webkit-user-select:none}
 #peek.open #peektab{display:flex}
-#peektab .chev{font-size:10px;color:var(--gold)}
+#peektab .pgrab{display:block;width:44px;height:4px;border-radius:2px;background:#D8D3C6}
 #peekbody{height:100%;background:var(--paper);color:var(--ink);border-radius:0 0 18px 18px;
   display:flex;flex-direction:column;overflow:hidden}
 #peek.open #peekbody{box-shadow:0 12px 34px rgba(0,0,0,.45)}
@@ -423,7 +424,7 @@ body.haspill #cardnudge{margin-top:8px}
 .cbtn{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#A8A296;border:1px solid #DAD4C6;border-radius:12px;padding:7px 12px;background:none;font-family:var(--sans)}
 .cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
 .cbtn:disabled{opacity:.45}
-.cbtn.imp{color:var(--coral-dk);border-color:var(--coral)}
+.cbtn.imp{background:var(--coral);border-color:var(--coral);color:#fff}
 .cbtn:disabled{opacity:.35}
 #imparea{width:100%;height:90px;border:1px solid #CFC9BC;border-radius:10px;padding:8px;font-size:11px;font-family:monospace;margin:8px 0;resize:none;background:#FCFBF9;color:var(--ink)}
 #impfile{font-size:12px;margin:2px 0 6px;max-width:100%}
@@ -617,7 +618,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
     <div id="peekhead"><h3 id="peektitle">Your Card</h3><p id="peeksub"></p></div>
     <div id="peeklines"></div>
   </div>
-  <div id="peektab"><span>CLOSE</span><span class="chev">▲</span></div>
+  <div id="peektab"><i class="pgrab"></i></div>
 </div>
 </div>
 
@@ -630,7 +631,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
     <div id="cardctl">
       <button class="cbtn" id="ccclub">OOH LA CARD</button>
       <button class="cbtn" id="ccmine">MY CARD</button>
-      <button class="cbtn imp" id="ccimport">IMPORT…</button>
+      <button class="cbtn imp" id="ccimport">ADD YOUR 2026 CARD</button>
     </div>
     <div id="cardlock">the table is playing this card — changes unlock after the game</div>
     <div id="cardlist"></div>
@@ -2239,6 +2240,11 @@ function renderCardCtl(){
   $('ccclub').classList.toggle('on',activeCardName()==='club');
   $('ccmine').classList.toggle('on',activeCardName()==='custom');
   const locked=cardLocked();
+  /* before you have a card of your own there is nothing to switch to, so MY CARD
+     says nothing; once you do, it wears your card's name and the door shrinks to UPDATE… */
+  $('ccmine').style.display=CUSTOM?'':'none';
+  if(CUSTOM){const t=(CUSTOM.title||'MY CARD').toUpperCase();$('ccmine').textContent=t.length>16?t.slice(0,15)+'…':t}
+  $('ccimport').textContent=CUSTOM?'UPDATE…':'ADD YOUR 2026 CARD';
   $('ccclub').disabled=locked;
   $('ccmine').disabled=locked||!CUSTOM;
   $('ccimport').disabled=locked;
@@ -2757,7 +2763,7 @@ function openSchedCreate(){
       const name=mpName()||'A friend';
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      const cfg={pace:'relaxed',hints:true,charleston:CHFULL?'full':'express'};
+      const cfg={pace:'relaxed',hints:true,charleston:'full'};   /* friend tables always play the full Charleston */
       box.querySelector('#gcreate').textContent='CREATING…';
       try{
         if(mode==='fixed'){
@@ -3082,7 +3088,7 @@ $('btnhow').onclick=()=>{
   box.innerHTML=`<div class="mtop">HOUSE RULES</div><h2 style="font-size:24px">How We Play</h2>
   <div class="rules" style="margin-top:12px">
   <p><b>The goal.</b> Be first to make a 14-tile hand from the card in play — the Ooh La Card, or your own card once you've added it (tap CARD anytime; it shows every hand and how close you are).</p>
-  <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. Never pass a joker.</p>
+  <p><b>The Charleston.</b> Before play, pass 3 unwanted tiles right, then across, then left. If everyone agrees, a second round goes left, across, right. On the last pass of each round you may pass tiles you just received without looking — a <i>blind</i> pass. Afterward, you and the player across may swap up to 3 more (the courtesy) — the smaller offer counts. Never pass a joker. Solo games can shorten this to a single round: Menu → CHARLESTON → EXPRESS.</p>
   <p><b>Your turn.</b> Draw a tile, discard a tile. Tap a tile, then DISCARD.</p>
   <p><b>Calling.</b> When someone discards a tile you need for a group of 3+ (pung, kong, quint), you may call it — the group is then exposed. Pairs may never be called.</p>
   <p><b>Jokers.</b> A joker stands for any tile in a group of 3 or more — never in pairs. If an exposed group holds a joker and you have the real tile, swap for it on your turn.</p>
@@ -3434,10 +3440,6 @@ function openFriends(errMsg){
             <button class="chip on" id="fhintyes">✓ HINTS ALLOWED</button>
             <button class="chip" id="fhintno">NO HINTS</button>
           </div>
-          <div class="chiprow">
-            <button class="chip on" id="fcharfull">✓ FULL CHARLESTON</button>
-            <button class="chip" id="fcharexp">EXPRESS</button>
-          </div>
         </div>
         <div class="orpill" style="width:100%"><span>OR</span></div>
         <button class="abtn gold" id="fjoinstep">JOIN A FRIEND'S TABLE</button>
@@ -3456,23 +3458,13 @@ function openFriends(errMsg){
     };
     box.querySelector('#fhintyes').onclick=()=>setHints(true);
     box.querySelector('#fhintno').onclick=()=>setHints(false);
-    let charFull=true;
-    const setChar=v=>{
-      charFull=v;
-      box.querySelector('#fcharfull').classList.toggle('on',v);
-      box.querySelector('#fcharfull').textContent=v?'✓ FULL CHARLESTON':'FULL CHARLESTON';
-      box.querySelector('#fcharexp').classList.toggle('on',!v);
-      box.querySelector('#fcharexp').textContent=v?'EXPRESS':'✓ EXPRESS';
-      sfx('tap');
-    };
-    box.querySelector('#fcharfull').onclick=()=>setChar(true);
-    box.querySelector('#fcharexp').onclick=()=>setChar(false);
     box.querySelector('#fcreate').onclick=()=>{
       if(!getName())return;
       MP.intended=true;
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
-      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints,charleston:charFull?'full':'express'}}));
+      /* friend tables always play the real, full Charleston */
+      mpConnect(()=>mpSend({type:'create',card,config:{pace:'relaxed',hints:allowHints,charleston:'full'}}));
     };
     box.querySelector('#fjoinstep').onclick=()=>{if(getName())stepTwo()};
     box.querySelector('#fsched').onclick=()=>{if(getName())openSchedCreate()};
