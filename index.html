@@ -1660,7 +1660,7 @@ function discardSelected(){
        const keep=keepIdsFor(G.players[0],f.rem);
        const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keep.has(x.id));
        if(junkLeft&&keep.has(selT.id)){
-         setStatus('Keep that one — it belongs to your hand.');
+         stGuard('Keep that one — it belongs to your hand.');
          G.sel.clear();renderRack();renderActions();
          if(typeof coachReplace==='function')coachReplace();
          return;
@@ -2263,6 +2263,17 @@ function setStatus(html){
     if(typeof coachReplace==='function')coachReplace();
   },2200);
 }
+/* a tap rebuke ("keep that one", "jokers are precious") is about ONE tap — it must
+   fade even when the ghosted coach has emptied HINTBASE, or it lingers under the
+   next instruction and the two argue on screen */
+function stGuard(html){
+  setStatus(html);
+  clearTimeout(STREVERT);
+  STREVERT=setTimeout(()=>{
+    $('statusline').innerHTML=HINTBASE;
+    if(typeof coachReplace==='function')coachReplace();
+  },2200);
+}
 let msgTimer=null;
 function showMsg(txt){
   $('tablemsgtxt').textContent=txt;
@@ -2424,13 +2435,13 @@ function tapTile(t){
     const ph=G.chPhase||'pass';
     if(ph==='vote'||ph==='voted')return;
     if(MP.active&&(ph==='pass'?MP.chSubmitted:MP.chOffered))return;
-    if(t.s==='J'){setStatus('Jokers may never be passed, darling');return}
+    if(t.s==='J'){stGuard('Jokers may never be passed, darling');return}
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else if(G.sel.size<3)G.sel.add(t.id);
     sfx('tap');
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
-    if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
+    if(t.s==='J'){stGuard('Jokers are far too precious to discard, darling');return}
     /* The first game will not let her dismantle her own hand, full stop (Alex's
        rule, stated twice). The HINT button toggles the highlighting, never this
        protection. The guard runs BEFORE the coach advances, so the tap is judged
@@ -2442,7 +2453,7 @@ function tapTile(t){
         const keep=keepIdsFor(G.players[0],f.rem);
         const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keep.has(x.id));
         if(junkLeft&&keep.has(t.id)){
-          setStatus('Keep that one — it belongs to your hand.');
+          stGuard('Keep that one — it belongs to your hand.');
           sfx('tap');return;
         }
       }
@@ -2456,7 +2467,11 @@ function tapTile(t){
     else{G.sel.clear();G.sel.add(t.id)}
     sfx('tap');
     renderRack();renderActions();
-    if(learnOn())later(50,()=>{G.sel.size?coachAfterSelect():coachStep(G.learn.step)});
+    if(learnOn()){
+      const st=$('statusline');
+      if(/Keep that one|Jokers are|Jokers may/.test(st.textContent)){clearTimeout(STREVERT);st.innerHTML=HINTBASE}
+      later(50,()=>{G.sel.size?coachAfterSelect():coachStep(G.learn.step)});
+    }
   }
 }
 function renderActions(){
