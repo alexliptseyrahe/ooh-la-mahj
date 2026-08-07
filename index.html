@@ -1605,6 +1605,7 @@ function playerDiscardPhase(){
       return;
     }
     if(G.learn.step>=5)later(60,coachFinish);
+    else if(G.learn.step===4)later(60,()=>{if(G.turn===0&&G.step==='discard')coachStep(4)});
   }
   if(!G.winNow){
     if(me.exp.length&&!topFits(me).length)
@@ -1639,7 +1640,7 @@ function doJokerSwap(){
 function learnOnDiscard(){
   if(!learnOn())return;
   if(G.learn.step===2)learnAfter('discard');
-  if(G.learn.step>=5){coachClear();$('coach').classList.remove('on')}
+  if(G.learn.step>=4){coachClear();$('coach').classList.remove('on')}
 }
 function discardSelected(){
   if(G.sel.size!==1)return;
@@ -2411,10 +2412,9 @@ function tapTile(t){
     if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
     /* Judge the tap against what she was looking at when she made it, so the guard
        runs BEFORE the coach advances and repaints the rack. It protects exactly the
-       tiles the hint has ringed: never one it dimmed, never once she has turned the
-       training wheels off, and never while the ghost overlay is already naming the
-       tile to throw. */
-    if(learnOn()&&HINTON&&hintsAllowed()&&!document.querySelector('#coach .cghost')){
+       tiles her hand needs — during the ghosted moments too, where the coach is
+       pointing at the one tile to throw — and never once she has turned hints off. */
+    if(learnOn()&&HINTON&&hintsAllowed()){
       const f=learnFit();
       if(f){
         const keep=keepIdsFor(G.players[0],f.rem);
@@ -4380,7 +4380,10 @@ function coachStep(n){
   }else if(n===4){
     renderActions();   /* step is 4 now, so the swap button is allowed to appear */
     const sw=[...$('actions').querySelectorAll('button')].find(b=>/SWAP JOKER/.test(b.textContent));
-    const exp=document.querySelector('#opps .tile.joker')||document.querySelector('#opps .tile');
+    /* the swap is gone — done, or she threw the matching tile away. Never show a
+       tip whose button doesn't exist; move on to the endgame coaching. */
+    if(!sw){coachStep(5);return}
+    const exp=document.querySelector('#opps .tile.joker');
     coachShow({step:4,ring:[sw,exp].filter(Boolean),
       text:"Evelyn's joker is standing in for a tile you hold.",
       aside:'Swap the real one for it — jokers are the best tiles on the table.'});
@@ -4431,10 +4434,18 @@ function chDone(){CHTAUGHT=true;try{localStorage.setItem('olmChTaught','1')}catc
    and everything drawn underneath it is suddenly in the wrong place. So the coach
    redraws with the ghosts gone and its finger on the button she needs next. */
 function coachAfterSelect(){
-  if(!learnOn()||G.learn.step!==2)return;
+  if(!learnOn())return;
+  const st=G.learn.step;
+  if(st!==2&&st<5)return;
   const btn=[...$('actions').querySelectorAll('button')].find(b=>/DISCARD/.test(b.textContent));
   if(!btn){coachClear();$('coach').classList.remove('on');return}
-  coachShow({step:2,ring:[btn],text:'Now send it away.',aside:'That one belongs to nobody.'});
+  /* say "belongs to nobody" only when it is true of the tile she actually lifted */
+  const me=G.players[0];
+  const sel=me.hand.find(t=>G.sel.has(t.id));
+  const f=learnFit();
+  const keeper=!!(sel&&f&&keepIdsFor(me,f.rem).has(sel.id));
+  coachShow({step:st===2?2:5,ring:[btn],text:'Now send it away.',
+    aside:keeper?'Careful — that one does fit your hand.':'That one belongs to nobody.'});
 }
 /* the coach follows what she actually does */
 function learnAfter(ev){
@@ -4444,7 +4455,7 @@ function learnAfter(ev){
   if(ev==='callbar'&&st===2)coachStep(3);
   if(ev==='called'&&st===3){coachClear();$('coach').classList.remove('on')}
   if(ev==='swapready'&&(st===3||st===2))coachStep(4);
-  if(ev==='swapped'&&st===4){coachClear();$('coach').classList.remove('on')}
+  if(ev==='swapped'&&st===4)coachStep(5);   /* on to the endgame: ring the junk, every turn */
 }
 $('btnlearn').onclick=openLearn;
 function beacon(path){
