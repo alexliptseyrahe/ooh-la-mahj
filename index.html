@@ -226,37 +226,62 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #coach{position:fixed;inset:0;z-index:120;pointer-events:none;display:none}
 #coach.on{display:block}
 .cspot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(4,20,14,.72);
-  border:1.5px solid rgba(232,217,174,.5);transition:all .3s ease}
+  border:1.5px solid rgba(232,217,174,.5);transition:all .3s ease;z-index:1}
 .cring{position:absolute;border-radius:11px;border:2.5px solid var(--coral);
-  box-shadow:0 0 0 5px rgba(226,114,91,.28);transition:all .25s ease}
+  box-shadow:0 0 0 5px rgba(226,114,91,.28);transition:all .25s ease;z-index:2}
 .cring.gold{border-color:var(--gold);box-shadow:0 0 0 5px rgba(201,162,75,.3)}
-.cghost{position:absolute;border-radius:11px;background:rgba(10,28,20,.66)}
+.cghost{position:absolute;border-radius:11px;background:rgba(10,28,20,.66);z-index:1}
 #coachchip{position:absolute;left:12px;right:12px;background:var(--paper);border-radius:14px;
   padding:13px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 10px 26px rgba(0,0,0,.45);
-  pointer-events:auto;text-align:left}
+  pointer-events:auto;text-align:left;z-index:3}
 #coachchip .bar{width:3px;align-self:stretch;border-radius:2px;background:var(--coral);flex:none}
 #coachchip .tx{font-size:14px;line-height:1.4;color:var(--ink);font-weight:600;font-family:var(--sans)}
 #coachchip .tx i{display:block;font-style:normal;font-weight:400;font-size:12px;color:#8A8478;margin-top:3px}
 #coachchip .nx{margin-left:auto;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--coral);
   white-space:nowrap;background:none;border:none;font-family:var(--sans);padding:6px 2px}
-#coachdots{position:absolute;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);display:flex;gap:4px}
+#coachdots{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:3}
 #coachdots i{width:5px;height:5px;border-radius:50%;background:rgba(232,217,174,.32)}
 #coachdots i.on{background:var(--coral);width:14px;border-radius:3px}
 /* ---------- learn screens: one step larger than the rest of the app ---------- */
 .lrn h2{font-size:24px!important}
 .lrn .msub{font-size:15px;line-height:1.5;color:#5A6A60}
 .lrnrow{display:flex;align-items:center;gap:14px;margin:8px 0}
-.lrnrow .lb{width:64px;flex:none;text-align:right;font-size:12px;letter-spacing:.14em;font-weight:700;color:#8A6F2F}
+.lrnrow .lb{width:64px;flex:none;text-align:right;font-size:10.5px;letter-spacing:.2em;font-weight:700;color:var(--coral)}
 .lrnrow .tiles{display:flex;gap:6px;flex-wrap:wrap}
 .lrnrow .tile{cursor:pointer;transition:transform .18s ease}
 .lrnrow .tile.said{transform:translateY(-7px);box-shadow:0 9px 16px rgba(10,25,18,.32)}
 .lrnwin{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;background:#fff;border:1px solid #EFE9DB;
-  border-radius:13px;padding:12px 10px;margin-top:12px}
+  border-radius:14px;padding:12px 10px;margin-top:12px}
 .lrnsay{margin-top:12px;min-height:40px;display:flex;align-items:center;justify-content:center}
-.lrnsay .card{background:#F3F0E8;border-radius:11px;padding:9px 14px;text-align:left}
+.lrnsay .card{background:#F1EFE9;border-radius:12px;padding:10px 14px;text-align:left}
 .lrnsay b{display:block;font-family:var(--serif);font-size:16px;color:var(--deep)}
 .lrnsay span{display:block;font-size:11.5px;color:#8A8478;margin-top:2px}
-.lrntiny{font-size:11px;color:#A8A296;letter-spacing:.04em;margin-top:12px}
+.lrntiny{font-size:11px;color:#A8A296;letter-spacing:.04em;margin-top:12px}  /* = .lstartsub */
+/* reading a line: the printed groups, then the tiles that answer them */
+.rlline{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:16px 0 2px}
+.rlline i{font-style:normal;font-family:var(--sans);font-size:21px;letter-spacing:.06em;font-weight:700;
+  background:#F1EFEA;border-radius:8px;padding:6px 10px;cursor:pointer;transition:opacity .2s ease}
+.rlline i.cR{color:var(--red)} .rlline i.cG{color:var(--grn)} .rlline i.cB{color:var(--blu)}
+.rlline i.cN{color:#26332C} .rlline i.cF{color:var(--coral-dk)}
+.rlline i.dim{opacity:.3}
+.rlline i.hot{outline:2.5px solid var(--coral);outline-offset:3px}
+.rlnote{font-size:12.5px;color:#8A7F5F;margin-top:7px}
+.rlmap{margin-top:12px;border-top:1px solid #EFE9DB;padding-top:4px}
+.rlgrp{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #EFE9DB;text-align:left}
+.rlgrp:last-child{border-bottom:none}
+.rlgrp .tag{width:58px;flex:none;text-align:right;font-size:18px;font-weight:700;letter-spacing:.04em}
+.rlgrp .tag.cR{color:var(--red)} .rlgrp .tag.cG{color:var(--grn)} .rlgrp .tag.cB{color:var(--blu)}
+.rlgrp .tag.cN{color:#26332C} .rlgrp .tag.cF{color:var(--coral-dk)}
+.rlgrp .col{min-width:0}
+.rlgrp .tiles{display:flex;gap:5px;flex-wrap:wrap}
+.rlgrp .say{font-size:12.5px;color:#8A8478;margin-top:4px;line-height:1.4}
+.rlkey{background:#F1EFE9;border-radius:12px;padding:13px 14px;margin-top:15px;text-align:left;
+  font-size:13.5px;line-height:1.6;color:#3E4E45}
+.rlkey b{color:var(--deep)}
+.rlwrong{background:rgba(226,114,91,.08);border-radius:12px;padding:12px 13px;margin-top:13px;text-align:left}
+.rlwrong .hd{font-size:13px;font-weight:700;color:#B3705E;letter-spacing:.02em}
+.rlwrong .rows{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.rlwrong .x{font-size:19px;color:#B3705E;font-weight:700;flex:none}
 
 /* ---------- title screen ---------- */
 #title{
@@ -587,7 +612,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   box-shadow:0 10px 36px rgba(0,0,0,.45);
 }
 #modal.kb #modalin::before{display:none}
-#modalin .mtop{font-size:10px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
+#modalin .mtop{font-size:10.5px;letter-spacing:.34em;color:var(--gold-dk);margin-bottom:8px}
 #modalin h2{font-family:var(--serif);font-weight:700;font-size:30px;color:var(--deep);letter-spacing:.06em;line-height:1.1}
 #modalin .msub{font-size:14px;color:#5A6A60;margin:10px 0 4px;line-height:1.5}
 #modalin .mtiles{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:14px 0}
@@ -1351,6 +1376,7 @@ let CHFULL=true;try{CHFULL=localStorage.getItem('olmChar')!=='express'}catch(e){
 function promptCharleston(){
   G.sel.clear();
   G.chPhase='pass';
+  later(420,chTeach);
   const S=CHSEQ[G.chStep]||CHSEQ[0];
   setStatus(S.blind
     ?`Charleston — pass 3 <b>${S.dir.toLowerCase()}</b> · select fewer and the rest go <b>blind</b>`
@@ -1471,6 +1497,8 @@ function doCourtesy(){
   later(1200,startPlay);
 }
 function startPlay(){
+  if(!learnOn())coachOff();
+  chDone();
   G.phase='play';G.turn=G.dealer;G.step='discard';
   showMsg('GAME ON');
   setStatus(G.dealer===0?'You are East — discard to begin':`<b>${G.players[G.dealer].name}</b> is East`);
@@ -1487,8 +1515,9 @@ function nextTurnFrom(i){
   else later(900,botAct);
 }
 function playerDraw(){
-  if(learnOn()&&G.learn.myDraws.length){
-    const t=G.learn.myDraws.shift();
+  if(learnOn()){
+    const t=learnDraw();
+    if(!t)return wallGame();
     G.players[0].hand.push(t);
     G.step='discard';sfx('draw');
     setStatus(`You draw <b>${nameOf(t)}</b>`);
@@ -1509,6 +1538,7 @@ function playerDiscardPhase(){
   G.winNow=checkWin(me);
   G.sel.clear();
   renderRack();renderActions();
+  if(learnOn()&&G.learn.step>=5)later(60,coachFinish);
   if(!G.winNow){
     if(me.exp.length&&!topFits(me).length)
       setStatus('Your turn — <b>hand is dead</b> (no card line fits your exposures). Discard safely.');
@@ -1539,7 +1569,11 @@ function doJokerSwap(){
   if(learnOn())learnAfter('swapped');
 }
 /* she obeyed the coach and threw the tile — take the overlay down and wait for the table */
-function learnOnDiscard(){ if(learnOn()&&G.learn.step===2)learnAfter('discard'); }
+function learnOnDiscard(){
+  if(!learnOn())return;
+  if(G.learn.step===2)learnAfter('discard');
+  if(G.learn.step>=5){coachClear();$('coach').classList.remove('on')}
+}
 function discardSelected(){
   if(G.sel.size!==1)return;
   {const selT=(MP.active&&MP.view?MP.view.you.rack:G.players[0].hand).find(x=>G.sel.has(x.id));
@@ -1654,7 +1688,9 @@ function playerCallWin(t,win){
 function botAct(){
   const j=G.turn,p=G.players[j];
   if(learnOn()){
-    const t=G.learn.botThrows.length?G.learn.botThrows.shift():T_('W','N');
+    if(G.step==='draw'&&G.wall.length)p.hand.push(G.wall.pop());
+    const t=learnBotThrow(p);
+    if(!t)return nextTurnFrom(j);
     G.step='discard';
     G.discards.push({t,by:j});
     sfx('placebot');
@@ -2290,6 +2326,21 @@ function tapTile(t){
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
     if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
+    /* she'd rather get on with it than read — let the coach catch up */
+    if(learnOn()&&G.learn.step<2){
+      if(PEEK.open)peekClose(true);
+      coachStep(2);
+    }
+    /* first game: the app won't let her dismantle her own hand — only the tiles
+       that belong to nothing can go, which is the lesson anyway */
+    if(learnOn()){
+      const keepK={};LEARN_TARGET.forEach(([k,n])=>keepK[k]=n);
+      const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keepK[key(x)]);
+      if(junkLeft&&keepK[key(t)]){
+        setStatus('Keep that one — it belongs to your hand.');
+        sfx('tap');return;
+      }
+    }
     if(G.sel.has(t.id))G.sel.delete(t.id);
     else{G.sel.clear();G.sel.add(t.id)}
     sfx('tap');
@@ -3670,8 +3721,10 @@ $('btnfriends').onclick=()=>openFriends();
 /* ================= LEARN v2 — shown, not told =================
    Two picture screens, then a real game with a coach pointing at things.
    The deal is rigged so all six moments actually happen, once. */
-const LRNSUITS=[['CRAKS','C',[1,5,9]],['BAMS','B',[1,5,9]],['DOTS','D',[1,5,9]]];
-const LRNHON=[['W','E'],['W','S'],['G','R'],['G','G'],['G','0'],['F',undefined],['J',undefined]];
+/* each suit shown with its own dragon — the pairing the whole card is built on */
+const LRNSUITS=[['CRAKS','C',[1,5,9],['G','R']],['BAMS','B',[1,5,9],['G','G']],['DOTS','D',[1,5,9],['G','0']]];
+const LRNWINDS=[['W','E'],['W','S'],['W','W'],['W','N']];
+const LRNSPECIAL=[['F',undefined],['J',undefined]];
 function sayTile(t){
   try{
     if(!('speechSynthesis' in window))return;
@@ -3694,7 +3747,7 @@ function openLearn(){
     <div class="mbtns" style="margin-top:16px"><button class="abtn" id="l1next">SHOW ME THE TILES</button></div>
     <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l1x">NOT NOW</button></div>`;
   const w=box.querySelector('#lrnwin');
-  win.forEach(([sv,n])=>w.appendChild(tileDOM(mk(sv,n),'t-sm')));
+  win.forEach(([sv,n])=>w.appendChild(tileDOM(mk(sv,n),'t-md')));
   box.querySelector('#l1next').onclick=openLearnTiles;
   box.querySelector('#l1x').onclick=()=>{box.className='';closeModal()};
   $('modal').classList.add('open');
@@ -3704,10 +3757,10 @@ function openLearnTiles(){
   box.className='lrn';
   box.innerHTML=`<div class="mtop">THE TILES</div>
     <h2>Three suits</h2>
-    <div class="msub">Each counts one to nine.</div>
+    <div class="msub">Each counts one to nine —<br>and each has a dragon of its own.</div>
     <div style="margin-top:14px" id="lrnrows"></div>
     <div class="lrnsay" id="lrnsay"><div class="lrntiny" style="margin:0">TAP ANY TILE TO HEAR IT</div></div>
-    <div class="mbtns" style="margin-top:8px"><button class="abtn" id="l2next">DEAL ME A HAND</button></div>
+    <div class="mbtns" style="margin-top:8px"><button class="abtn" id="l2next">NOW THE CARD</button></div>
     <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l2back">BACK</button></div>`;
   const rows=box.querySelector('#lrnrows');
   const addRow=(label,tiles)=>{
@@ -3715,7 +3768,7 @@ function openLearnTiles(){
     r.innerHTML=`<span class="lb">${label}</span>`;
     const tw=document.createElement('div');tw.className='tiles';
     tiles.forEach(t=>{
-      const el=tileDOM(t,'t-md');
+      const el=tileDOM(t,'t-lg');
       el.onclick=()=>{
         rows.querySelectorAll('.tile.said').forEach(x=>x.classList.remove('said'));
         el.classList.add('said');
@@ -3727,10 +3780,89 @@ function openLearnTiles(){
     });
     r.appendChild(tw);rows.appendChild(r);
   };
-  LRNSUITS.forEach(([nm,sv,ns])=>addRow(nm,ns.map(n=>mk(sv,n))));
-  addRow('AND',LRNHON.map(([sv,n])=>mk(sv,n)));
-  box.querySelector('#l2next').onclick=()=>{box.className='';startLearnGame()};
+  LRNSUITS.forEach(([nm,sv,ns,dr])=>addRow(nm,ns.map(n=>mk(sv,n)).concat([mk(dr[0],dr[1])])));
+  addRow('WINDS',LRNWINDS.map(([sv,n])=>mk(sv,n)));
+  addRow('AND',LRNSPECIAL.map(([sv,n])=>mk(sv,n)));
+  box.querySelector('#l2next').onclick=openLearnLine;
   box.querySelector('#l2back').onclick=openLearn;
+  $('modal').classList.add('open');
+}
+
+/* ---------- reading a line: the leap from printed groups to actual tiles ----------
+   The hardest idea in the game, and the one nothing else in the app teaches:
+   a colour on the card means "this suit", not "this ink". */
+const RL_GROUPS=[
+  {pat:'222', col:'cR', tiles:[['C',2],['C',2],['C',2]], say:'three 2 Craks — any one suit'},
+  {pat:'0000',col:'cN', tiles:[['G','0'],['G','0'],['G','0'],['G','0']], say:'four Soaps — zero is the Soap'},
+  {pat:'222', col:'cG', tiles:[['B',2],['B',2],['B',2]], say:'three 2 Bams — a different suit'},
+  {pat:'6666',col:'cB', tiles:[['D',6],['D',6],['D',6],['D',6]], say:'four 6 Dots — the third suit'},
+];
+function openLearnLine(){
+  const box=$('modalin');
+  box.className='lrn';
+  const shown=new Set();
+  const render=()=>{
+    const all=shown.size>=RL_GROUPS.length;
+    box.innerHTML=`<div class="mtop">THE CARD</div>
+      <h2>How a line works</h2>
+      <div class="msub">${all?'Fourteen tiles, one line.':'This is one line from the card.'}</div>
+      <div class="rlline" id="rlline">${RL_GROUPS.map((g,i)=>
+        `<i class="${g.col} ${shown.size&&!shown.has(i)?'dim':''} ${shown.size===1&&shown.has(i)?'hot':''}" data-g="${i}">${g.pat}</i>`).join('')}</div>
+      ${shown.size?'':'<div class="rlnote">Sunrise 2026 · 30 points</div>'}
+      <div class="rlmap" id="rlmap" style="${shown.size?'':'display:none'}"></div>
+      ${all?`<div class="rlkey"><b>Colour is the rule.</b> Groups printed in the same colour must be the
+        <b>same suit</b>; different colours must be <b>different suits</b>. The card never says <i>which</i> — that part is yours.</div>`:''}
+      <div class="lrntiny">${all?'':'TAP A GROUP TO SEE ITS TILES'}</div>
+      <div class="mbtns" style="margin-top:${all?'14':'10'}px">${all
+        ?`<button class="abtn" id="l3next">DEAL ME A HAND</button>`
+        :`<button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l3all">SHOW ME ALL OF IT</button>`}</div>
+      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l3back">BACK</button></div>`;
+    const map=box.querySelector('#rlmap');
+    RL_GROUPS.forEach((g,i)=>{
+      if(!shown.has(i))return;
+      const row=document.createElement('div');row.className='rlgrp';
+      row.innerHTML=`<span class="tag ${g.col}">${g.pat}</span>`;
+      const col=document.createElement('span');col.className='col';
+      const tw=document.createElement('div');tw.className='tiles';
+      g.tiles.forEach(([sv,n])=>tw.appendChild(tileDOM(mk(sv,n),'t-lg')));
+      col.appendChild(tw);
+      const say=document.createElement('div');say.className='say';say.textContent=g.say;
+      col.appendChild(say);row.appendChild(col);map.appendChild(row);
+    });
+    box.querySelectorAll('#rlline i').forEach(el=>el.onclick=()=>{
+      shown.add(+el.dataset.g);sfx('tap');render();
+    });
+    const a=box.querySelector('#l3all');
+    if(a)a.onclick=()=>{RL_GROUPS.forEach((_,i)=>shown.add(i));sfx('tap');render()};
+    const n=box.querySelector('#l3next');
+    if(n)n.onclick=openLearnWrong;
+    box.querySelector('#l3back').onclick=openLearnTiles;
+  };
+  render();
+  $('modal').classList.add('open');
+}
+/* the same tiles, the wrong way round — the mistake every beginner makes once */
+function openLearnWrong(){
+  const box=$('modalin');
+  box.className='lrn';
+  box.innerHTML=`<div class="mtop">THE CARD</div>
+    <h2>Nearly — but no</h2>
+    <div class="rlline">${RL_GROUPS.map(g=>`<i class="${g.col}">${g.pat}</i>`).join('')}</div>
+    <div class="rlwrong">
+      <div class="hd">These are all Craks</div>
+      <div class="rows" id="rlbad"></div>
+      <div class="say" style="font-size:12.5px;color:#8A7F5F;margin-top:10px;line-height:1.45">
+        Red and blue are different colours on the card, so those groups must come from
+        <b>different suits</b>. Same tiles, wrong hand.</div>
+    </div>
+    <div class="mbtns" style="margin-top:14px"><button class="abtn" id="l4next">DEAL ME A HAND</button></div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l4back">BACK</button></div>`;
+  const bad=box.querySelector('#rlbad');
+  const x=document.createElement('span');x.className='x';x.textContent='✕';bad.appendChild(x);
+  [['C',2],['C',2],['C',2]].forEach(([sv,n])=>bad.appendChild(tileDOM(mk(sv,n),'t-lg')));
+  [['C',6],['C',6],['C',6],['C',6]].forEach(([sv,n])=>bad.appendChild(tileDOM(mk(sv,n),'t-lg')));
+  box.querySelector('#l4next').onclick=()=>{box.className='';startLearnGame()};
+  box.querySelector('#l4back').onclick=openLearnLine;
   $('modal').classList.add('open');
 }
 
@@ -3757,46 +3889,126 @@ function coachMark(el,cls,pad){
 function coachShow(o){
   const c=$('coach');c.classList.add('on');
   coachClear();
-  (o.spot||[]).forEach(el=>coachMark(el,'cspot',6));
+  const marks=[];
+  (o.spot||[]).forEach(el=>{const m=coachMark(el,'cspot',6);if(m)marks.push(el)});
   (o.ghost||[]).forEach(el=>coachMark(el,'cghost',4));
-  (o.ring||[]).forEach(x=>coachMark(Array.isArray(x)?x[0]:x,'cring'+(Array.isArray(x)&&x[1]?' '+x[1]:''),4));
+  (o.ring||[]).forEach(x=>{const el=Array.isArray(x)?x[0]:x;
+    const m=coachMark(el,'cring'+(Array.isArray(x)&&x[1]?' '+x[1]:''),4);if(m)marks.push(el)});
   const chip=$('coachchip');
   chip.querySelector('.tx').innerHTML=o.text+(o.aside?`<i>${o.aside}</i>`:'');
   const nx=chip.querySelector('.nx');
   if(o.next){nx.style.display='';nx.textContent=o.nextLabel||'GOT IT ›';nx.onclick=o.next}
   else nx.style.display='none';
-  chip.style.top=(o.top||440)+'px';
   const dots=$('coachdots');
-  dots.innerHTML=[0,1,2,3,4,5].map(i=>`<i class="${i===o.step?'on':''}"></i>`).join('');
+  dots.innerHTML=(o.step==null?'':[0,1,2,3,4,5].map(i=>`<i class="${i===o.step?'on':''}"></i>`).join(''));
+  /* sit clear of everything it is pointing at, and clear of her rack */
+  chip.style.top='0px';
+  requestAnimationFrame(()=>{
+    const H=window.innerHeight,ch=chip.offsetHeight||64;
+    const hdr=rectOf($('hdr'));
+    const rack=$('me')?rectOf($('me')):{y:H,h:0};
+    let hi=hdr.y+hdr.h+10, lo=Math.max(hi, rack.y-ch-12);
+    let top=lo;
+    if(marks.length){
+      const boxes=marks.map(rectOf);
+      const topMost=Math.min(...boxes.map(b=>b.y));
+      const botMost=Math.max(...boxes.map(b=>b.y+b.h));
+      /* prefer just above the marked thing; if that collides with the header, go below it */
+      top = (topMost-ch-14 >= hi) ? topMost-ch-14 : Math.min(botMost+14, rack.y-ch-12);
+    }
+    /* her tiles are never covered, whatever else is going on */
+    top=Math.min(top, rack.y-ch-12);
+    top=Math.max(hi,Math.min(top,H-ch-14));
+    chip.style.top=top+'px';
+    dots.style.top=Math.max(hdr.y+hdr.h+4,top-15)+'px';
+  });
 }
 /* the coach never blocks the tap it is asking for */
 function coachPassthrough(){ $('coach').classList.add('on'); }
 
-/* ---------- the rigged tutorial game ---------- */
+/* ---------- the rigged tutorial game ----------
+   Dealt from a REAL 152-tile deck, so nothing on the table ever looks absurd, and
+   every tile count stays legal. The rigging is only this: she is quietly dealt what
+   her hand needs, so a first-timer reaches mah jongg however clumsily she plays. */
 const T_=(s,n)=>mk(s,n);
+const LEARN_TARGET=[['C6',4],['B2',3],['D2',3],['G0',4]];   /* Sunrise 2026 */
 function startLearnGame(){
   closeModal();
   SEQ++;killClones();
-  _tid=0;
-  HINTON=false;HINTIDX=0;
-  const me=[T_('C',6),T_('C',6),T_('C',6),T_('B',2),T_('B',2),T_('D',2),T_('D',2),T_('D',2),
-            T_('G','0'),T_('G','0'),T_('G','0'),T_('W','E'),T_('B',9),T_('C',1)];
-  const players=[{name:'You',isBot:false,hand:sortHand(me),exp:[]}]
+  HINTON=false;HINTIDX=0;LEARNWIN=false;
+  const deck=makeDeck();
+  const take=(sv,n,c)=>{const out=[];for(let i=0;i<c;i++){
+    const ix=deck.findIndex(t=>t.s===sv&&t.n===n);
+    if(ix<0)break; out.push(deck.splice(ix,1)[0]);}return out};
+  /* her 14: three quarters of Sunrise 2026, one obvious throwaway, one spare the
+     joker will stand in for, and a wind to let go after the call */
+  const my=[...take('C',6,3),...take('B',2,2),...take('D',2,3),...take('G','0',3),
+            ...take('B',9,1),...take('D',5,1),...take('W','E',1)];
+  /* Evelyn leans on a joker for a 5 Dot — a tile she holds but does NOT need,
+     so trading it away is pure profit. (Her soaps stay hers; the deck only has four.) */
+  const evExp=[...take('D',5,2),...take('J',undefined,1)];
+  const evThrow=take('B',2,1)[0];        /* the third 2 Bam, for the call */
+  const finisher=[...take('C',6,1),...take('G','0',1)];  /* what finishes her hand */
+  shuffle(deck);
+  deck.push(...finisher);   /* live in the wall like everything else; learnDraw finds them */
+  const players=[{name:'You',isBot:false,hand:sortHand(my),exp:[]}]
     .concat(BOTNAMES.map(n=>({name:n,isBot:true,hand:[],exp:[]})));
-  /* Evelyn already leans on a joker for a soap — that's moment 5 */
-  players[1].exp=[{rep:'G0',tiles:[T_('G','0'),T_('G','0'),T_('J',undefined)]}];
-  for(let i=0;i<10;i++)players[1].hand.push(T_('W','N'));
-  for(let i=0;i<13;i++){players[2].hand.push(T_('W','W'));players[3].hand.push(T_('W','S'))}
-  const filler=[];for(let i=0;i<62;i++)filler.push(T_('W','N'));
-  G={phase:'play',wall:filler,players,dealer:0,turn:0,step:'discard',
+  players[1].exp=[{rep:'D5',tiles:evExp}];
+  players[1].hand=[evThrow,...deck.splice(0,9)];
+  players[2].hand=deck.splice(0,13);
+  players[3].hand=deck.splice(0,13);
+  G={phase:'play',wall:deck,players,dealer:0,turn:0,step:'discard',
      chStep:6,chPhase:null,chFull:false,sel:new Set(),discards:[],winNow:null,
-     learn:{step:0,
-       myDraws:[T_('C',6),T_('G','0')],           /* exactly what she needs, when she needs it */
-       botThrows:[T_('B',2),T_('W','N'),T_('W','W'),T_('W','S'),T_('W','N'),T_('W','W'),T_('W','S')]}};
+     learn:{step:0,firstThrow:evThrow,thrown:false,draws:0}};
   $('title').classList.add('hide');
   renderAll();
   setStatus('');
   later(400,()=>coachStep(0));
+}
+/* what the target hand still wants, as tile keys */
+function learnNeed(){
+  const me=G.players[0];
+  const have={};let jk=0;
+  for(const t of me.hand){if(t.s==='J')jk++;else have[key(t)]=(have[key(t)]||0)+1}
+  for(const e of me.exp)for(const t of e.tiles){if(t.s!=='J')have[key(t)]=(have[key(t)]||0)+1}
+  const want=[];
+  for(const [k,n] of LEARN_TARGET){
+    let short=n-(have[k]||0);
+    while(short-->0)want.push(k);
+  }
+  /* jokers already in hand cover some of the shortfall */
+  return want.slice(jk);
+}
+/* the quiet hand on the wall: give her what she needs, and a joker if the real
+   tile is gone because she threw it away. She always gets there. */
+function learnDraw(){
+  G.learn.draws++;
+  const want=learnNeed();
+  const pull=fn=>{const i=G.wall.findIndex(fn);return i<0?null:G.wall.splice(i,1)[0]};
+  if(want.length){
+    /* after a few turns of getting nowhere, start handing her jokers instead —
+       they fill any group here and she can never throw one away, so she closes */
+    if(G.learn.draws>5){const j=pull(t=>t.s==='J');if(j)return j}
+    const real=pull(t=>want.includes(key(t)));
+    if(real)return real;
+    const j=pull(t=>t.s==='J');if(j)return j;
+  }
+  return G.wall.length?G.wall.pop():null;
+}
+/* tutorial bots throw from their own hands, and never hand her a call she
+   hasn't been taught yet */
+function learnBotThrow(p){
+  if(!G.learn.thrown){
+    const ix=p.hand.findIndex(t=>t===G.learn.firstThrow);
+    if(ix>=0){G.learn.thrown=true;return p.hand.splice(ix,1)[0]}
+  }
+  const me=G.players[0];
+  const mine={};for(const t of me.hand)if(t.s!=='J')mine[key(t)]=(mine[key(t)]||0)+1;
+  const want=learnNeed();
+  let ix=p.hand.findIndex(t=>t.s!=='J'&&(mine[key(t)]||0)<2&&!want.includes(key(t)));
+  if(ix<0)ix=p.hand.findIndex(t=>t.s!=='J');
+  if(ix<0)ix=0;
+  return p.hand.splice(ix,1)[0];
 }
 function learnOn(){return !!(G&&G.learn)}
 function coachStep(n){
@@ -3804,7 +4016,7 @@ function coachStep(n){
   G.learn.step=n;
   const rackTiles=()=>[...$('rack').querySelectorAll('.tile')];
   if(n===0){
-    coachShow({step:0,spot:[$('rack')],top:430,
+    coachShow({step:0,spot:[$('rack')],
       text:'These tiles are yours.',aside:'Nobody else can see them · play moves to your right.',
       next:()=>coachStep(1)});
   }else if(n===1){
@@ -3812,33 +4024,70 @@ function coachStep(n){
     later(420,()=>{
       const line=[...document.querySelectorAll('.pkline')].find(el=>/Sunrise/i.test(el.textContent))
         ||document.querySelector('.pkline');
-      coachShow({step:1,ring:[[line,'gold']],top:Math.min(560,(line?rectOf(line).y+rectOf(line).h+16:420)),
-        text:"We're aiming here.",aside:'Pull the card down whenever you like.',
+      coachShow({step:1,ring:[[line,'gold']],text:"We're aiming here.",aside:'Pull the card down whenever you like.',
         next:()=>{peekClose(true);later(320,()=>coachStep(2))}});
     });
   }else if(n===2){
     const tiles=rackTiles();
     const junkI=G.players[0].hand.findIndex(t=>t.s==='B'&&t.n===9);
     const junk=tiles[junkI];
-    coachShow({step:2,ring:[junk],ghost:tiles.filter((_,i)=>i!==junkI),top:430,
+    coachShow({step:2,ring:[junk],ghost:tiles.filter((_,i)=>i!==junkI),
       text:'This one fits nothing. Send it away.',aside:'Tap it, then DISCARD.'});
   }else if(n===3){
     const btns=[...$('callbtns').querySelectorAll('button')];
     const pung=btns.find(b=>/PUNG/.test(b.textContent));
     const others=btns.filter(b=>b!==pung&&!/PASS/.test(b.textContent));
-    coachShow({step:3,ring:pung?[pung]:[],ghost:others,top:520,
+    coachShow({step:3,ring:pung?[pung]:[],ghost:others,
       text:'You hold two. Take the third.',aside:'Only the tile just thrown — never one further back.'});
   }else if(n===4){
     renderActions();   /* step is 4 now, so the swap button is allowed to appear */
     const sw=[...$('actions').querySelectorAll('button')].find(b=>/SWAP JOKER/.test(b.textContent));
-    const exp=document.querySelector('#opps .tile');
-    coachShow({step:4,ring:[sw,exp].filter(Boolean),top:420,
+    const exp=document.querySelector('#opps .tile.joker')||document.querySelector('#opps .tile');
+    coachShow({step:4,ring:[sw,exp].filter(Boolean),
       text:"Evelyn's joker is standing in for a tile you hold.",
       aside:'Swap the real one for it — jokers are the best tiles on the table.'});
   }else if(n===5){
-    coachOff();
+    coachFinish();
   }
 }
+/* After the joker she is a few tiles away. The coach doesn't walk off — it points at
+   what to let go of, every turn, until she wins. Quiet: a ring and one short line. */
+function coachFinish(){
+  if(!learnOn()||G.phase!=='play')return;
+  if(!(G.turn===0&&G.step==='discard')){coachClear();$('coach').classList.remove('on');return}
+  const me=G.players[0];
+  if(G.winNow){
+    coachShow({step:5,text:'That completes it — call mah jongg.',
+      ring:[...$('actions').querySelectorAll('button')].filter(b=>/MAH JONGG/.test(b.textContent))});
+    return;
+  }
+  const want=learnNeed();
+  const keepK={};for(const [k,n] of LEARN_TARGET)keepK[k]=n;
+  const tiles=[...$('rack').querySelectorAll('.tile')];
+  const junkI=me.hand.findIndex(t=>t.s!=='J'&&!keepK[key(t)]);
+  if(junkI<0){coachClear();$('coach').classList.remove('on');return}
+  coachShow({step:5,ring:[tiles[junkI]],ghost:tiles.filter((_,i)=>i!==junkI),
+    text:'Let this one go.',aside:want.length===1?'One tile from home.':`${want.length} to go.`});
+}
+/* The tutorial deliberately skips the Charleston — it is a lot at once. So the
+   very first time she meets one in a real game, the same coach turns up for two
+   sentences and then never again. */
+let CHTAUGHT=false;try{CHTAUGHT=localStorage.getItem('olmChTaught')==='1'}catch(e){}
+function chTeach(){
+  if(CHTAUGHT||learnOn()||MP.active)return;
+  if(!G||G.phase!=='charleston'||(G.chPhase||'pass')!=='pass')return;
+  const S=CHSEQ[G.chStep]||CHSEQ[0];
+  if(G.chStep===0){
+    coachShow({spot:[$('rack')],
+      text:'Before play — pass three you can\u2019t use.',
+      aside:'To your right first, then across, then left. Never a joker.',
+      next:()=>{coachOff()},nextLabel:'GOT IT ›'});
+  }else if(G.chStep===1){
+    coachShow({text:'Now three across.',aside:'Same idea — the ones that fit nothing.',
+      next:()=>{coachOff();chDone()},nextLabel:'GOT IT ›'});
+  }
+}
+function chDone(){CHTAUGHT=true;try{localStorage.setItem('olmChTaught','1')}catch(e){}}
 /* the coach follows what she actually does */
 function learnAfter(ev){
   if(!learnOn())return;
