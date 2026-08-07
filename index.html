@@ -222,6 +222,41 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #statusline b{color:var(--gold)}
 #chwarn{display:none;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--coral);padding-top:3px}
 #chwarn b{color:var(--coral);font-weight:700}
+/* ---------- the coach layer: four pieces, nothing else ---------- */
+#coach{position:fixed;inset:0;z-index:120;pointer-events:none;display:none}
+#coach.on{display:block}
+.cspot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(4,20,14,.72);
+  border:1.5px solid rgba(232,217,174,.5);transition:all .3s ease}
+.cring{position:absolute;border-radius:11px;border:2.5px solid var(--coral);
+  box-shadow:0 0 0 5px rgba(226,114,91,.28);transition:all .25s ease}
+.cring.gold{border-color:var(--gold);box-shadow:0 0 0 5px rgba(201,162,75,.3)}
+.cghost{position:absolute;border-radius:11px;background:rgba(10,28,20,.66)}
+#coachchip{position:absolute;left:12px;right:12px;background:var(--paper);border-radius:14px;
+  padding:13px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 10px 26px rgba(0,0,0,.45);
+  pointer-events:auto;text-align:left}
+#coachchip .bar{width:3px;align-self:stretch;border-radius:2px;background:var(--coral);flex:none}
+#coachchip .tx{font-size:14px;line-height:1.4;color:var(--ink);font-weight:600;font-family:var(--sans)}
+#coachchip .tx i{display:block;font-style:normal;font-weight:400;font-size:12px;color:#8A8478;margin-top:3px}
+#coachchip .nx{margin-left:auto;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--coral);
+  white-space:nowrap;background:none;border:none;font-family:var(--sans);padding:6px 2px}
+#coachdots{position:absolute;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);display:flex;gap:4px}
+#coachdots i{width:5px;height:5px;border-radius:50%;background:rgba(232,217,174,.32)}
+#coachdots i.on{background:var(--coral);width:14px;border-radius:3px}
+/* ---------- learn screens: one step larger than the rest of the app ---------- */
+.lrn h2{font-size:24px!important}
+.lrn .msub{font-size:15px;line-height:1.5;color:#5A6A60}
+.lrnrow{display:flex;align-items:center;gap:14px;margin:8px 0}
+.lrnrow .lb{width:64px;flex:none;text-align:right;font-size:12px;letter-spacing:.14em;font-weight:700;color:#8A6F2F}
+.lrnrow .tiles{display:flex;gap:6px;flex-wrap:wrap}
+.lrnrow .tile{cursor:pointer;transition:transform .18s ease}
+.lrnrow .tile.said{transform:translateY(-7px);box-shadow:0 9px 16px rgba(10,25,18,.32)}
+.lrnwin{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;background:#fff;border:1px solid #EFE9DB;
+  border-radius:13px;padding:12px 10px;margin-top:12px}
+.lrnsay{margin-top:12px;min-height:40px;display:flex;align-items:center;justify-content:center}
+.lrnsay .card{background:#F3F0E8;border-radius:11px;padding:9px 14px;text-align:left}
+.lrnsay b{display:block;font-family:var(--serif);font-size:16px;color:var(--deep)}
+.lrnsay span{display:block;font-size:11.5px;color:#8A8478;margin-top:2px}
+.lrntiny{font-size:11px;color:#A8A296;letter-spacing:.04em;margin-top:12px}
 
 /* ---------- title screen ---------- */
 #title{
@@ -605,6 +640,11 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <div id="actions"></div>
 </div>
 
+<div id="coach">
+  <div id="coachdots"></div>
+  <div id="coachchip"><span class="bar"></span><span class="tx"></span><button class="nx"></button></div>
+</div>
+
 <div id="callbar">
   <div class="cq" id="callq"></div>
   <div class="cbtns" id="callbtns"></div>
@@ -968,6 +1008,38 @@ async function unlockCard(code){
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b(LOCKED_CARD.i)},key,b(LOCKED_CARD.c));
   return new TextDecoder().decode(pt);
 }
+/* Free, on-device: is this photo even worth sending? Sharpness is the average
+   absolute difference between neighbouring pixels on a small greyscale copy — a soft
+   or motion-blurred photo scores far lower than a crisp one. Catching it here costs
+   nothing; letting it through costs an API call that was always going to fail. */
+function photoQuality(file){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const W=img.width,H=img.height;
+      const n=220,sc=Math.min(1,n/Math.max(W,H));
+      const cv=document.createElement('canvas');
+      cv.width=Math.max(8,Math.round(W*sc));cv.height=Math.max(8,Math.round(H*sc));
+      const cx=cv.getContext('2d',{willReadFrequently:true});
+      cx.drawImage(img,0,0,cv.width,cv.height);
+      let d;try{d=cx.getImageData(0,0,cv.width,cv.height).data}catch(e){URL.revokeObjectURL(img.src);return res({ok:true,why:null})}
+      const g=new Float32Array(cv.width*cv.height);
+      for(let i=0,p=0;i<d.length;i+=4,p++)g[p]=(d[i]*.299+d[i+1]*.587+d[i+2]*.114);
+      let sum=0,cnt=0;
+      for(let y=1;y<cv.height-1;y++)for(let x=1;x<cv.width-1;x++){
+        const p=y*cv.width+x;
+        sum+=Math.abs(4*g[p]-g[p-1]-g[p+1]-g[p-cv.width]-g[p+cv.width]);cnt++;
+      }
+      const sharp=cnt?sum/cnt:0;
+      URL.revokeObjectURL(img.src);
+      if(Math.min(W,H)<600)res({ok:false,why:'came out small — move closer and fill the frame'});
+      else if(sharp<6)res({ok:false,why:'came out soft — hold steady and tap the card to focus'});
+      else res({ok:true,why:null,sharp:Math.round(sharp)});
+    };
+    img.onerror=()=>res({ok:true,why:null});
+    img.src=URL.createObjectURL(file);
+  });
+}
 function fileToJpeg(file,max=1568){
   return new Promise((res,rej)=>{
     const img=new Image();
@@ -1250,6 +1322,7 @@ function later(ms,fn){const s=SEQ;setTimeout(()=>{if(s===SEQ&&G&&G.phase!=='over
 
 function newGame(){
   SEQ++;
+  coachOff();
   killClones();
   _tid=0;
   sfx('shuffle');
@@ -1414,6 +1487,14 @@ function nextTurnFrom(i){
   else later(900,botAct);
 }
 function playerDraw(){
+  if(learnOn()&&G.learn.myDraws.length){
+    const t=G.learn.myDraws.shift();
+    G.players[0].hand.push(t);
+    G.step='discard';sfx('draw');
+    setStatus(`You draw <b>${nameOf(t)}</b>`);
+    renderAll();playerDiscardPhase();
+    return;
+  }
   if(!G.wall.length)return wallGame();
   const t=G.wall.pop();
   G.players[0].hand.push(t);
@@ -1455,7 +1536,10 @@ function doJokerSwap(){
   setStatus(`You swap <b>${nameOf(sw.real)}</b> for a <b>Joker</b>`);
   renderAll();
   playerDiscardPhase();
+  if(learnOn())learnAfter('swapped');
 }
+/* she obeyed the coach and threw the tile — take the overlay down and wait for the table */
+function learnOnDiscard(){ if(learnOn()&&G.learn.step===2)learnAfter('discard'); }
 function discardSelected(){
   if(G.sel.size!==1)return;
   {const selT=(MP.active&&MP.view?MP.view.you.rack:G.players[0].hand).find(x=>G.sel.has(x.id));
@@ -1472,6 +1556,7 @@ function discardSelected(){
   me.hand=me.hand.filter(x=>x!==t);
   G.sel.clear();
   G.discards.push({t,by:0});
+  learnOnDiscard();
   sfx('place');
   setStatus(`You discard <b>${nameOf(t)}</b>`);
   renderAll();
@@ -1494,8 +1579,9 @@ function afterDiscard(by,t){
           opts.push({label:k===3?'PUNG':k===4?'KONG':'QUINT',cls:'',fn:()=>playerCallExpose(t,k)});
       }
     }
-    if(opts.length){openCallBar(t,opts,()=>botClaims(by,t));return}
+    if(opts.length){openCallBar(t,opts,()=>botClaims(by,t));if(learnOn())later(120,()=>learnAfter('callbar'));return}
   }
+  if(learnOn())return nextTurnFrom(by);   /* tutorial bots never claim */
   botClaims(by,t);
 }
 function botClaims(by,t){
@@ -1557,6 +1643,7 @@ function playerCallExpose(t,k){
   setStatus(`You call <b>${nameOf(t)}</b> — now discard`);
   renderAll();
   playerDiscardPhase();
+  if(learnOn()){learnAfter('called');later(300,()=>{if(findJokerSwap())learnAfter('swapready')})}
 }
 function playerCallWin(t,win){
   closeCall();
@@ -1566,6 +1653,16 @@ function playerCallWin(t,win){
 }
 function botAct(){
   const j=G.turn,p=G.players[j];
+  if(learnOn()){
+    const t=G.learn.botThrows.length?G.learn.botThrows.shift():T_('W','N');
+    G.step='discard';
+    G.discards.push({t,by:j});
+    sfx('placebot');
+    setStatus(`<b>${p.name}</b> discards <b>${nameOf(t)}</b>`);
+    renderAll();
+    later(700,()=>afterDiscard(j,t));
+    return;
+  }
   if(G.step==='draw'){
     if(!G.wall.length)return wallGame();
     p.hand.push(G.wall.pop());
@@ -1800,7 +1897,10 @@ function addDebrief(box){
   const btns=box.querySelector('.mbtns');
   if(btns)box.insertBefore(db,btns);else box.appendChild(db);
 }
+let LEARNWIN=false;
 function declareWin(i,win){
+  LEARNWIN=learnOn()&&i===0;
+  coachOff();
   G.phase='over';SEQ++;
   const p=G.players[i];
   const final=sortHand(allTiles(p));
@@ -1818,16 +1918,22 @@ function declareWin(i,win){
      <div class="msub"><b>${win.hand.cat}</b><br>${win.hand.name}${jokerless?' · jokerless ×2':''}</div>
      <div class="mtiles" id="mtiles"></div>
      <div class="mpts">${pts} points</div>
-     <div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
-     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`);
+     ${LEARNWIN?`<div class="mbtns"><button class="abtn ghost" id="mprac" style="color:var(--deep);border-color:#C6C1B4">ANOTHER PRACTICE HAND</button></div>
+     <div class="mbtns"><button class="abtn" id="mreal">PLAY A REAL GAME</button></div>
+     <button class="mexit" id="mhome">EXIT</button>`
+     :`<div class="mbtns"><button class="abtn" id="mnew">PLAY AGAIN</button>
+     <button class="abtn ghost" id="mhome" style="color:var(--deep);border-color:#C6C1B4">EXIT GAME</button></div>`}`);
   const mt=box.querySelector('#mtiles');
   for(const t of final)mt.appendChild(tileDOM(t,'t-md'));
   if(!mine)addDebrief(box);
-  box.querySelector('#mnew').onclick=newGame;
+  const mn=box.querySelector('#mnew');if(mn)mn.onclick=newGame;
+  const mp=box.querySelector('#mprac');if(mp)mp.onclick=()=>{closeModal();startLearnGame()};
+  const mr=box.querySelector('#mreal');if(mr)mr.onclick=()=>{closeModal();newGame()};
   box.querySelector('#mhome').onclick=goTitle;
   $('modal').classList.add('open');
 }
 function wallGame(){
+  coachOff();
   G.phase='over';SEQ++;
   beacon('/b?e=solo&r=wall');
   const box=$('modalin');
@@ -1842,6 +1948,7 @@ function wallGame(){
 }
 function closeModal(){
   $('modal').classList.remove('open');$('modal').classList.remove('kb');
+  $('modalin').className='';   /* the Learn screens run one type-step larger; don't leak that */
   $('modalin').style.animation='';  /* re-arm the entrance for the next open */
 }
 $('modalin').addEventListener('animationend',()=>{$('modalin').style.animation='none'});
@@ -2224,7 +2331,7 @@ function renderActions(){
       mk('DISCARD','',discardSelected,G.sel.size!==1);
     }else{
       if(G.winNow)mk('MAH JONGG!','gold',()=>declareWin(0,G.winNow));
-      if(findJokerSwap())mk('SWAP JOKER','ghost',doJokerSwap);
+      if(findJokerSwap()&&!(learnOn()&&G.learn.step<4))mk('SWAP JOKER','ghost',doJokerSwap);
       mk('DISCARD','',discardSelected,G.sel.size!==1);
     }
   }
@@ -2363,7 +2470,7 @@ function openImport(backToSheet,focus){
 function olmHttp(){return OLM_SERVER.replace(/^wss:/,'https:').replace(/^ws:/,'http:')}
 /* background reading: the user plays on while the server reads their photos.
    BGREAD.state: 'working' | 'matched' (verified + auto-saved) | 'pending' (needs review) | 'error' | null */
-let BGREAD={timer:null,state:null,stage:null,done:0,of:3,secs:0};
+let BGREAD={timer:null,state:null,stage:null,done:0,of:3,secs:0,job:null,confirm:null};
 let READERR=null;
 function readInProgress(){try{return JSON.parse(localStorage.getItem('olmReadJob')||'null')}catch(e){return null}}
 function bgReadClear(){clearTimeout(BGREAD.timer);BGREAD.timer=null;try{localStorage.removeItem('olmReadJob')}catch(e){}}
@@ -2401,6 +2508,36 @@ function renderReadSheet(){
       <div class="msub">Loaded from your photos — ${CUSTOM&&CUSTOM.hands?'all '+CUSTOM.hands.length+' hands':'your card is'} ready to play.</div>
       <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rsplay">PLAY WITH MY CARD</button></div>`;
     box.querySelector('#rsplay').onclick=()=>{BGREAD.state=null;readPillSync();closeModal();showMsg('CARD READY')};
+    return;
+  }
+  if(st==='confirm'){
+    const c=BGREAD.confirm||{};
+    const seen=[];
+    if(c.year)seen.push(`a <b>${c.year}</b> card`);
+    if(c.sections&&c.sections.length)seen.push(`sections beginning <b>${c.sections.slice(0,2).join('</b> and <b>')}</b>`);
+    box.innerHTML=`${flag}<div class="mtop">ONE MOMENT</div><h2 style="font-size:23px">Is this your card?</h2>
+      <div class="msub">We could see ${seen.length?seen.join(' with '):'your card'}, but not clearly enough to be sure on our own.</div>
+      <div class="mbtns" style="margin-top:16px"><button class="abtn" id="cfyes">YES — THAT'S MINE</button></div>
+      <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="cfno">NO, MINE IS DIFFERENT</button></div>
+      <div class="lstartsub" style="margin-top:10px">Saying no starts the slow, careful read of your own card.</div>`;
+    box.querySelector('#cfyes').onclick=async e=>{
+      e.target.textContent='UNLOCKING…';
+      try{
+        const r=await fetch(olmHttp()+'/api/cardconfirm',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({job:BGREAD.job,answer:'yes'})}).then(x=>x.json());
+        if(r.err)throw new Error(r.err);
+        BGREAD.state='working';renderReadSheet();bgReadPoll(BGREAD.job);
+      }catch(x){READERR=x.message;BGREAD.state='error';renderReadSheet()}
+    };
+    box.querySelector('#cfno').onclick=async e=>{
+      e.target.textContent='STARTING THE FULL READ…';
+      try{
+        const r=await fetch(olmHttp()+'/api/cardconfirm',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({job:BGREAD.job,answer:'no'})}).then(x=>x.json());
+        if(r.err)throw new Error(r.err);
+        BGREAD.state='working';BGREAD.stage='deep';renderReadSheet();bgReadPoll(BGREAD.job);
+      }catch(x){READERR=x.message;BGREAD.state='error';renderReadSheet()}
+    };
     return;
   }
   if(st==='error'){
@@ -2462,6 +2599,13 @@ async function bgReadPoll(job){
       maybeOfferPendingCard();
       return;
     }
+    if(j.status==='confirm'&&j.confirm){
+      clearTimeout(BGREAD.timer);
+      BGREAD.state='confirm';BGREAD.job=job;BGREAD.confirm=j.confirm;
+      readPillSync();
+      if(readSheetLive())renderReadSheet();else openReadSheet();
+      return;
+    }
     if(j.status==='error'||j.err){
       bgReadClear();
       READERR=j.err==='no such job'?'The reader restarted mid-read — please send the photos again.':
@@ -2502,7 +2646,35 @@ async function convertPhotos(files,backToSheet){
   box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">One moment</h2>
     <div class="spin"></div><div class="msub">Preparing your photos…</div>`;
   try{
+    /* free pre-flight: a soft or tiny panel is caught here, before anything is sent */
+    const qs=await Promise.all(files.map(f=>photoQuality(f)));
+    const bad=qs.map((q,i)=>q.ok?null:{i,why:q.why}).filter(Boolean);
+    if(bad.length){
+      const names=['left','middle','right'];
+      const list=bad.map(b=>`the <b>${names[b.i]||('#'+(b.i+1))}</b> panel ${b.why}`).join(', and ');
+      box.innerHTML=`<div class="mtop">YOUR 2026 CARD</div><h2 style="font-size:23px">Let's retake one</h2>
+        <div class="msub">${list.charAt(0).toUpperCase()+list.slice(1)}.<br><br>Card flat, bright light, one full panel per photo — and keep the year in shot.</div>
+        <div class="mbtns" style="margin-top:14px"><button class="abtn" id="qretake">RETAKE THE PHOTOS</button>
+        <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="qany">SEND THEM ANYWAY</button></div>`;
+      box.querySelector('#qretake').onclick=()=>openImport(backToSheet,'photo');
+      box.querySelector('#qany').onclick=()=>sendPhotos(files,box,backToSheet);
+      return;
+    }
+    return sendPhotos(files,box,backToSheet);
+  }catch(e){
+    box.innerHTML=`<div class="mtop">OOH LA MAHJ</div><h2 style="font-size:23px">Hmm, that didn't work</h2>
+      <div class="msub">${(e&&e.message)||'Something went wrong reading the photos.'}<br><br>Try retaking the photos — flat card, bright light, one full panel per photo.</div>
+      <div class="mbtns" style="margin-top:14px"><button class="abtn" id="rtry">TRY AGAIN</button>
+      <button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="rcancel">${backToSheet?'CANCEL':'USE THE OOH LA CARD'}</button></div>`;
+    box.querySelector('#rtry').onclick=()=>openImport(backToSheet);
+    box.querySelector('#rcancel').onclick=()=>{closeModal();if(backToSheet)openSheet()};
+  }
+}
+async function sendPhotos(files,box,backToSheet){
+  try{
     const photos=await Promise.all(files.map(f=>fileToJpeg(f,2000)));
+    /* the ownership check only ever looks at one small panel */
+    const thumb=await fileToJpeg(files[0],768);
     READERR=null;clearTimeout(BGREAD.timer);
     BGREAD.state='working';BGREAD.stage=null;BGREAD.done=0;BGREAD.of=photos.length;BGREAD.secs=0;
     openReadSheet();readPillSync();
@@ -2519,7 +2691,7 @@ async function convertPhotos(files,backToSheet){
         }
         if(!awake)throw new Error('The reading service is not reachable — try again in a few minutes');
         const pr=await fetch(base+'/api/read',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({token:mpToken(),photos})});
+          body:JSON.stringify({token:mpToken(),photos,thumb})});
         const pj=await pr.json();
         if(pj.err)throw new Error(pj.err);
         try{localStorage.setItem('olmReadJob',JSON.stringify({job:pj.job,ts:Date.now()}))}catch(e){}
@@ -3495,76 +3667,187 @@ function openFriends(errMsg){
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
-/* ---------- learn: a small honest primer, not a coming-soon wall ---------- */
-const LEARN_PAGES=[
-  {k:'tiles',t:'What the tiles are',sub:'152 tiles, and only five kinds to know',
-   html:`<p><b>Three suits.</b> <i>Cracks</i> (the character 萬), <i>Bams</i> (bamboo sticks) and <i>Dots</i> (circles).
-     Each runs 1 through 9, and there are four of every one.</p>
-   <p><b>Winds.</b> North, East, West and South — four of each.</p>
-   <p><b>Dragons.</b> Red, Green and White. The white one is called the <i>Soap</i>, and on the card it can also stand in for a zero.</p>
-   <p><b>Flowers.</b> Eight of them, and they are all interchangeable — a flower is a flower.</p>
-   <p><b>Jokers.</b> Eight. A joker can stand in for any tile inside a group of three or more, but never inside a pair,
-     and never as a single. They are the most valuable things you will hold.</p>`},
-  {k:'turn',t:'How a turn goes',sub:'draw one, discard one — that really is the whole game',
-   html:`<p><b>The deal.</b> Everyone gets 13 tiles. The dealer gets 14 and starts by throwing one away.</p>
-   <p><b>The Charleston.</b> Before play begins you pass three unwanted tiles to your right, then across, then to your left —
-     a chance for everyone to trade away what they can't use. Jokers may never be passed.</p>
-   <p><b>Your turn.</b> Draw a tile from the wall, then discard one. Tap a tile, then tap DISCARD.</p>
-   <p><b>Calling.</b> When somebody discards a tile that completes a group of three or more for you, you may call it out —
-     the group then sits face-up in front of you for the rest of the hand. You can never call a tile to make a pair.</p>
-   <p><b>The end.</b> Someone completes a full hand from the card and calls mah jongg — or the wall runs out and nobody wins.
-     That's a wall game, and it's nobody's fault.</p>`},
-  {k:'card',t:'What the card is',sub:'the list of hands that count this year',
-   html:`<p>American mah jongg is played from a <b>card</b>: a printed list of the only hands that count, and it changes every year.
-     You are not building any old set of tiles — you are building one particular line from that card.</p>
-   <p><b>The Ooh La Card</b> is ours, so you can start playing this minute. If you have this year's published card,
-     you can photograph it and play from your own instead — that's the ADD YOURS option on the home screen.</p>
-   <p>Hands are grouped into sections, and each is worth points. A line marked <b>C</b> must stay concealed until you win;
-     one marked <b>X</b> means you're allowed to expose groups by calling.</p>
-   <p>Tap <b>THE CARD</b> at any time — during a game too — and it shows every hand along with how close you are to each one.</p>`},
-];
+/* ================= LEARN v2 — shown, not told =================
+   Two picture screens, then a real game with a coach pointing at things.
+   The deal is rigged so all six moments actually happen, once. */
+const LRNSUITS=[['CRAKS','C',[1,5,9]],['BAMS','B',[1,5,9]],['DOTS','D',[1,5,9]]];
+const LRNHON=[['W','E'],['W','S'],['G','R'],['G','G'],['G','0'],['F',undefined],['J',undefined]];
+function sayTile(t){
+  try{
+    if(!('speechSynthesis' in window))return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(nameOf(t));
+    u.rate=.92;u.pitch=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
 function openLearn(){
   const box=$('modalin');
-  box.innerHTML=`<div class="mtop">NEW TO MAH JONGG?</div><h2 style="font-size:24px">Learn</h2>
-    <div class="msub">Ten minutes and you'll be playing.</div>
-    <div class="msect">THE BASICS</div>
-    ${LEARN_PAGES.map(p=>`<button class="mnrow" data-p="${p.k}"><span class="lb">${p.t.toUpperCase()}<span class="sb">${p.sub}</span></span><span class="chevr">›</span></button>`).join('')}
-    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="lprac">PLAY A PRACTICE HAND</button></div>
-    <div class="lstartsub" style="margin-top:9px">Hints on, nothing at stake, leave whenever you like.</div>
-    <div class="msect">SOON</div>
-    <button class="mnrow" disabled style="opacity:.6"><span class="lb">A GUIDED FIRST GAME<span class="sb">we'll walk you through one, move by move</span></span><span class="chevr" style="font-size:10px;letter-spacing:.1em">soon</span></button>
-    <div class="mbtns" style="margin-top:14px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lclose">CLOSE</button></div>`;
-  box.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>openLearnPage(b.dataset.p));
-  box.querySelector('#lprac').onclick=startPractice;
-  box.querySelector('#lclose').onclick=closeModal;
+  box.className='lrn';
+  /* one real winning hand, rendered by the real tile renderer */
+  const win=[['C',6],['C',6],['C',6],['C',6],['B',2],['B',2],['B',2],['D',2],['D',2],['D',2],['G','0'],['G','0'],['G','0'],['G','0']];
+  box.innerHTML=`<div class="mtop">NEW TO MAH JONGG?</div>
+    <h2>You're building one hand</h2>
+    <div class="msub">Fourteen tiles.<br>One line from this year's card.</div>
+    <div class="lrnwin" id="lrnwin"></div>
+    <div class="lrntiny">SUNRISE 2026</div>
+    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="l1next">SHOW ME THE TILES</button></div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l1x">NOT NOW</button></div>`;
+  const w=box.querySelector('#lrnwin');
+  win.forEach(([sv,n])=>w.appendChild(tileDOM(mk(sv,n),'t-sm')));
+  box.querySelector('#l1next').onclick=openLearnTiles;
+  box.querySelector('#l1x').onclick=()=>{box.className='';closeModal()};
   $('modal').classList.add('open');
 }
-function openLearnPage(k){
-  const i=LEARN_PAGES.findIndex(p=>p.k===k),p=LEARN_PAGES[i],nx=LEARN_PAGES[i+1];
+function openLearnTiles(){
   const box=$('modalin');
-  box.innerHTML=`<div class="mtop">THE BASICS · ${i+1} OF ${LEARN_PAGES.length}</div>
-    <h2 style="font-size:23px">${p.t}</h2>
-    <div class="rules" style="margin-top:12px">${p.html}</div>
-    <div class="mbtns" style="margin-top:14px">${nx
-      ?`<button class="abtn" id="lnext">NEXT — ${nx.t.toUpperCase()}</button>`
-      :`<button class="abtn" id="lprac2">PLAY A PRACTICE HAND</button>`}</div>
-    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lback">BACK</button></div>`;
-  const n=box.querySelector('#lnext');if(n)n.onclick=()=>openLearnPage(nx.k);
-  const pr=box.querySelector('#lprac2');if(pr)pr.onclick=startPractice;
-  box.querySelector('#lback').onclick=openLearn;
+  box.className='lrn';
+  box.innerHTML=`<div class="mtop">THE TILES</div>
+    <h2>Three suits</h2>
+    <div class="msub">Each counts one to nine.</div>
+    <div style="margin-top:14px" id="lrnrows"></div>
+    <div class="lrnsay" id="lrnsay"><div class="lrntiny" style="margin:0">TAP ANY TILE TO HEAR IT</div></div>
+    <div class="mbtns" style="margin-top:8px"><button class="abtn" id="l2next">DEAL ME A HAND</button></div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l2back">BACK</button></div>`;
+  const rows=box.querySelector('#lrnrows');
+  const addRow=(label,tiles)=>{
+    const r=document.createElement('div');r.className='lrnrow';
+    r.innerHTML=`<span class="lb">${label}</span>`;
+    const tw=document.createElement('div');tw.className='tiles';
+    tiles.forEach(t=>{
+      const el=tileDOM(t,'t-md');
+      el.onclick=()=>{
+        rows.querySelectorAll('.tile.said').forEach(x=>x.classList.remove('said'));
+        el.classList.add('said');
+        sayTile(t);sfx('tap');
+        box.querySelector('#lrnsay').innerHTML=
+          `<div class="card"><b>${nameOf(t)}</b><span>said aloud, the way it's called at a table</span></div>`;
+      };
+      tw.appendChild(el);
+    });
+    r.appendChild(tw);rows.appendChild(r);
+  };
+  LRNSUITS.forEach(([nm,sv,ns])=>addRow(nm,ns.map(n=>mk(sv,n))));
+  addRow('AND',LRNHON.map(([sv,n])=>mk(sv,n)));
+  box.querySelector('#l2next').onclick=()=>{box.className='';startLearnGame()};
+  box.querySelector('#l2back').onclick=openLearn;
   $('modal').classList.add('open');
 }
-function startPractice(){
+
+/* ---------- the coach ---------- */
+let COACH=null;
+function coachClear(){
+  $('coach').querySelectorAll('.cspot,.cring,.cghost').forEach(el=>el.remove());
+}
+function coachOff(){
+  COACH=null;coachClear();
+  $('coach').classList.remove('on');
+}
+function rectOf(el){const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height}}
+function coachMark(el,cls,pad){
+  if(!el)return;
+  const r=rectOf(el),p=pad===undefined?5:pad;
+  const d=document.createElement('div');
+  d.className=cls;
+  d.style.left=(r.x-p)+'px';d.style.top=(r.y-p)+'px';
+  d.style.width=(r.w+p*2)+'px';d.style.height=(r.h+p*2)+'px';
+  $('coach').appendChild(d);
+  return d;
+}
+function coachShow(o){
+  const c=$('coach');c.classList.add('on');
+  coachClear();
+  (o.spot||[]).forEach(el=>coachMark(el,'cspot',6));
+  (o.ghost||[]).forEach(el=>coachMark(el,'cghost',4));
+  (o.ring||[]).forEach(x=>coachMark(Array.isArray(x)?x[0]:x,'cring'+(Array.isArray(x)&&x[1]?' '+x[1]:''),4));
+  const chip=$('coachchip');
+  chip.querySelector('.tx').innerHTML=o.text+(o.aside?`<i>${o.aside}</i>`:'');
+  const nx=chip.querySelector('.nx');
+  if(o.next){nx.style.display='';nx.textContent=o.nextLabel||'GOT IT ›';nx.onclick=o.next}
+  else nx.style.display='none';
+  chip.style.top=(o.top||440)+'px';
+  const dots=$('coachdots');
+  dots.innerHTML=[0,1,2,3,4,5].map(i=>`<i class="${i===o.step?'on':''}"></i>`).join('');
+}
+/* the coach never blocks the tap it is asking for */
+function coachPassthrough(){ $('coach').classList.add('on'); }
+
+/* ---------- the rigged tutorial game ---------- */
+const T_=(s,n)=>mk(s,n);
+function startLearnGame(){
   closeModal();
-  /* a short Charleston for this one hand only — her own setting is snapshotted at the
-     deal and restored straight after, so practising never changes what she plays next */
-  const keep=CHFULL;
-  CHFULL=false;
-  newGame();
-  CHFULL=keep;
-  HINTON=true;HINTIDX=0;
+  SEQ++;killClones();
+  _tid=0;
+  HINTON=false;HINTIDX=0;
+  const me=[T_('C',6),T_('C',6),T_('C',6),T_('B',2),T_('B',2),T_('D',2),T_('D',2),T_('D',2),
+            T_('G','0'),T_('G','0'),T_('G','0'),T_('W','E'),T_('B',9),T_('C',1)];
+  const players=[{name:'You',isBot:false,hand:sortHand(me),exp:[]}]
+    .concat(BOTNAMES.map(n=>({name:n,isBot:true,hand:[],exp:[]})));
+  /* Evelyn already leans on a joker for a soap — that's moment 5 */
+  players[1].exp=[{rep:'G0',tiles:[T_('G','0'),T_('G','0'),T_('J',undefined)]}];
+  for(let i=0;i<10;i++)players[1].hand.push(T_('W','N'));
+  for(let i=0;i<13;i++){players[2].hand.push(T_('W','W'));players[3].hand.push(T_('W','S'))}
+  const filler=[];for(let i=0;i<62;i++)filler.push(T_('W','N'));
+  G={phase:'play',wall:filler,players,dealer:0,turn:0,step:'discard',
+     chStep:6,chPhase:null,chFull:false,sel:new Set(),discards:[],winNow:null,
+     learn:{step:0,
+       myDraws:[T_('C',6),T_('G','0')],           /* exactly what she needs, when she needs it */
+       botThrows:[T_('B',2),T_('W','N'),T_('W','W'),T_('W','S'),T_('W','N'),T_('W','W'),T_('W','S')]}};
+  $('title').classList.add('hide');
   renderAll();
-  setStatus('A practice hand — hints are on. Tap <b>HINT</b> anytime to see what to build.');
+  setStatus('');
+  later(400,()=>coachStep(0));
+}
+function learnOn(){return !!(G&&G.learn)}
+function coachStep(n){
+  if(!learnOn())return;
+  G.learn.step=n;
+  const rackTiles=()=>[...$('rack').querySelectorAll('.tile')];
+  if(n===0){
+    coachShow({step:0,spot:[$('rack')],top:430,
+      text:'These tiles are yours.',aside:'Nobody else can see them · play moves to your right.',
+      next:()=>coachStep(1)});
+  }else if(n===1){
+    peekOpen();
+    later(420,()=>{
+      const line=[...document.querySelectorAll('.pkline')].find(el=>/Sunrise/i.test(el.textContent))
+        ||document.querySelector('.pkline');
+      coachShow({step:1,ring:[[line,'gold']],top:Math.min(560,(line?rectOf(line).y+rectOf(line).h+16:420)),
+        text:"We're aiming here.",aside:'Pull the card down whenever you like.',
+        next:()=>{peekClose(true);later(320,()=>coachStep(2))}});
+    });
+  }else if(n===2){
+    const tiles=rackTiles();
+    const junkI=G.players[0].hand.findIndex(t=>t.s==='B'&&t.n===9);
+    const junk=tiles[junkI];
+    coachShow({step:2,ring:[junk],ghost:tiles.filter((_,i)=>i!==junkI),top:430,
+      text:'This one fits nothing. Send it away.',aside:'Tap it, then DISCARD.'});
+  }else if(n===3){
+    const btns=[...$('callbtns').querySelectorAll('button')];
+    const pung=btns.find(b=>/PUNG/.test(b.textContent));
+    const others=btns.filter(b=>b!==pung&&!/PASS/.test(b.textContent));
+    coachShow({step:3,ring:pung?[pung]:[],ghost:others,top:520,
+      text:'You hold two. Take the third.',aside:'Only the tile just thrown — never one further back.'});
+  }else if(n===4){
+    renderActions();   /* step is 4 now, so the swap button is allowed to appear */
+    const sw=[...$('actions').querySelectorAll('button')].find(b=>/SWAP JOKER/.test(b.textContent));
+    const exp=document.querySelector('#opps .tile');
+    coachShow({step:4,ring:[sw,exp].filter(Boolean),top:420,
+      text:"Evelyn's joker is standing in for a tile you hold.",
+      aside:'Swap the real one for it — jokers are the best tiles on the table.'});
+  }else if(n===5){
+    coachOff();
+  }
+}
+/* the coach follows what she actually does */
+function learnAfter(ev){
+  if(!learnOn())return;
+  const st=G.learn.step;
+  if(ev==='discard'&&st===2){coachClear();$('coach').classList.remove('on')}
+  if(ev==='callbar'&&st===2)coachStep(3);
+  if(ev==='called'&&st===3){coachClear();$('coach').classList.remove('on')}
+  if(ev==='swapready'&&(st===3||st===2))coachStep(4);
+  if(ev==='swapped'&&st===4){coachClear();$('coach').classList.remove('on')}
 }
 $('btnlearn').onclick=openLearn;
 function beacon(path){
@@ -3628,6 +3911,7 @@ try{
 
 function goTitle(){
   SEQ++;
+  coachOff();
   killClones();
   MP.active=false;MP.intended=false;MP.view=null;MP.chSubmitted=false;
   if(G)G.phase='over';
@@ -3866,6 +4150,17 @@ bootCard();
   }
   setTimeout(()=>maybeOfferPendingCard(),600);
 })();
+</script>
+<!-- Cloudflare Web Analytics — website only; inside the iOS wrapper the origin is
+     capacitor://localhost, where the beacon has nothing meaningful to report -->
+<script>
+if(/^https?:$/.test(location.protocol)){
+  const s=document.createElement('script');
+  s.type='module';s.defer=true;
+  s.src='https://static.cloudflareinsights.com/beacon.min.js';
+  s.setAttribute('data-cf-beacon','{"token": "8efc7551b00f4eb08cbf85f537d0b9dd"}');
+  document.body.appendChild(s);
+}
 </script>
 </body>
 </html>
