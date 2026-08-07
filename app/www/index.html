@@ -81,28 +81,28 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 
 /* rack size */
 .t-lg{width:min(12.2vw,52px);aspect-ratio:13/17}
-.t-lg .n{font-size:clamp(19px,6vw,26px)}
-.t-lg .m svg{width:clamp(12px,3.8vw,16px);height:clamp(12px,3.8vw,16px)}
-.t-lg .m .zi{font-size:clamp(11px,3.4vw,14px)}
-.t-lg .lbl{font-size:7px;margin-top:2px}
+.t-lg .n{font-size:clamp(21px,6.7vw,29px)}
+.t-lg .m svg{width:clamp(13.5px,4.3vw,18px);height:clamp(13.5px,4.3vw,18px)}
+.t-lg .m .zi{font-size:clamp(12.5px,3.8vw,15.7px)}
+.t-lg .lbl{font-size:7.8px;margin-top:2px}
 /* mid (exposures, win display) */
 .t-md{width:34px;aspect-ratio:13/17;border-radius:6px}
-.t-md .n{font-size:17px}
-.t-md .m svg{width:10px;height:10px}
-.t-md .m .zi{font-size:9px}
-.t-md .lbl{font-size:5px;margin-top:1px}
+.t-md .n{font-size:19px}
+.t-md .m svg{width:11.2px;height:11.2px}
+.t-md .m .zi{font-size:10px}
+.t-md .lbl{font-size:5.6px;margin-top:1px}
 /* small (discards) */
 .t-sm{width:29px;aspect-ratio:13/17;border-radius:5px}
-.t-sm .n{font-size:15px}
-.t-sm .m svg{width:9px;height:9px}
-.t-sm .m .zi{font-size:8px}
-.t-sm .lbl{font-size:4.5px;margin-top:1px}
+.t-sm .n{font-size:16.8px}
+.t-sm .m svg{width:10px;height:10px}
+.t-sm .m .zi{font-size:9px}
+.t-sm .lbl{font-size:5px;margin-top:1px}
 /* tiny (opponent exposures) */
 .t-xs{width:20px;aspect-ratio:13/17;border-radius:4px;box-shadow:0 1px 2px rgba(10,25,18,.3)}
-.t-xs .n{font-size:10px}
-.t-xs .m svg{width:6px;height:6px}
-.t-xs .m .zi{font-size:5.5px}
-.t-xs .lbl{font-size:3.5px}
+.t-xs .n{font-size:11.2px}
+.t-xs .m svg{width:6.7px;height:6.7px}
+.t-xs .m .zi{font-size:6.2px}
+.t-xs .lbl{font-size:3.9px}
 
 .tile.joker{background:linear-gradient(165deg,#125441,#0D4232);border-color:#0A2E24;color:var(--gold-pale)}
 .tile.joker .lbl{color:var(--gold);letter-spacing:.16em}
@@ -181,6 +181,9 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #title .abtn.big{box-sizing:border-box;width:min(92%,360px);white-space:nowrap;font-size:14px;letter-spacing:.13em}
 #title .abtn.gold.big{background:rgba(12,59,46,.55);border:1px solid rgba(232,217,174,.4);color:#F7F2E4;box-shadow:none;
   backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1)}
+/* three peers: same size and type, told apart by material — coral, ivory, frosted glass */
+#title .abtn.ivory.big{background:linear-gradient(#FBF7EC,#F1EADA);color:var(--deep);border:1px solid rgba(255,255,255,.5);
+  box-shadow:0 2px 8px rgba(0,0,0,.2)}
 /* the title art steps politely aside under the buttons and links */
 #titlemural{-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.55) 62%,rgba(0,0,0,.3) 76%,rgba(0,0,0,.2) 100%);
   mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.55) 62%,rgba(0,0,0,.3) 76%,rgba(0,0,0,.2) 100%)}
@@ -198,25 +201,27 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
   #board{max-width:920px;margin-left:auto;margin-right:auto;width:calc(100% - 20px)}
   #me{max-width:1120px;margin:0 auto;width:100%}
   .t-lg{width:min(6.2vw,68px)}
-  .t-lg .n{font-size:clamp(22px,3.4vw,33px)}
-  .t-lg .m svg{width:clamp(14px,2.1vw,21px);height:clamp(14px,2.1vw,21px)}
-  .t-lg .m .zi{font-size:clamp(13px,1.9vw,18px)}
-  .t-lg .lbl{font-size:9px}
+  .t-lg .n{font-size:clamp(24.6px,3.8vw,37px)}
+  .t-lg .m svg{width:clamp(15.7px,2.35vw,23.5px);height:clamp(15.7px,2.35vw,23.5px)}
+  .t-lg .m .zi{font-size:clamp(14.6px,2.1vw,20.2px)}
+  .t-lg .lbl{font-size:10px}
   .t-md{width:42px}
-  .t-md .n{font-size:21px}
-  .t-md .m svg{width:13px;height:13px}
-  .t-md .m .zi{font-size:11px}
+  .t-md .n{font-size:23.5px}
+  .t-md .m svg{width:14.6px;height:14.6px}
+  .t-md .m .zi{font-size:12.3px}
   .t-sm{width:36px}
-  .t-sm .n{font-size:18px}
-  .t-sm .m svg{width:11px;height:11px}
-  .t-sm .m .zi{font-size:10px}
+  .t-sm .n{font-size:20.2px}
+  .t-sm .m svg{width:12.3px;height:12.3px}
+  .t-sm .m .zi{font-size:11.2px}
   .t-xs{width:26px}
-  .t-xs .n{font-size:13px}
+  .t-xs .n{font-size:14.6px}
   #discards{gap:6px;padding:10px 14px 14px}
   #tablemsg span{font-size:26px}
   #statusline{font-size:13px}
 }
 #statusline b{color:var(--gold)}
+#chwarn{display:none;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--coral);padding-top:3px}
+#chwarn b{color:var(--coral);font-weight:700}
 
 /* ---------- title screen ---------- */
 #title{
@@ -413,6 +418,8 @@ body.haspill #cardnudge{margin-top:8px}
 #sheetin .sub{text-align:center;font-size:11px;letter-spacing:.16em;color:#8A7F5F;padding-bottom:8px;border-bottom:1px solid #E7E3DA}
 #cardlist{overflow-y:auto;padding:10px 16px calc(env(safe-area-inset-bottom,10px) + 16px)}
 #cardctl{display:flex;gap:6px;justify-content:center;padding:9px 0 2px}
+#cardlock{display:none;text-align:center;font-size:11px;line-height:1.5;color:#A08F63;
+  padding:7px 22px 3px;margin:0}
 .cbtn{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#A8A296;border:1px solid #DAD4C6;border-radius:12px;padding:7px 12px;background:none;font-family:var(--sans)}
 .cbtn.on{background:var(--deep);color:var(--gold-pale);border-color:var(--deep)}
 .cbtn:disabled{opacity:.45}
@@ -593,6 +600,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   </div>
   <div id="rack"></div>
   <div id="statusline"></div>
+  <div id="chwarn"></div>
   <div id="actions"></div>
 </div>
 
@@ -624,8 +632,7 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
       <button class="cbtn" id="ccmine">MY CARD</button>
       <button class="cbtn imp" id="ccimport">IMPORT…</button>
     </div>
-    <div id="cardlock" style="display:none;font-size:11px;color:#A08F63;margin:6px 0 2px">
-      the table is playing this card — changes unlock after the game</div>
+    <div id="cardlock">the table is playing this card — changes unlock after the game</div>
     <div id="cardlist"></div>
   </div>
 </div>
@@ -650,8 +657,9 @@ details.altimp summary{font-size:12px;letter-spacing:.08em;color:#8A7F5F;cursor:
   <div class="est">EST. 2026</div>
   <div id="readpill"><div class="rdot"></div><span></span></div>
   <div class="tbtns">
-    <button class="abtn big" id="btnplay">TAKE A SEAT</button>
-    <button class="abtn gold big" id="btnfriends">PLAY WITH FRIENDS</button>
+    <button class="abtn big" id="btnplay">PLAY NOW</button>
+    <button class="abtn ivory big" id="btnfriends">PLAY WITH FRIENDS</button>
+    <button class="abtn gold big" id="btnlearn">LEARN</button>
     <div class="tlinks"><button id="btncard2">THE CARD</button><i>·</i><button id="btnhow">HOUSE RULES</button></div>
     <button id="schedpill" style="display:none"></button>
     <div id="cardnudge" style="display:none"><button id="cnmain">Have the 2026 card? <b>ADD YOURS</b></button><button id="cnx">✕</button></div>
@@ -2234,7 +2242,7 @@ function renderCardCtl(){
   $('ccclub').disabled=locked;
   $('ccmine').disabled=locked||!CUSTOM;
   $('ccimport').disabled=locked;
-  $('cardlock').style.display=locked?'':'none';
+  $('cardlock').style.display=locked?'block':'none';
 }
 $('ccclub').onclick=()=>{if(cardLocked())return;useCard('club');openSheet()};
 $('ccmine').onclick=()=>{if(cardLocked())return;if(CUSTOM){useCard('custom');openSheet()}};
@@ -2711,6 +2719,7 @@ function openSchedCreate(){
     box.innerHTML=`<div class="mtop">NEW GAME</div><h2 style="font-size:22px">Schedule a game</h2>
     <label class="frmlbl">NAME IT (OPTIONAL)</label>
     <input class="frmin" id="glabel" maxlength="24" placeholder="e.g. Thursday girls" value="${box._label||''}">
+    <div id="gdupe" style="display:none;font-size:10.5px;line-height:1.5;color:#B3705E;text-align:left;padding:6px 2px 0"></div>
     <label class="frmlbl">HOW DO YOU WANT TO SET THE TIME?</label>
     <div class="seg" style="margin:0;justify-content:flex-start">
       <button class="sgi ${mode==='fixed'?'on':''}" id="mfixed">I KNOW THE TIME</button>
@@ -2725,7 +2734,8 @@ function openSchedCreate(){
     <div class="mbtns" style="margin-top:18px"><button class="abtn" id="gcreate" ${mode==='poll'&&slots.length<2?'disabled':''}>
       ${mode==='fixed'?'CREATE & GET THE LINK':'CREATE THE POLL'}</button></div>
     <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="gback">BACK</button></div>`;
-    box.querySelector('#glabel').oninput=e=>{box._label=e.target.value};
+    box.querySelector('#glabel').oninput=e=>{box._label=e.target.value;
+      const w=box.querySelector('#gdupe');if(w)w.style.display='none'};
     box.querySelector('#mfixed').onclick=()=>{mode='fixed';render()};
     box.querySelector('#mpoll').onclick=()=>{mode='poll';render()};
     box.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{dayIdx=+b.dataset.d;render()});
@@ -2737,6 +2747,13 @@ function openSchedCreate(){
     box.querySelector('#gcreate').onclick=async()=>{
       if(!API()){setStatus('Multiplayer is not switched on');return}
       const label=(box._label||'').trim();
+      /* one name, one table — a second "Thursday girls" makes the list unreadable */
+      if(label&&schedUpcoming().some(x=>(x.label||'').trim().toLowerCase()===label.toLowerCase())){
+        const w=box.querySelector('#gdupe');
+        if(w){w.textContent=`You already have a table called “${label}” — give this one its own name.`;w.style.display='block'}
+        box.querySelector('#glabel').focus();
+        return;
+      }
       const name=mpName()||'A friend';
       let card=null;
       try{if(localStorage.getItem('olmUse')==='custom')card=JSON.parse(localStorage.getItem('olmCard')||'null')}catch(e){}
@@ -3220,7 +3237,8 @@ function mpRenderGame(v){
         :S.blind?`Charleston — pass 3 <b>${S.dir.toLowerCase()}</b> · fewer than 3 go <b>blind</b>`
         :`Charleston — choose 3 tiles to pass <b>${S.dir.toLowerCase()}</b>`);
     }
-  }else if(v.phase==='play'){
+    chWatch(v);
+  }else{chWatch(null); if(v.phase==='play'){
     const myExpTiles=v.seats[meIdx].exp.reduce((s,e)=>s+e.tiles.length,0);
     const mustDiscard=v.turn===meIdx&&v.step==='discard'&&v.you.rack.length===14-myExpTiles;
     if(mustDiscard){
@@ -3229,7 +3247,27 @@ function mpRenderGame(v){
       if(v.turn===meIdx&&v.step==='discard')setStatus('Your discard is on the table — waiting…');
       else{const s=v.seats[v.turn];setStatus(s&&s.isYou?'Your turn…':`<b>${s?s.name:'…'}</b>’s turn…`)}
     }
-  }
+  }}
+}
+/* The table only ever plays a Charleston move for you when other people are genuinely
+   waiting — and when it might, it says so out loud first. Alone with the bots the
+   server sends no clock at all and this never runs. */
+let CHTICK=null;
+function chWatch(v){
+  if(CHTICK){clearInterval(CHTICK);CHTICK=null}
+  const el=$('chwarn');if(!el)return;
+  el.style.display='none';
+  if(!v||v.chLeft==null)return;
+  const owed=(v.chPhase==='vote')?!MP.chVoted:(v.chPhase==='courtesy')?!MP.chOffered:!MP.chSubmitted;
+  if(!owed)return;
+  const due=Date.now()+v.chLeft;
+  const tick=()=>{
+    const s=Math.ceil((due-Date.now())/1000);
+    if(s<=0||s>20){el.style.display='none';if(s<=0&&CHTICK){clearInterval(CHTICK);CHTICK=null}return}
+    el.style.display='block';
+    el.innerHTML=`the table is waiting — playing this for you in <b>${s}s</b>`;
+  };
+  tick();CHTICK=setInterval(tick,1000);
 }
 function mpShowCallBar(m){
   sfx('call');
@@ -3465,6 +3503,78 @@ function openFriends(errMsg){
   $('modal').classList.add('open');
 }
 $('btnfriends').onclick=()=>openFriends();
+/* ---------- learn: a small honest primer, not a coming-soon wall ---------- */
+const LEARN_PAGES=[
+  {k:'tiles',t:'What the tiles are',sub:'152 tiles, and only five kinds to know',
+   html:`<p><b>Three suits.</b> <i>Cracks</i> (the character 萬), <i>Bams</i> (bamboo sticks) and <i>Dots</i> (circles).
+     Each runs 1 through 9, and there are four of every one.</p>
+   <p><b>Winds.</b> North, East, West and South — four of each.</p>
+   <p><b>Dragons.</b> Red, Green and White. The white one is called the <i>Soap</i>, and on the card it can also stand in for a zero.</p>
+   <p><b>Flowers.</b> Eight of them, and they are all interchangeable — a flower is a flower.</p>
+   <p><b>Jokers.</b> Eight. A joker can stand in for any tile inside a group of three or more, but never inside a pair,
+     and never as a single. They are the most valuable things you will hold.</p>`},
+  {k:'turn',t:'How a turn goes',sub:'draw one, discard one — that really is the whole game',
+   html:`<p><b>The deal.</b> Everyone gets 13 tiles. The dealer gets 14 and starts by throwing one away.</p>
+   <p><b>The Charleston.</b> Before play begins you pass three unwanted tiles to your right, then across, then to your left —
+     a chance for everyone to trade away what they can't use. Jokers may never be passed.</p>
+   <p><b>Your turn.</b> Draw a tile from the wall, then discard one. Tap a tile, then tap DISCARD.</p>
+   <p><b>Calling.</b> When somebody discards a tile that completes a group of three or more for you, you may call it out —
+     the group then sits face-up in front of you for the rest of the hand. You can never call a tile to make a pair.</p>
+   <p><b>The end.</b> Someone completes a full hand from the card and calls mah jongg — or the wall runs out and nobody wins.
+     That's a wall game, and it's nobody's fault.</p>`},
+  {k:'card',t:'What the card is',sub:'the list of hands that count this year',
+   html:`<p>American mah jongg is played from a <b>card</b>: a printed list of the only hands that count, and it changes every year.
+     You are not building any old set of tiles — you are building one particular line from that card.</p>
+   <p><b>The Ooh La Card</b> is ours, so you can start playing this minute. If you have this year's published card,
+     you can photograph it and play from your own instead — that's the ADD YOURS option on the home screen.</p>
+   <p>Hands are grouped into sections, and each is worth points. A line marked <b>C</b> must stay concealed until you win;
+     one marked <b>X</b> means you're allowed to expose groups by calling.</p>
+   <p>Tap <b>THE CARD</b> at any time — during a game too — and it shows every hand along with how close you are to each one.</p>`},
+];
+function openLearn(){
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">NEW TO MAH JONGG?</div><h2 style="font-size:24px">Learn</h2>
+    <div class="msub">Ten minutes and you'll be playing.</div>
+    <div class="msect">THE BASICS</div>
+    ${LEARN_PAGES.map(p=>`<button class="mnrow" data-p="${p.k}"><span class="lb">${p.t.toUpperCase()}<span class="sb">${p.sub}</span></span><span class="chevr">›</span></button>`).join('')}
+    <div class="mbtns" style="margin-top:16px"><button class="abtn" id="lprac">PLAY A PRACTICE HAND</button></div>
+    <div class="lstartsub" style="margin-top:9px">Hints on, nothing at stake, leave whenever you like.</div>
+    <div class="msect">SOON</div>
+    <button class="mnrow" disabled style="opacity:.6"><span class="lb">A GUIDED FIRST GAME<span class="sb">we'll walk you through one, move by move</span></span><span class="chevr" style="font-size:10px;letter-spacing:.1em">soon</span></button>
+    <div class="mbtns" style="margin-top:14px"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lclose">CLOSE</button></div>`;
+  box.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>openLearnPage(b.dataset.p));
+  box.querySelector('#lprac').onclick=startPractice;
+  box.querySelector('#lclose').onclick=closeModal;
+  $('modal').classList.add('open');
+}
+function openLearnPage(k){
+  const i=LEARN_PAGES.findIndex(p=>p.k===k),p=LEARN_PAGES[i],nx=LEARN_PAGES[i+1];
+  const box=$('modalin');
+  box.innerHTML=`<div class="mtop">THE BASICS · ${i+1} OF ${LEARN_PAGES.length}</div>
+    <h2 style="font-size:23px">${p.t}</h2>
+    <div class="rules" style="margin-top:12px">${p.html}</div>
+    <div class="mbtns" style="margin-top:14px">${nx
+      ?`<button class="abtn" id="lnext">NEXT — ${nx.t.toUpperCase()}</button>`
+      :`<button class="abtn" id="lprac2">PLAY A PRACTICE HAND</button>`}</div>
+    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="lback">BACK</button></div>`;
+  const n=box.querySelector('#lnext');if(n)n.onclick=()=>openLearnPage(nx.k);
+  const pr=box.querySelector('#lprac2');if(pr)pr.onclick=startPractice;
+  box.querySelector('#lback').onclick=openLearn;
+  $('modal').classList.add('open');
+}
+function startPractice(){
+  closeModal();
+  /* a short Charleston for this one hand only — her own setting is snapshotted at the
+     deal and restored straight after, so practising never changes what she plays next */
+  const keep=CHFULL;
+  CHFULL=false;
+  newGame();
+  CHFULL=keep;
+  HINTON=true;HINTIDX=0;
+  renderAll();
+  setStatus('A practice hand — hints are on. Tap <b>HINT</b> anytime to see what to build.');
+}
+$('btnlearn').onclick=openLearn;
 function beacon(path){
   if(!OLM_SERVER)return;
   try{fetch(OLM_SERVER.replace(/^wss/,'https').replace(/^ws:/,'http:')+path).catch(()=>{})}catch(e){}
