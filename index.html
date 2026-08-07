@@ -1919,9 +1919,15 @@ function openCallBar(t,opts,onPass){
   $('callq').innerHTML=`${nameOf(t)} was discarded — call it?`+callAdvice(t);
   const bb=$('callbtns');bb.innerHTML='';
   const advisePass=CALLV==='pass';
+  const K={PUNG:3,KONG:4,QUINT:5};
   for(const o of opts){
     const b=document.createElement('button');
-    b.className='abtn '+(advisePass&&o.cls!=='gold'?'ghost':(o.cls||''));b.textContent=o.label;
+    let cls=o.cls||'';
+    if(o.cls!=='gold'){
+      if(advisePass)cls='ghost';
+      else if(CALLOK&&K[o.label]!==undefined&&CALLOK[K[o.label]]===false)cls='ghost';
+    }
+    b.className='abtn '+cls;b.textContent=o.label;
     b.onclick=()=>{clearTimeout(callTimer);o.fn()};
     bb.appendChild(b);
   }
@@ -1957,9 +1963,9 @@ function callKeepsAlive(me,t,kSize){
   const p2={hand,exp:[...me.exp,{rep:tk,tiles:new Array(kSize).fill(0)}]};
   return handProgress(p2).some(x=>!x.dead);
 }
-let CALLV=null; /* 'call' | 'pass' | null — lets the call bar style its buttons to match the advice */
+let CALLV=null,CALLOK=null; /* advice verdict + per-size survival map — the call bar styles buttons to match */
 function callAdvice(t){
-  CALLV=null;
+  CALLV=null;CALLOK=null;
   try{
     if(!HINTON||!hintsAllowed())return '';
     const me=G.players[0];
@@ -1967,6 +1973,8 @@ function callAdvice(t){
     const fits=topFits(me);
     if(!fits.length)return '';
     const sizes=callSizes(me,t);
+    CALLOK={};
+    for(const k of sizes)CALLOK[k]=callKeepsAlive(me,t,k);
     const copies=(countsOf(me.hand).c[tk])||0;
     for(const bf of fits){
       const grp=bf.rem.find(([k2,k])=>k2===tk&&k>=3);
@@ -2608,7 +2616,7 @@ function schedToken(){
   if(!t){t=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);try{localStorage.setItem('olmSchedTok',t)}catch(e){}}
   return t;
 }
-const schedLink=rec=>location.origin+location.pathname.replace(/[^/]*$/,'')+ (rec.type==='p'?'?p=':'?g=')+rec.code;
+const schedLink=rec=>siteURL().replace(/[^/]*$/,'')+ (rec.type==='p'?'?p=':'?g=')+rec.code;
 function fmtAt(at){
   const d=new Date(at);
   return d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+' · '
@@ -3235,9 +3243,10 @@ function mpShowCallBar(m){
     b.onclick=()=>{mpSend({type:'call',choice});closeCall()};
     bb.appendChild(b);
   };
+  const K2={pung:3,kong:4,quint:5};
   for(const o of m.options){
     if(o==='mahjong')mkb('MAH JONGG!','mahjong','gold');
-    else mkb(o.toUpperCase(),o,advisePass?'ghost':'');
+    else mkb(o.toUpperCase(),o,(advisePass||(CALLOK&&K2[o]!==undefined&&CALLOK[K2[o]]===false))?'ghost':'');
   }
   mkb('PASS','pass',advisePass?'':'ghost');
   bar.classList.add('open');
