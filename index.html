@@ -1606,6 +1606,11 @@ function playerDiscardPhase(){
     }
     if(G.learn.step>=5)later(60,coachFinish);
     else if(G.learn.step===4)later(60,()=>{if(G.turn===0&&G.step==='discard')coachStep(4)});
+    /* she passed the pung — the lesson moves on: the swap if it is there, else the endgame */
+    else if(G.learn.step===3&&!$('callbar').classList.contains('open'))
+      later(60,()=>{if(G.turn===0&&G.step==='discard')coachStep(findJokerSwap()?4:5)});
+    /* still in the throw-the-junk lesson — re-aim it at whatever is junk now */
+    else if(G.learn.step===2)later(60,()=>{if(G.turn===0&&G.step==='discard')coachStep(2)});
   }
   if(!G.winNow){
     if(me.exp.length&&!topFits(me).length)
@@ -1645,7 +1650,23 @@ function learnOnDiscard(){
 function discardSelected(){
   if(G.sel.size!==1)return;
   {const selT=(MP.active&&MP.view?MP.view.you.rack:G.players[0].hand).find(x=>G.sel.has(x.id));
-   if(selT&&selT.s==='J'){setStatus('Jokers are far too precious to discard, darling');G.sel.clear();renderRack();renderActions();return}}
+   if(selT&&selT.s==='J'){setStatus('Jokers are far too precious to discard, darling');G.sel.clear();renderRack();renderActions();return}
+   /* the guard again, at the point of no return: the table can change between the
+      tap and the button (a call moves her exposures, the target line shifts), so a
+      legally-selected tile may have become one her hand now needs */
+   if(selT&&learnOn()&&!MP.active){
+     const f=learnFit();
+     if(f){
+       const keep=keepIdsFor(G.players[0],f.rem);
+       const junkLeft=G.players[0].hand.some(x=>x.s!=='J'&&!keep.has(x.id));
+       if(junkLeft&&keep.has(selT.id)){
+         setStatus('Keep that one — it belongs to your hand.');
+         G.sel.clear();renderRack();renderActions();
+         if(typeof coachReplace==='function')coachReplace();
+         return;
+       }
+     }
+   }}
   if(MP.active){
     mpSend({type:'discard',id:[...G.sel][0]});
     G.sel.clear();
@@ -2410,11 +2431,12 @@ function tapTile(t){
     renderRack();renderActions();
   }else if(G.phase==='play'&&G.turn===0&&G.step==='discard'){
     if(t.s==='J'){setStatus('Jokers are far too precious to discard, darling');return}
-    /* Judge the tap against what she was looking at when she made it, so the guard
-       runs BEFORE the coach advances and repaints the rack. It protects exactly the
-       tiles her hand needs — during the ghosted moments too, where the coach is
-       pointing at the one tile to throw — and never once she has turned hints off. */
-    if(learnOn()&&HINTON&&hintsAllowed()){
+    /* The first game will not let her dismantle her own hand, full stop (Alex's
+       rule, stated twice). The HINT button toggles the highlighting, never this
+       protection. The guard runs BEFORE the coach advances, so the tap is judged
+       against what she was looking at; it stands down only when no junk remains,
+       or the hand has gone dead and learnFit has nothing left to protect. */
+    if(learnOn()){
       const f=learnFit();
       if(f){
         const keep=keepIdsFor(G.players[0],f.rem);
@@ -4366,10 +4388,15 @@ function coachStep(n){
         next:()=>{peekClose(true);later(320,()=>coachStep(2))}});
     });
   }else if(n===2){
+    /* aim at whatever is junk NOW — in the fresh deal that is the 9 Bam, but this
+       step also revisits later turns and second practice hands, where it is not */
+    const me2=G.players[0];
+    const f2=learnFit();
+    const keep2=f2?keepIdsFor(me2,f2.rem):new Set();
+    const junkI=me2.hand.findIndex(t=>t.s!=='J'&&!keep2.has(t.id));
+    if(junkI<0){coachClear();$('coach').classList.remove('on');return}
     const tiles=rackTiles();
-    const junkI=G.players[0].hand.findIndex(t=>t.s==='B'&&t.n===9);
-    const junk=tiles[junkI];
-    coachShow({step:2,ring:[junk],ghost:tiles.filter((_,i)=>i!==junkI),
+    coachShow({step:2,ring:[tiles[junkI]],ghost:tiles.filter((_,i)=>i!==junkI),
       text:'This one fits nothing. Send it away.',aside:'Tap it, then DISCARD.'});
   }else if(n===3){
     const btns=[...$('callbtns').querySelectorAll('button')];
@@ -4439,13 +4466,21 @@ function coachAfterSelect(){
   if(st!==2&&st<5)return;
   const btn=[...$('actions').querySelectorAll('button')].find(b=>/DISCARD/.test(b.textContent));
   if(!btn){coachClear();$('coach').classList.remove('on');return}
-  /* say "belongs to nobody" only when it is true of the tile she actually lifted */
+  /* the coach never commands the discard of a tile her hand needs. With hints off
+     the guard stands aside — the words must not. */
   const me=G.players[0];
   const sel=me.hand.find(t=>G.sel.has(t.id));
   const f=learnFit();
-  const keeper=!!(sel&&f&&keepIdsFor(me,f.rem).has(sel.id));
+  const keep=f?keepIdsFor(me,f.rem):new Set();
+  const keeper=!!(sel&&keep.has(sel.id));
+  const junkLeft=me.hand.some(x=>x.s!=='J'&&!keep.has(x.id));
+  if(keeper&&junkLeft){
+    coachShow({step:st===2?2:5,text:'Not that one — it fits your hand.',
+      aside:'Tap it again to put it back.'});
+    return;
+  }
   coachShow({step:st===2?2:5,ring:[btn],text:'Now send it away.',
-    aside:keeper?'Careful — that one does fit your hand.':'That one belongs to nobody.'});
+    aside:keeper?'Every tile fits — one still has to go.':'That one belongs to nobody.'});
 }
 /* the coach follows what she actually does */
 function learnAfter(ev){
