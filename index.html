@@ -239,6 +239,12 @@ button{font-family:var(--sans);border:none;cursor:pointer;background:none;color:
 #coachchip .tx i{display:block;font-style:normal;font-weight:400;font-size:12px;color:#8A8478;margin-top:3px}
 #coachchip .nx{margin-left:auto;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--coral);
   white-space:nowrap;background:none;border:none;font-family:var(--sans);padding:6px 2px}
+/* over the open card the paper chip vanished into the paper — this one doesn't */
+#coachchip.oncard{background:var(--deep);box-shadow:0 10px 26px rgba(0,0,0,.55)}
+#coachchip.oncard .tx{color:var(--gold-pale)}
+#coachchip.oncard .tx i{color:rgba(232,217,174,.62)}
+#coachchip.oncard .bar{background:var(--gold)}
+#coachchip.oncard .nx{color:var(--gold)}
 #coachdots{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:3}
 #coachdots i{width:5px;height:5px;border-radius:50%;background:rgba(232,217,174,.32)}
 #coachdots i.on{background:var(--coral);width:14px;border-radius:3px}
@@ -2258,7 +2264,8 @@ function renderRack(){
   let hintKeep=null;
   if(HINTON&&hintsAllowed()&&(G.phase==='charleston'||G.phase==='play')){
     const fits=topFits(me);
-    if(fits.length){
+    const coachGhosting=learnOn()&&document.querySelector('#coach .cghost');
+    if(fits.length&&!coachGhosting){
       if(HINTIDX>=fits.length)HINTIDX=0;
       hintKeep=keepIdsFor(me,fits[HINTIDX].rem);
       const bf=fits[HINTIDX];
@@ -2363,6 +2370,7 @@ function tapTile(t){
     else{G.sel.clear();G.sel.add(t.id)}
     sfx('tap');
     renderRack();renderActions();
+    if(learnOn())later(50,()=>{G.sel.size?coachAfterSelect():coachStep(G.learn.step)});
   }
 }
 function renderActions(){
@@ -3791,8 +3799,7 @@ function openLearnTiles(){
         rows.querySelectorAll('.tile.said').forEach(x=>x.classList.remove('said'));
         el.classList.add('said');
         sayTile(t);sfx('tap');
-        box.querySelector('#lrnsay').innerHTML=
-          `<div class="card"><b>${nameOf(t)}</b><span>said aloud, the way it's called at a table</span></div>`;
+        box.querySelector('#lrnsay').innerHTML=`<div class="card"><b>${nameOf(t)}</b></div>`;
       };
       tw.appendChild(el);
     });
@@ -3853,37 +3860,12 @@ function openLearnLine(){
     const a=box.querySelector('#l3all');
     if(a)a.onclick=()=>{RL_GROUPS.forEach((_,i)=>shown.add(i));sfx('tap');render()};
     const n=box.querySelector('#l3next');
-    if(n)n.onclick=openLearnWrong;
+    if(n)n.onclick=()=>{box.className='';startLearnGame()};
     box.querySelector('#l3back').onclick=openLearnTiles;
   };
   render();
   $('modal').classList.add('open');
 }
-/* the same tiles, the wrong way round — the mistake every beginner makes once */
-function openLearnWrong(){
-  const box=$('modalin');
-  box.className='lrn';
-  box.innerHTML=`<div class="mtop">THE CARD</div>
-    <h2>Nearly — but no</h2>
-    <div class="rlline">${RL_GROUPS.map(g=>`<i class="${g.col}">${g.pat}</i>`).join('')}</div>
-    <div class="rlwrong">
-      <div class="hd">These are all Craks</div>
-      <div class="rows" id="rlbad"></div>
-      <div class="say" style="font-size:12.5px;color:#8A7F5F;margin-top:10px;line-height:1.45">
-        Red and blue are different colours on the card, so those groups must come from
-        <b>different suits</b>. Same tiles, wrong hand.</div>
-    </div>
-    <div class="mbtns" style="margin-top:14px"><button class="abtn" id="l4next">DEAL ME A HAND</button></div>
-    <div class="mbtns"><button class="abtn ghost" style="color:var(--deep);border-color:#C6C1B4" id="l4back">BACK</button></div>`;
-  const bad=box.querySelector('#rlbad');
-  const x=document.createElement('span');x.className='x';x.textContent='✕';bad.appendChild(x);
-  [['C',2],['C',2],['C',2]].forEach(([sv,n])=>bad.appendChild(tileDOM(mk(sv,n),'t-lg')));
-  [['C',6],['C',6],['C',6],['C',6]].forEach(([sv,n])=>bad.appendChild(tileDOM(mk(sv,n),'t-lg')));
-  box.querySelector('#l4next').onclick=()=>{box.className='';startLearnGame()};
-  box.querySelector('#l4back').onclick=openLearnLine;
-  $('modal').classList.add('open');
-}
-
 /* ---------- the coach ---------- */
 let COACH=null;
 function coachClear(){
@@ -3913,6 +3895,7 @@ function coachShow(o){
   (o.ring||[]).forEach(x=>{const el=Array.isArray(x)?x[0]:x;
     const m=coachMark(el,'cring'+(Array.isArray(x)&&x[1]?' '+x[1]:''),4);if(m)marks.push(el)});
   const chip=$('coachchip');
+  chip.classList.toggle('oncard',!!o.oncard);
   chip.querySelector('.tx').innerHTML=o.text+(o.aside?`<i>${o.aside}</i>`:'');
   const nx=chip.querySelector('.nx');
   if(o.next){nx.style.display='';nx.textContent=o.nextLabel||'GOT IT ›';nx.onclick=o.next}
@@ -3925,8 +3908,18 @@ function coachShow(o){
     const H=window.innerHeight,ch=chip.offsetHeight||64;
     const hdr=rectOf($('hdr'));
     const rack=$('me')?rectOf($('me')):{y:H,h:0};
+    const cb=$('callbar');
+    const cbr=(cb&&cb.classList.contains('open'))?rectOf(cb):null;
     let hi=hdr.y+hdr.h+10, lo=Math.max(hi, rack.y-ch-12);
     let top=lo;
+    if(cbr){
+      /* the call bar is the thing she is reading — never sit on top of it */
+      const below=cbr.y+cbr.h+14;
+      top=(below+ch<=rack.y-12)?below:Math.max(hi,cbr.y-ch-14);
+      chip.style.top=Math.max(hi,Math.min(top,H-ch-14))+'px';
+      dots.style.top=Math.max(hdr.y+hdr.h+4,top-15)+'px';
+      return;
+    }
     if(marks.length){
       const boxes=marks.map(rectOf);
       const topMost=Math.min(...boxes.map(b=>b.y));
@@ -3953,7 +3946,8 @@ const LEARN_TARGET=[['C6',4],['B2',3],['D2',3],['G0',4]];   /* Sunrise 2026 */
 function startLearnGame(){
   closeModal();
   SEQ++;killClones();
-  HINTON=false;HINTIDX=0;LEARNWIN=false;
+  HINTON=true;HINTIDX=0;LEARNWIN=false;   /* a first game plays with hints on */
+  $('btnhint').classList.add('on');
   const deck=makeDeck();
   const take=(sv,n,c)=>{const out=[];for(let i=0;i<c;i++){
     const ix=deck.findIndex(t=>t.s===sv&&t.n===n);
@@ -4054,15 +4048,16 @@ function coachStep(n){
   G.learn.step=n;
   const rackTiles=()=>[...$('rack').querySelectorAll('.tile')];
   if(n===0){
-    coachShow({step:0,spot:[$('rack')],
-      text:'These tiles are yours.',aside:'Nobody else can see them · play moves to your right.',
+    coachShow({step:0,spot:[$('rack')],ring:[$('btnhint')],
+      text:'These tiles are yours.',
+      aside:'Play moves to your right · hints are on, tap HINT to turn them off.',
       next:()=>coachStep(1)});
   }else if(n===1){
     peekOpen();
     later(420,()=>{
       const line=[...document.querySelectorAll('.pkline')].find(el=>/Sunrise/i.test(el.textContent))
         ||document.querySelector('.pkline');
-      coachShow({step:1,ring:[[line,'gold']],text:"We're aiming here.",aside:'Pull the card down whenever you like.',
+      coachShow({step:1,ring:[[line,'gold']],oncard:true,text:"We're aiming here.",aside:'Pull the card down whenever you like.',
         next:()=>{peekClose(true);later(320,()=>coachStep(2))}});
     });
   }else if(n===2){
@@ -4126,6 +4121,15 @@ function chTeach(){
   }
 }
 function chDone(){CHTAUGHT=true;try{localStorage.setItem('olmChTaught','1')}catch(e){}}
+/* The moment she lifts the tile, the ghosts are stale — the selected tile rises 9px
+   and everything drawn underneath it is suddenly in the wrong place. So the coach
+   redraws with the ghosts gone and its finger on the button she needs next. */
+function coachAfterSelect(){
+  if(!learnOn()||G.learn.step!==2)return;
+  const btn=[...$('actions').querySelectorAll('button')].find(b=>/DISCARD/.test(b.textContent));
+  if(!btn){coachClear();$('coach').classList.remove('on');return}
+  coachShow({step:2,ring:[btn],text:'Now send it away.',aside:'That one belongs to nobody.'});
+}
 /* the coach follows what she actually does */
 function learnAfter(ev){
   if(!learnOn())return;
